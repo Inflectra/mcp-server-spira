@@ -4,16 +4,19 @@ Provides operations for working with the Spira tasks I have been assigned
 This module provides MCP tools for retrieving and updating my assigned tasks.
 """
 
-def _get_my_tasks_impl() -> str:
+def _get_my_tasks_impl(spira_client) -> str:
     """
     Implementation of retrieving my assigned Spira tasks.
+
+    Args:
+        spira_client: The Inflectra Spira API client instance
                 
     Returns:
         Formatted string containing the list of assigned tasks
     """
     # Get the list of open tasks for the current user
-    tasks_url = f"{SPIRA_API_BASE}/tasks"
-    tasks_data = await make_spira_api_request(tasks_url)
+    tasks_url = "/tasks"
+    tasks_data = spira_client.make_spira_api_get_request(tasks_url)
 
     if not tasks_data:
         return "Unable to fetch task data for the current user."
