@@ -9,6 +9,7 @@ from typing import Optional, Tuple, Any
 
 # Constants
 USER_AGENT = "mcp-server/1.0"
+API_ENDPOINT_URL = "/Services/v7_0/RestService.svc"
 
 def get_base_url() -> Optional[str]:
     """
@@ -30,24 +31,48 @@ def get_credentials() -> Tuple[Optional[str], Optional[str]]:
     username = os.environ.get("INFLECTRA_SPIRA_USERNAME")
     api_key = os.environ.get("INFLECTRA_SPIRA_API_KEY")
     return username, api_key
+        
+class SpiraClient:
+  def __init__(self, base_url, username, api_key):
+    self.base_url = base_url
+    self.username = username
+    self.api_key = api_key
 
-def make_spira_api_get_request(url: str) -> dict[str, Any] | None:
-    """Make a request to the Spira REST API with proper error handling."""
+    def make_spira_api_get_request(url: str) -> dict[str, Any] | list[Any] | None:
+        """
+        Makes an HTTP GET request to the Spira REST API with proper error handling.
+
+        Args:
+            url: The Relative URL for the specific REST resouce being called
+                    
+        Returns:
+            List or Dictionary containing the JSON returned from the API
+        """
+
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "username": username,
+            "api-key": api_key
+        }
+
+        full_url = self.base_url + API_ENDPOINT_URL + url
+        
+        with httpx.Client() as client:
+            try:
+                response = client.get(full_url, headers=headers, timeout=30.0)
+                response.raise_for_status()
+                return response.json()
+            except Exception:
+                return None
+
+def get_client() -> SpiraClient:
+
+    # Get the base url, login and api key
     base_url = get_base_url()
     username, api_key = get_credentials()
 
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "username": username,
-        "api-key": api_key
-    }
-    
-    with httpx.Client() as client:
-        try:
-            response = client.get(url, headers=headers, timeout=30.0)
-            response.raise_for_status()
-            return response.json()
-        except Exception:
-            return None
+    # Create the Spira client
+    spira_client = SpiraClient(base_url, username, api_key)
+    return spira_client

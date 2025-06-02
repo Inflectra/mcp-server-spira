@@ -4,6 +4,8 @@ Provides operations for working with the Spira tasks I have been assigned
 This module provides MCP tools for retrieving and updating my assigned tasks.
 """
 
+from mcp_server_spira.features.mywork.common import get_spira_client
+
 def _get_my_tasks_impl(spira_client) -> str:
     """
     Implementation of retrieving my assigned Spira tasks.
@@ -16,14 +18,14 @@ def _get_my_tasks_impl(spira_client) -> str:
     """
     # Get the list of open tasks for the current user
     tasks_url = "/tasks"
-    tasks_data = spira_client.make_spira_api_get_request(tasks_url)
+    tasks = spira_client.make_spira_api_get_request(tasks_url)
 
-    if not tasks_data:
+    if not tasks:
         return "Unable to fetch task data for the current user."
 
     # Format the tasks into human readable data
     formatted_results = []
-    for task in tasks_data[:5]:  # Only show first 5 tasks
+    for task in tasks[:25]:  # Only show first 25 tasks
         task_info = f"""
 Task TK:{task['TaskId']} - {task['Name']},
 Status: {task['TaskStatusName']},
