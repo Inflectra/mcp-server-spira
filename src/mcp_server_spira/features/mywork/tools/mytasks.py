@@ -1,0 +1,65 @@
+"""
+Provides operations for working with the Spira tasks I have been assigned
+
+This module provides MCP tools for retrieving and updating my assigned tasks.
+"""
+
+def _get_my_tasks_impl() -> str:
+    """
+    Implementation of retrieving my assigned Spira tasks.
+                
+    Returns:
+        Formatted string containing the list of assigned tasks
+    """
+    # Get the list of open tasks for the current user
+    tasks_url = f"{SPIRA_API_BASE}/tasks"
+    tasks_data = await make_spira_api_request(tasks_url)
+
+    if not tasks_data:
+        return "Unable to fetch task data for the current user."
+
+    # Format the tasks into human readable data
+    tasks = []
+    for task in tasks_data[:5]:  # Only show first 5 tasks
+        task_info = f"""
+Task TK:{task['TaskId']} - {task['Name']},
+Status: {task['TaskStatusName']},
+Type: {task['TaskTypeName']},
+Priority: {task['TaskPriorityName']},
+Due Date: {task['EndDate']},
+Description: {task['Description']}
+"""
+        tasks.append(task_info)
+
+    return "\n---\n".join(tasks)
+
+def register_tools(mcp) -> None:
+    """
+    Register my work tools with the MCP server.
+    
+    Args:
+        mcp: The FastMCP server instance
+    """
+
+    @mcp.tool()
+    def get_my_tasks() -> str:
+        """
+        Retrieves a list of the open tasks that are assigned to me
+        
+        Use this tool when you need to:
+        - View the complete details of a specific work item
+        - Examine the current state, assigned user, and other properties
+        - Get information about multiple work items at once
+        - Access the full description and custom fields of work items
+                    
+        Returns:
+            Formatted string containing comprehensive information for the
+            requested list of tasks, including all system and custom fields,
+            formatted as markdown with clear section headings
+        """
+        try:
+            spira_client = get_spira_client()
+            return _get_my_tasks_impl(spira_client)
+        except Exception as e:
+            return f"Error: {str(e)}"
+        
