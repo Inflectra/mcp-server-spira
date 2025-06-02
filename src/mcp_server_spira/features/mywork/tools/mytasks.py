@@ -19,7 +19,7 @@ def _get_my_tasks_impl() -> str:
         return "Unable to fetch task data for the current user."
 
     # Format the tasks into human readable data
-    tasks = []
+    formatted_results = []
     for task in tasks_data[:5]:  # Only show first 5 tasks
         task_info = f"""
 Task TK:{task['TaskId']} - {task['Name']},
@@ -29,9 +29,9 @@ Priority: {task['TaskPriorityName']},
 Due Date: {task['EndDate']},
 Description: {task['Description']}
 """
-        tasks.append(task_info)
+        formatted_results.append(task_info)
 
-    return "\n---\n".join(tasks)
+    return "\n\n".join(formatted_results)
 
 def register_tools(mcp) -> None:
     """
