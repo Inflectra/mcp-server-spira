@@ -8,7 +8,6 @@ from mcp.shared.memory import (
 
 from mcp_server_spira.server import mcp
 
-
 # Mark all tests with anyio for async testing
 @pytest.mark.anyio
 async def test_server_initialization():

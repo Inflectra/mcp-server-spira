@@ -6,5 +6,8 @@
 		{
 			"path": "tests"
 		}
-	]
+	],
+	"settings": {
+		"python.testing.pytestEnabled": true
+	}
 }
