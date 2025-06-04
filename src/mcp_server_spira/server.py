@@ -2,6 +2,13 @@
 Inflectra Spira MCP Server
 
 A simple MCP server that exposes Inflectra Spira capabilities.
+
+Prerequisites: You need to have the following environment variables defined:
+
+- INFLECTRA_SPIRA_BASE_URL: The base URL to your Spira instance (e.g. https://mycompany.spiraservice.net)
+- INFLECTRA_SPIRA_USERNAME: The login to your Spira instance
+- INFLECTRA_SPIRA_API_KEY: The API Key (RSS Token) for your Spira instance
+
 """
 import argparse
 
