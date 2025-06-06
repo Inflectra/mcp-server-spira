@@ -33,12 +33,12 @@ def get_credentials() -> Tuple[Optional[str], Optional[str]]:
     return username, api_key
         
 class SpiraClient:
-  def __init__(self, base_url, username, api_key):
-    self.base_url = base_url
-    self.username = username
-    self.api_key = api_key
+    def __init__(self, base_url, username, api_key):
+        self.base_url = base_url
+        self.username = username
+        self.api_key = api_key
 
-    def make_spira_api_get_request(url: str) -> dict[str, Any] | list[Any] | None:
+    def make_spira_api_get_request(self, url: str) -> dict[str, Any] | list[Any] | None:
         """
         Makes an HTTP GET request to the Spira REST API with proper error handling.
 
@@ -53,11 +53,11 @@ class SpiraClient:
             "User-Agent": USER_AGENT,
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "username": username,
-            "api-key": api_key
+            "username": self.username,
+            "api-key": self.api_key
         }
 
-        full_url = self.base_url + API_ENDPOINT_URL + url
+        full_url = self.base_url + API_ENDPOINT_URL + '/' + url
         
         with httpx.Client() as client:
             try:

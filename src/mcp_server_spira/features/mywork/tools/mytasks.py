@@ -17,7 +17,7 @@ def _get_my_tasks_impl(spira_client) -> str:
         Formatted string containing the list of assigned tasks
     """
     # Get the list of open tasks for the current user
-    tasks_url = "/tasks"
+    tasks_url = "tasks"
     tasks = spira_client.make_spira_api_get_request(tasks_url)
 
     if not tasks:
