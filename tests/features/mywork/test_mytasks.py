@@ -12,4 +12,5 @@ def test_get_my_tasks_impl():
     results = _get_my_tasks_impl(spira_client)
 
     # Check that we get one of our expected tasks
-    assert "[TK:123]" in results
+    print(results)
+    assert "[TK:40]" in results

@@ -27,7 +27,8 @@ def _get_my_tasks_impl(spira_client) -> str:
     formatted_results = []
     for task in tasks[:25]:  # Only show first 25 tasks
         task_info = f"""
-Task TK:{task['TaskId']} - {task['Name']},
+## Task [TK:{task['TaskId']}] - {task['Name']}
+{task['Description']}
 Status: {task['TaskStatusName']},
 Type: {task['TaskTypeName']},
 Priority: {task['TaskPriorityName']},

@@ -57,6 +57,14 @@ class SpiraClient:
             "api-key": self.api_key
         }
 
+        # Check that we have the appropriate settings populated
+        if self.base_url is None:
+            raise ValueError("INFLECTRA_SPIRA_BASE_URL needs to be populated as an environment variable!")
+        if self.username is None:
+            raise ValueError("INFLECTRA_SPIRA_USERNAME needs to be populated as an environment variable!")
+        if self.api_key is None:
+            raise ValueError("INFLECTRA_SPIRA_API_KEY needs to be populated as an environment variable!")        
+
         full_url = self.base_url + API_ENDPOINT_URL + '/' + url
         
         with httpx.Client() as client:
