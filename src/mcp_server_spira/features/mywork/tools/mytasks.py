@@ -4,6 +4,7 @@ Provides operations for working with the Spira tasks I have been assigned
 This module provides MCP tools for retrieving and updating my assigned tasks.
 """
 
+from mcp_server_spira.features.formatting import format_task
 from mcp_server_spira.features.mywork.common import get_spira_client
 
 def _get_my_tasks_impl(spira_client) -> str:
@@ -26,14 +27,7 @@ def _get_my_tasks_impl(spira_client) -> str:
     # Format the tasks into human readable data
     formatted_results = []
     for task in tasks[:25]:  # Only show first 25 tasks
-        task_info = f"""
-## Task [TK:{task['TaskId']}] - {task['Name']}
-{'' if task['Description'] is None else task['Description']}
-- **Status:** {task['TaskStatusName']}
-- **Type:** {task['TaskTypeName']}
-- **Priority:** {task['TaskPriorityName']}
-- **Due Date:** {task['EndDate']}
-"""
+        task_info = format_task(task)
         formatted_results.append(task_info)
 
     return "\n\n".join(formatted_results)
