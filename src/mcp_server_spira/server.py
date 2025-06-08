@@ -18,7 +18,7 @@ from mcp_server_spira.features import register_all
 from mcp_server_spira.utils import register_all_prompts
 
 # Create a FastMCP server instance with a name
-mcp = FastMCP("Inflectra Spira")
+mcp = FastMCP("inflectra-spira")
 
 # Register all features
 register_all(mcp)
