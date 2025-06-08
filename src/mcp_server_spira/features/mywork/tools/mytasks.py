@@ -46,14 +46,14 @@ def register_tools(mcp) -> None:
         Retrieves a list of the open tasks that are assigned to me
         
         Use this tool when you need to:
-        - View the complete details of a specific work item
+        - View the complete details of a specific task
         - Examine the current state, assigned user, and other properties
-        - Get information about multiple work items at once
-        - Access the full description and custom fields of work items
+        - Get information about multiple tasks at once
+        - Access the full description and selected fields of tasks
                     
         Returns:
             Formatted string containing comprehensive information for the
-            requested list of tasks, including all system and custom fields,
+            requested list of tasks, including name, id, description and key fields,
             formatted as markdown with clear section headings
         """
         try:
