@@ -26,33 +26,33 @@ def register_prompt(mcp: FastMCP) -> None:
 
 Using the available Inflectra Spira tools, please:
 
-1. Get an overview of ALL projects (get_projects)
-2. For ALL projects:
-   - Identify teams (get_all_teams)
-   - Get area paths and iterations for each team 
-   (get_team_area_paths, get_team_iterations)
-3. Capture work item configuration for EACH project:
-   - Process ID and details (get_project_process_id, get_process_details)
-   - Work item types (get_work_item_types)
-   - For each work item type, get ALL fields 
-   (get_work_item_type_fields) and clearly identify mandatory fields
-   - Note differences in processes between projects
+1. Get an overview of ALL programs (get_programs)
+2. For ALL programs:
+   - Get a list of all the milestones in the program (get_milestones)
+   - Get a list of all the products in the program (get_program_products)
+   - Get the list of releases in the product (get_releases) 
+3. Capture template configuration for EACH product:
+   - Template name and ID (get_template)
+   - Artifact types and sub-types (get_artifact_types)
+   - For each artifact type, get list of custom properties
+     (get_custom_properties) and clearly identify mandatory fields
 
 Create a concise markdown document with these sections:
 
-1. **Projects and Teams**: 
-    List of all projects and their teams
-2. **Work Item Types by Process**: 
-    Work item types grouped by process template, 
-    including ALL fields for each type with mandatory fields clearly marked
-3. **Classification Structure**: 
-    Area paths and iterations for each team, 
-    with team-specific structures and patterns
-4. **Naming Conventions**: 
-    Observed naming patterns across projects, teams, and items
+1. **Workspaces**: 
+    List of all programs and their products
+2. **Template Configuration**: 
+    Name, ID and description of product template
+    List of all artifact types (requirement, test case, etc.),
+    with the sub-types for each artifact nested underneath 
+3. **Custom Properties**: 
+    List of custom properties for each artifact type in the template
+4. **Classification Structure**: 
+    List of milestones in each program
+    List of releases in each product
 
 Focus on identifying and documenting patterns and 
-variations between projects. 
+variations between products. 
 When listing field names or other details, prioritize the most important ones.
 The goal is to create a reference that captures key conventions 
 while staying concise."""
