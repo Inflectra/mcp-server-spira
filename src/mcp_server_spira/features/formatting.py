@@ -55,3 +55,33 @@ def format_test_set(test_set) -> str:
 - **Due Date:** {test_set['PlannedDate']}
 """
     return test_set_info
+
+def format_product(product) -> str:
+    product_info = f"""
+## Product [PR:{product['ProductId']}] - {product['Name']}
+{'' if product['Description'] is None else product['Description']}
+- **Website:** {product['Website']}
+- **Template ID:** [PT:{product['ProjectTemplateId']}]
+- **Program ID:** [PG:{product['ProjectGroupId']}]
+- **% Complete:** {product['PercentComplete']}%
+- **Start Date:** {product['StartDate']}
+- **End Date:** {product['EndDate']}
+"""
+    return product_info
+
+def format_product_template(template) -> str:
+    template_info = f"""
+## Product Template [PT:{template['ProjectTemplateId']}] - {template['Name']}
+{'' if template['Description'] is None else template['Description']}
+"""
+    return template_info
+
+def format_program(program) -> str:
+    program_info = f"""
+## Program [PG:{program['ProgramId']}] - {program['Name']}
+{'' if program['Description'] is None else program['Description']}
+- **Website:** {program['Website']}
+- **Product Template ID:** [PT:{program['ProjectTemplateId']}]
+- **Portfolio ID:** [PF:{program['PortfolioId']}]
+"""
+    return program_info

@@ -4,31 +4,32 @@ Provides operations for working with the Spira product workspace
 This module provides MCP tools for retrieving and updating products (also known as projects).
 """
 
-from mcp_server_spira.features.formatting import format_task
+from mcp_server_spira.features.formatting import format_product
 from mcp_server_spira.features.workspaces.common import get_spira_client
 
-def _get_my_tasks_impl(spira_client) -> str:
+def _get_products_impl(spira_client) -> str:
     """
-    Implementation of retrieving my assigned Spira tasks.
+    Implementation of retrieving the list of Spira products (projects)
+    the current user has access to
 
     Args:
         spira_client: The Inflectra Spira API client instance
                 
     Returns:
-        Formatted string containing the list of assigned tasks
+        Formatted string containing the list of available products
     """
-    # Get the list of open tasks for the current user
-    tasks_url = "tasks"
-    tasks = spira_client.make_spira_api_get_request(tasks_url)
+    # Get the list of available products for the current user
+    products_url = "projects"
+    products = spira_client.make_spira_api_get_request(products_url)
 
-    if not tasks:
-        return "Unable to fetch task data for the current user."
+    if not products:
+        return "Unable to fetch products list for the current user."
 
-    # Format the tasks into human readable data
+    # Format the products into human readable data
     formatted_results = []
-    for task in tasks[:25]:  # Only show first 25 tasks
-        task_info = format_task(task)
-        formatted_results.append(task_info)
+    for product in products[:100]:  # Only show first 100 products
+        product_info = format_product(product)
+        formatted_results.append(product_info)
 
     return "\n\n".join(formatted_results)
 
@@ -41,24 +42,23 @@ def register_tools(mcp) -> None:
     """
 
     @mcp.tool()
-    def get_my_tasks() -> str:
+    def get_products() -> str:
         """
-        Retrieves a list of the open tasks that are assigned to me
+        Retrieves a list of the products (projects) that the current user has access to
         
         Use this tool when you need to:
-        - View the complete details of a specific task
-        - Examine the current state, assigned user, and other properties
-        - Get information about multiple tasks at once
-        - Access the full description and selected fields of tasks
+        - View the list of products that a user has access to
+        - Get information about multiple products at once
+        - Access the full description and selected fields of products
                     
         Returns:
             Formatted string containing comprehensive information for the
-            requested list of tasks, including name, id, description and key fields,
+            requested list of products, including name, id, description and key fields,
             formatted as markdown with clear section headings
         """
         try:
             spira_client = get_spira_client()
-            return _get_my_tasks_impl(spira_client)
+            return _get_products_impl(spira_client)
         except Exception as e:
             return f"Error: {str(e)}"
         
