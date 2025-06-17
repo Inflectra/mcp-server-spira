@@ -5,7 +5,7 @@ This module provides MCP tools for retrieving and updating programs (also known 
 """
 
 from mcp_server_spira.features.formatting import format_program
-from mcp_server_spira.features.workspaces.common import get_spira_client
+from mcp_server_spira.features.common import get_spira_client
 
 def _get_programs_impl(spira_client) -> str:
     """

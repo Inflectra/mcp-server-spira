@@ -20,11 +20,13 @@ mcp-server-spira/
 │   └── mcp_server_spira/      # Main package
 │       ├── features/          # Feature modules
 │       │   ├── formatting.py  # Formatting helpers
+│       │   ├── common.py      # Common utilities for features
 │       │   ├── projects/      # Project management features
+│       │   │   └── tools/     # Project management tools
 │       │   ├── programs/      # Program management features 
+│       │   │   └── tools/     # Program management tools
 │       │   └── mywork/        # My assigned work features
-│       │       ├── tools/     # My assigned work tools
-│       │       └── common.py  # Common utilities for my assigned work
+│       │       └── tools/     # My assigned work tools
 │       ├── utils/             # Shared utilities
 │       ├── __init__.py        # Package initialization
 │       └── server.py          # Main MCP server

@@ -1,5 +1,5 @@
 """
-Common utilities for Inflectra Spora My Work features.
+Common utilities for Inflectra Spira features.
 
 This module provides shared functionality used by both tools and resources.
 """

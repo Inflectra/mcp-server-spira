@@ -5,7 +5,7 @@ This module provides MCP tools for retrieving and updating product templates (al
 """
 
 from mcp_server_spira.features.formatting import format_product_template
-from mcp_server_spira.features.workspaces.common import get_spira_client
+from mcp_server_spira.features.common import get_spira_client
 
 def _get_product_templates_impl(spira_client) -> str:
     """
