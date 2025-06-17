@@ -32,7 +32,7 @@ Using the available Inflectra Spira tools, please:
    - Get a list of all the products in the program (get_program_products)
    - Get the list of releases in the product (get_releases) 
 3. Capture template configuration for EACH product:
-   - Template name and ID (get_template)
+   - Template name and ID (get_product_template)
    - Artifact types and sub-types (get_artifact_types)
    - For each artifact type, get list of custom properties
      (get_custom_properties) and clearly identify mandatory fields

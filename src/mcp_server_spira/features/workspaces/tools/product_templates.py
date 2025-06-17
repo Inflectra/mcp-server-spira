@@ -33,6 +33,28 @@ def _get_product_templates_impl(spira_client) -> str:
 
     return "\n\n".join(formatted_results)
 
+def _get_product_template_impl(spira_client, template_id: int) -> str:
+    """
+    Implementation of retrieving a single Spira product template
+
+    Args:
+        spira_client: The Inflectra Spira API client instance
+        template_id: The numeric ID of the product template. If the ID is PT:45, just use 45.
+                
+    Returns:
+        Formatted string containing the details of the requested product template
+    """
+    # Get the product template by its ID
+    product_templates_url = "project-templates/" + str(template_id)
+    product_template = spira_client.make_spira_api_get_request(product_templates_url)
+
+    if not product_template:
+        return "Unable to fetch product template details for ID " + str(template_id) + "."
+
+    # Format the product template into human readable data
+    product_template_info = format_product_template(product_template)
+    return product_template_info
+
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.
@@ -44,7 +66,7 @@ def register_tools(mcp) -> None:
     @mcp.tool()
     def get_product_templates() -> str:
         """
-        Retrieves a list of the product templates (projects) that the current user has access to
+        Retrieves a list of the product templates that the current user has access to
         
         Use this tool when you need to:
         - View the list of product templates that a user has access to
@@ -59,6 +81,30 @@ def register_tools(mcp) -> None:
         try:
             spira_client = get_spira_client()
             return _get_product_templates_impl(spira_client)
+        except Exception as e:
+            return f"Error: {str(e)}"
+        
+    @mcp.tool()
+    def get_product_template(template_id: int) -> str:
+        """
+        Retrieves a product template by its unique numeric ID (remove any PT prefixes)
+        
+        Use this tool when you need to:
+        - View the details of a product template when you know its ProjectTemplateId
+        - Get information about a single product template
+        - Access the full description and selected fields of the product template
+
+        Args:
+            template_id: The numeric ID of the product template. If the ID is PT:45, just use 45.
+                    
+        Returns:
+            Formatted string containing comprehensive information for the
+            requested product template, including name, id, description and key fields,
+            formatted as markdown with clear section headings
+        """
+        try:
+            spira_client = get_spira_client()
+            return _get_product_template_impl(spira_client, template_id)
         except Exception as e:
             return f"Error: {str(e)}"
         
