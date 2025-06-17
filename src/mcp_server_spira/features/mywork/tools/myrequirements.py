@@ -5,7 +5,7 @@ This module provides MCP tools for retrieving and updating my assigned requireme
 """
 
 from mcp_server_spira.features.formatting import format_requirement
-from mcp_server_spira.features.mywork.common import get_spira_client
+from mcp_server_spira.features.common import get_spira_client
 
 def _get_my_requirements_impl(spira_client) -> str:
     """

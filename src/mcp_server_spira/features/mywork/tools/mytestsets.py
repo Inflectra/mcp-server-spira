@@ -5,7 +5,7 @@ This module provides MCP tools for retrieving and updating my assigned test sets
 """
 
 from mcp_server_spira.features.formatting import format_test_set
-from mcp_server_spira.features.mywork.common import get_spira_client
+from mcp_server_spira.features.common import get_spira_client
 
 def _get_my_testsets_impl(spira_client) -> str:
     """
