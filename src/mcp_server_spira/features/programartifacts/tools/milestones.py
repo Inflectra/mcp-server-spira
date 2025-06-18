@@ -23,7 +23,7 @@ def _get_milestones_impl(spira_client, program_id: int) -> str:
     milestones = spira_client.make_spira_api_get_request(milestones_url)
 
     if not milestones:
-        return "Unable to fetch programs list for the current user."
+        return "Unable to fetch milestones list for the current program."
 
     # Format the milestones into human readable data
     formatted_results = []

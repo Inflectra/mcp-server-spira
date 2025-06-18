@@ -19,11 +19,11 @@ def _get_releases_impl(spira_client, product_id: int) -> str:
         Formatted string containing the list of releases
     """
     # Get the list of releases in the product
-    releases_url = "products/" + str(product_id) + "/releases"
+    releases_url = "projects/" + str(product_id) + "/releases?active_only=true"
     releases = spira_client.make_spira_api_get_request(releases_url)
 
     if not releases:
-        return "Unable to fetch products list for the current user."
+        return "Unable to fetch releases list for the product."
 
     # Format the releases into human readable data
     formatted_results = []
