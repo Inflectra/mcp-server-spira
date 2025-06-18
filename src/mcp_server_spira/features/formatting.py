@@ -58,7 +58,7 @@ def format_test_set(test_set) -> str:
 
 def format_product(product) -> str:
     product_info = f"""
-## Product [PR:{product['ProductId']}] - {product['Name']}
+## Product [PR:{product['ProjectId']}] - {product['Name']}
 {'' if product['Description'] is None else product['Description']}
 - **Website:** {product['Website']}
 - **Template ID:** [PT:{product['ProjectTemplateId']}]
