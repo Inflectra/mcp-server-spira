@@ -18,20 +18,122 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
     Returns:
         Formatted string containing the list of artifact types and sub-types
     """
-    # Get the list of milestones in the program
-    milestones_url = "programs/" + str(program_id) + "/milestones"
-    milestones = spira_client.make_spira_api_get_request(milestones_url)
 
-    if not milestones:
-        return "Unable to fetch programs list for the current user."
+    formatted_results = "   # Artifact Types\n\n"
 
-    # Format the milestones into human readable data
-    formatted_results = []
-    for milestone in milestones:
-        milestone_info = format_milestone(milestone)
-        formatted_results.append(milestone_info)
 
-    return "\n\n".join(formatted_results)
+    # --- Requirements ---
+    formatted_results += "  ## Requirement"
+        
+    types_url = "project-templates/" + str(template_id) + "/requirements/types"
+    types = spira_client.make_spira_api_get_request(types_url)
+
+    if not types:
+        return "Unable to fetch requirement types for the product template."
+
+    # Format the types into human readable data
+    type_results = []
+    for type in types:
+        milestone_info = f"""   - {type['Name']} (ID={type['RequirementTypeId']})"""
+        type_results.append(milestone_info)
+
+    formatted_results += "\n".join(type_results)    
+    formatted_results += "\n\n------------------------------\n\n"
+
+
+    # --- Test Cases ---
+    formatted_results += "  ## Test Case"
+        
+    types_url = "project-templates/" + str(template_id) + "/test-cases/types"
+    types = spira_client.make_spira_api_get_request(types_url)
+
+    if not types:
+        return "Unable to fetch test case types for the product template."
+
+    # Format the types into human readable data
+    type_results = []
+    for type in types:
+        milestone_info = f"""   - {type['Name']} (ID={type['TestCaseTypeId']})"""
+        type_results.append(milestone_info)
+
+    formatted_results += "\n".join(type_results)    
+    formatted_results += "\n\n------------------------------\n\n"
+
+    # --- Tasks ---
+    formatted_results += "  ## Task"
+        
+    types_url = "project-templates/" + str(template_id) + "/tasks/types"
+    types = spira_client.make_spira_api_get_request(types_url)
+
+    if not types:
+        return "Unable to fetch task types for the product template."
+
+    # Format the types into human readable data
+    type_results = []
+    for type in types:
+        milestone_info = f"""   - {type['Name']} (ID={type['TaskTypeId']})"""
+        type_results.append(milestone_info)
+
+    formatted_results += "\n".join(type_results)
+    formatted_results += "\n\n------------------------------\n\n"
+
+    # --- Risks ---
+    formatted_results += "  ## Risk"
+        
+    types_url = "project-templates/" + str(template_id) + "/risks/types"
+    types = spira_client.make_spira_api_get_request(types_url)
+
+    if not types:
+        return "Unable to fetch risk types for the product template."
+
+    # Format the types into human readable data
+    type_results = []
+    for type in types:
+        milestone_info = f"""   - {type['Name']} (ID={type['RiskTypeId']})"""
+        type_results.append(milestone_info)
+
+    formatted_results += "\n".join(type_results)
+    formatted_results += "\n\n------------------------------\n\n"
+
+
+    # --- Incidents ---
+    formatted_results += "  ## Incident"
+        
+    types_url = "project-templates/" + str(template_id) + "/incidents/types"
+    types = spira_client.make_spira_api_get_request(types_url)
+
+    if not types:
+        return "Unable to fetch incident types for the product template."
+
+    # Format the types into human readable data
+    type_results = []
+    for type in types:
+        milestone_info = f"""   - {type['Name']} (ID={type['IncidentTypeId']})"""
+        type_results.append(milestone_info)
+
+    formatted_results += "\n".join(type_results)
+    formatted_results += "\n\n------------------------------\n\n"
+
+
+    # --- Documents ---
+    formatted_results += "  ## Document"
+        
+    types_url = "project-templates/" + str(template_id) + "/document-types"
+    types = spira_client.make_spira_api_get_request(types_url)
+
+    if not types:
+        return "Unable to fetch document types for the product template."
+
+    # Format the types into human readable data
+    type_results = []
+    for type in types:
+        milestone_info = f"""   - {type['Name']} (ID={type['DocumentTypeId']})"""
+        type_results.append(milestone_info)
+
+    formatted_results += "\n".join(type_results)
+    formatted_results += "\n\n------------------------------\n\n"
+
+    return formatted_results
 
 def register_tools(mcp) -> None:
     """
