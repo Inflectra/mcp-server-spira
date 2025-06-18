@@ -118,7 +118,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
     # --- Documents ---
     formatted_results += "## Document"
         
-    types_url = "project-templates/" + str(template_id) + "/document-types"
+    types_url = "project-templates/" + str(template_id) + "/document-types?active_only=true"
     types = spira_client.make_spira_api_get_request(types_url)
 
     if not types:
