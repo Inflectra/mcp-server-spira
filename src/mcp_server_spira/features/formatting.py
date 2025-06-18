@@ -25,7 +25,7 @@ def format_requirement(requirement) -> str:
     requirement_info = f"""
 ## Requirement [RQ:{requirement['RequirementId']}] - {requirement['Name']}
 {'' if requirement['Description'] is None else requirement['Description']}
-- **Status:** {requirement['RequirementStatusName']}
+- **Status:** {requirement['StatusName']}
 - **Type:** {requirement['RequirementTypeName']}
 - **Importance:** {requirement['ImportanceName']}
 - **Release:** {requirement['ReleaseVersionNumber']}
