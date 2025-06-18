@@ -18,20 +18,23 @@ def _get_products_impl(spira_client) -> str:
     Returns:
         Formatted string containing the list of available products
     """
-    # Get the list of available products for the current user
-    products_url = "projects"
-    products = spira_client.make_spira_api_get_request(products_url)
+    try:
+        # Get the list of available products for the current user
+        products_url = "projects"
+        products = spira_client.make_spira_api_get_request(products_url)
 
-    if not products:
-        return "Unable to fetch products list for the current user."
+        if not products:
+            return "There are no products available for the current user."
 
-    # Format the products into human readable data
-    formatted_results = []
-    for product in products[:100]:  # Only show first 100 products
-        product_info = format_product(product)
-        formatted_results.append(product_info)
+        # Format the products into human readable data
+        formatted_results = []
+        for product in products[:100]:  # Only show first 100 products
+            product_info = format_product(product)
+            formatted_results.append(product_info)
 
-    return "\n\n".join(formatted_results)
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
 
 def _get_program_products_impl(spira_client, program_id: int) -> str:
     """
@@ -45,23 +48,26 @@ def _get_program_products_impl(spira_client, program_id: int) -> str:
     Returns:
         Formatted string containing the list of available products
     """
-    # Get the list of available products for the current user
-    products_url = "projects"
-    products = spira_client.make_spira_api_get_request(products_url)
+    try:
+        # Get the list of available products for the current user
+        products_url = "projects"
+        products = spira_client.make_spira_api_get_request(products_url)
 
-    if not products:
-        return "Unable to fetch products list for the current user."
+        if not products:
+            return "The program does not contain any products."
 
-    # Loop through and only include the products that are part of the specified program
-    # Format the products into human readable data
-    formatted_results = []
-    for product in products:
-        if product['ProjectGroupId'] == program_id:
-            product_info = format_product(product)
-            formatted_results.append(product_info)
+        # Loop through and only include the products that are part of the specified program
+        # Format the products into human readable data
+        formatted_results = []
+        for product in products:
+            if product['ProjectGroupId'] == program_id:
+                product_info = format_product(product)
+                formatted_results.append(product_info)
 
-    return "\n\n".join(formatted_results)
-
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
+    
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.

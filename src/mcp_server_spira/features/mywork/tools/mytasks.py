@@ -17,21 +17,24 @@ def _get_my_tasks_impl(spira_client) -> str:
     Returns:
         Formatted string containing the list of assigned tasks
     """
-    # Get the list of open tasks for the current user
-    tasks_url = "tasks"
-    tasks = spira_client.make_spira_api_get_request(tasks_url)
+    try:
+        # Get the list of open tasks for the current user
+        tasks_url = "tasks"
+        tasks = spira_client.make_spira_api_get_request(tasks_url)
 
-    if not tasks:
-        return "Unable to fetch task data for the current user."
+        if not tasks:
+            return "The current user does not have any tasks."
 
-    # Format the tasks into human readable data
-    formatted_results = []
-    for task in tasks[:25]:  # Only show first 25 tasks
-        task_info = format_task(task)
-        formatted_results.append(task_info)
+        # Format the tasks into human readable data
+        formatted_results = []
+        for task in tasks[:25]:  # Only show first 25 tasks
+            task_info = format_task(task)
+            formatted_results.append(task_info)
 
-    return "\n\n".join(formatted_results)
-
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
+    
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.

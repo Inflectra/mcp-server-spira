@@ -17,21 +17,24 @@ def _get_my_testsets_impl(spira_client) -> str:
     Returns:
         Formatted string containing the list of assigned testsets
     """
-    # Get the list of open testsets for the current user
-    testsets_url = "test-sets"
-    testsets = spira_client.make_spira_api_get_request(testsets_url)
+    try:
+        # Get the list of open testsets for the current user
+        testsets_url = "test-sets"
+        testsets = spira_client.make_spira_api_get_request(testsets_url)
 
-    if not testsets:
-        return "Unable to fetch testset data for the current user."
+        if not testsets:
+            return "The current user does not have any test sets."
 
-    # Format the testsets into human readable data
-    formatted_results = []
-    for testset in testsets[:25]:  # Only show first 25 testsets
-        testset_info = format_test_set(testset)
-        formatted_results.append(testset_info)
+        # Format the testsets into human readable data
+        formatted_results = []
+        for testset in testsets[:25]:  # Only show first 25 testsets
+            testset_info = format_test_set(testset)
+            formatted_results.append(testset_info)
 
-    return "\n\n".join(formatted_results)
-
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
+    
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.

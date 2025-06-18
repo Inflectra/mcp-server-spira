@@ -17,21 +17,24 @@ def _get_my_testcases_impl(spira_client) -> str:
     Returns:
         Formatted string containing the list of assigned test cases
     """
-    # Get the list of open testcases for the current user
-    testcases_url = "test-cases"
-    testcases = spira_client.make_spira_api_get_request(testcases_url)
+    try:
+        # Get the list of open testcases for the current user
+        testcases_url = "test-cases"
+        testcases = spira_client.make_spira_api_get_request(testcases_url)
 
-    if not testcases:
-        return "Unable to fetch testcase data for the current user."
+        if not testcases:
+            return "The current user does not have any test cases."
 
-    # Format the testcases into human readable data
-    formatted_results = []
-    for testcase in testcases[:25]:  # Only show first 25 testcases
-        testcase_info = format_test_case(testcase)
-        formatted_results.append(testcase_info)
+        # Format the testcases into human readable data
+        formatted_results = []
+        for testcase in testcases[:25]:  # Only show first 25 testcases
+            testcase_info = format_test_case(testcase)
+            formatted_results.append(testcase_info)
 
-    return "\n\n".join(formatted_results)
-
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
+    
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.

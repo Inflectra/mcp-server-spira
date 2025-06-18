@@ -80,22 +80,26 @@ def _get_custom_properties_impl(spira_client, template_id: int) -> str:
 
 def _get_custom_properties_for_artifact_type(spira_client, template_id: int, artifact_type_name: str) -> str:
 
-    custom_props_url = "project-templates/" + str(template_id) + "/custom-properties/" + artifact_type_name
-    custom_props = spira_client.make_spira_api_get_request(custom_props_url)
+    try:
+        custom_props_url = "project-templates/" + str(template_id) + "/custom-properties/" + artifact_type_name
+        custom_props = spira_client.make_spira_api_get_request(custom_props_url)
 
-    if not custom_props:
-        return "Unable to fetch custom properties for the product template and artifact type."
+        if not custom_props:
+            return ""
 
-    # Format the custom prop into human readable data
-    custom_prop_results = []
-    for custom_prop in custom_props:
-        custom_prop_info = f"""   {custom_prop['PropertyNumber']}. {custom_prop['Name']} (ID={custom_prop['CustomPropertyId']})"""
-        custom_prop_results.append(custom_prop_info)
+        # Format the custom prop into human readable data
+        custom_prop_results = []
+        for custom_prop in custom_props:
+            custom_prop_info = f"""   {custom_prop['PropertyNumber']}. {custom_prop['Name']} (ID={custom_prop['CustomPropertyId']})"""
+            custom_prop_results.append(custom_prop_info)
 
-    formatted_results = "\n".join(custom_prop_results)    
-    formatted_results += "\n\n------------------------------\n\n"
+        formatted_results = "\n".join(custom_prop_results)    
+        formatted_results += "\n\n------------------------------\n\n"
 
-    return formatted_results
+        return formatted_results
+    
+    except Exception as e:
+        return ""
 
 def register_tools(mcp) -> None:
     """

@@ -18,20 +18,23 @@ def _get_product_templates_impl(spira_client) -> str:
     Returns:
         Formatted string containing the list of available product templates
     """
-    # Get the list of available product templates for the current user
-    product_templates_url = "project-templates"
-    product_templates = spira_client.make_spira_api_get_request(product_templates_url)
+    try:
+        # Get the list of available product templates for the current user
+        product_templates_url = "project-templates"
+        product_templates = spira_client.make_spira_api_get_request(product_templates_url)
 
-    if not product_templates:
-        return "Unable to fetch product templates list for the current user."
+        if not product_templates:
+            return "The are no product templates visible to the current user."
 
-    # Format the product templates into human readable data
-    formatted_results = []
-    for product_template in product_templates[:100]:  # Only show first 100 product templates
-        product_template_info = format_product_template(product_template)
-        formatted_results.append(product_template_info)
+        # Format the product templates into human readable data
+        formatted_results = []
+        for product_template in product_templates[:100]:  # Only show first 100 product templates
+            product_template_info = format_product_template(product_template)
+            formatted_results.append(product_template_info)
 
-    return "\n\n".join(formatted_results)
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
 
 def _get_product_template_impl(spira_client, template_id: int) -> str:
     """
@@ -44,17 +47,20 @@ def _get_product_template_impl(spira_client, template_id: int) -> str:
     Returns:
         Formatted string containing the details of the requested product template
     """
-    # Get the product template by its ID
-    product_templates_url = "project-templates/" + str(template_id)
-    product_template = spira_client.make_spira_api_get_request(product_templates_url)
+    try:
+        # Get the product template by its ID
+        product_templates_url = "project-templates/" + str(template_id)
+        product_template = spira_client.make_spira_api_get_request(product_templates_url)
 
-    if not product_template:
-        return "Unable to fetch product template details for ID " + str(template_id) + "."
+        if not product_template:
+            return "Unable to fetch product template details for ID " + str(template_id) + "."
 
-    # Format the product template into human readable data
-    product_template_info = format_product_template(product_template)
-    return product_template_info
-
+        # Format the product template into human readable data
+        product_template_info = format_product_template(product_template)
+        return product_template_info
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
+    
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.

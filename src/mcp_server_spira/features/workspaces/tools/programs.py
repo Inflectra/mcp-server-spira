@@ -18,21 +18,24 @@ def _get_programs_impl(spira_client) -> str:
     Returns:
         Formatted string containing the list of available programs
     """
-    # Get the list of available programs for the current user
-    programs_url = "programs"
-    programs = spira_client.make_spira_api_get_request(programs_url)
+    try:
+        # Get the list of available programs for the current user
+        programs_url = "programs"
+        programs = spira_client.make_spira_api_get_request(programs_url)
 
-    if not programs:
-        return "Unable to fetch programs list for the current user."
+        if not programs:
+            return "There are no programs available for the current user."
 
-    # Format the programs into human readable data
-    formatted_results = []
-    for program in programs[:100]:  # Only show first 100 programs
-        program_info = format_program(program)
-        formatted_results.append(program_info)
+        # Format the programs into human readable data
+        formatted_results = []
+        for program in programs[:100]:  # Only show first 100 programs
+            program_info = format_program(program)
+            formatted_results.append(program_info)
 
-    return "\n\n".join(formatted_results)
-
+        return "\n\n".join(formatted_results)
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
+    
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.

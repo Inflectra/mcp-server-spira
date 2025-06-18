@@ -18,20 +18,24 @@ def _get_releases_impl(spira_client, product_id: int) -> str:
     Returns:
         Formatted string containing the list of releases
     """
-    # Get the list of releases in the product
-    releases_url = "projects/" + str(product_id) + "/releases?active_only=true"
-    releases = spira_client.make_spira_api_get_request(releases_url)
+    try:
+        # Get the list of releases in the product
+        releases_url = "projects/" + str(product_id) + "/releases?active_only=true"
+        releases = spira_client.make_spira_api_get_request(releases_url)
 
-    if not releases:
-        return "Unable to fetch releases list for the product."
+        if not releases:
+            return "There are no releases for the product."
 
-    # Format the releases into human readable data
-    formatted_results = []
-    for release in releases:
-        release_info = format_release(release)
-        formatted_results.append(release_info)
+        # Format the releases into human readable data
+        formatted_results = []
+        for release in releases:
+            release_info = format_release(release)
+            formatted_results.append(release_info)
 
-    return "\n\n".join(formatted_results)
+        return "\n\n".join(formatted_results)
+    
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
 
 def register_tools(mcp) -> None:
     """
