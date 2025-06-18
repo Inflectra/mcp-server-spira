@@ -72,8 +72,8 @@ class SpiraClient:
                 response = client.get(full_url, headers=headers, timeout=30.0)
                 response.raise_for_status()
                 return response.json()
-            except Exception:
-                return None
+            except Exception as e:
+                raise Exception(f"Error returned when calling the Spira REST API. The error message was: {e}")
 
 def get_client() -> SpiraClient:
 

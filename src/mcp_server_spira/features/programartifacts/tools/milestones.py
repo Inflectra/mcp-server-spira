@@ -18,20 +18,24 @@ def _get_milestones_impl(spira_client, program_id: int) -> str:
     Returns:
         Formatted string containing the list of milestones
     """
-    # Get the list of milestones in the program
-    milestones_url = "programs/" + str(program_id) + "/milestones"
-    milestones = spira_client.make_spira_api_get_request(milestones_url)
+    try:
+        # Get the list of milestones in the program
+        milestones_url = "programs/" + str(program_id) + "/milestones"
+        milestones = spira_client.make_spira_api_get_request(milestones_url)
 
-    if not milestones:
-        return "Unable to fetch milestones list for the current program."
+        if not milestones:
+            return "There are no milestones in the current program."
 
-    # Format the milestones into human readable data
-    formatted_results = []
-    for milestone in milestones:
-        milestone_info = format_milestone(milestone)
-        formatted_results.append(milestone_info)
+        # Format the milestones into human readable data
+        formatted_results = []
+        for milestone in milestones:
+            milestone_info = format_milestone(milestone)
+            formatted_results.append(milestone_info)
 
-    return "\n\n".join(formatted_results)
+        return "\n\n".join(formatted_results)
+    
+    except Exception as e:
+        return f"There was a problem using this tool: {e}"
 
 def register_tools(mcp) -> None:
     """
