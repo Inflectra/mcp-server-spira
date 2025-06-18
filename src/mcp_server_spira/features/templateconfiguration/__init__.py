@@ -1,5 +1,5 @@
 # Template configuration feature package for Inflectra Spira MCP
-from mcp_server_spira.features.mywork import tools
+from mcp_server_spira.features.templateconfiguration import tools
 
 
 def register(mcp):

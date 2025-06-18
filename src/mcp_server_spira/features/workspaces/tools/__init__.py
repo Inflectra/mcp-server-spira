@@ -2,7 +2,7 @@
 Workspace tools for Spira by Inflectra
 """
 from mcp_server_spira.features.workspaces.tools import (
-    products, programs, templates
+    products, programs, product_templates
 )
 
 
@@ -15,5 +15,5 @@ def register_tools(mcp) -> None:
     """
     products.register_tools(mcp)
     programs.register_tools(mcp)
-    templates.register_tools(mcp)
+    product_templates.register_tools(mcp)
     
