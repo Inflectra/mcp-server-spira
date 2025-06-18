@@ -18,20 +18,84 @@ def _get_custom_properties_impl(spira_client, template_id: int) -> str:
     Returns:
         Formatted string containing the list of artifact types and associated custom properties
     """
-    # Get the list of milestones in the program
-    milestones_url = "project-templates/" + str(template_id) + "/milestones"
-    milestones = spira_client.make_spira_api_get_request(milestones_url)
 
-    if not milestones:
-        return "Unable to fetch programs list for the current user."
+    formatted_results = "# Artifact Types\n\n"
 
-    # Format the milestones into human readable data
-    formatted_results = []
-    for milestone in milestones:
-        milestone_info = format_milestone(milestone)
-        formatted_results.append(milestone_info)
+    # --- Requirements ---
+    formatted_results += "## Requirement"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'Requirement')
+    formatted_results += custom_prop_results
 
-    return "\n\n".join(formatted_results)
+    # --- Releases ---
+    formatted_results += "## Release"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'Release')
+    formatted_results += custom_prop_results
+
+    # --- Test Cases ---
+    formatted_results += "## Test Case"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'TestCase')
+    formatted_results += custom_prop_results
+
+    # --- Tasks ---
+    formatted_results += "## Task"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'Task')
+    formatted_results += custom_prop_results
+
+    # --- Risks ---
+    formatted_results += "## Risk"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'Risk')
+    formatted_results += custom_prop_results
+
+    # --- Incidents ---
+    formatted_results += "## Incident"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'Incident')
+    formatted_results += custom_prop_results
+
+    # --- Test Sets ---
+    formatted_results += "## Test Set"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'TestSet')
+    formatted_results += custom_prop_results
+
+    # --- Test Steps ---
+    formatted_results += "## Test Step"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'TestStep')
+    formatted_results += custom_prop_results
+
+    # --- Test Runs ---
+    formatted_results += "## Test Run"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'TestRun')
+    formatted_results += custom_prop_results
+
+    # --- Automation Hosts ---
+    formatted_results += "## Automation Host"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'AutomationHost')
+    formatted_results += custom_prop_results
+
+    # --- Documents ---
+    formatted_results += "## Documents"
+    custom_prop_results = _get_custom_properties_for_artifact_type(spira_client, template_id, 'Document')
+    formatted_results += custom_prop_results
+
+    return formatted_results
+
+def _get_custom_properties_for_artifact_type(spira_client, template_id: int, artifact_type_name: str) -> str:
+
+    custom_props_url = "project-templates/" + str(template_id) + "/custom-properties/" + artifact_type_name
+    custom_props = spira_client.make_spira_api_get_request(custom_props_url)
+
+    if not custom_props:
+        return "Unable to fetch custom properties for the product template and artifact type."
+
+    # Format the custom prop into human readable data
+    custom_prop_results = []
+    for custom_prop in custom_props:
+        custom_prop_info = f"""   {custom_prop['PropertyNumber']}. {custom_prop['Name']} (ID={custom_prop['CustomPropertyId']})"""
+        custom_prop_results.append(custom_prop_info)
+
+    formatted_results = "\n".join(custom_prop_results)    
+    formatted_results += "\n\n------------------------------\n\n"
+
+    return formatted_results
 
 def register_tools(mcp) -> None:
     """

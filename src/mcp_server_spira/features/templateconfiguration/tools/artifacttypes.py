@@ -19,11 +19,11 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
         Formatted string containing the list of artifact types and sub-types
     """
 
-    formatted_results = "   # Artifact Types\n\n"
+    formatted_results = "# Artifact Types\n\n"
 
 
     # --- Requirements ---
-    formatted_results += "  ## Requirement"
+    formatted_results += "## Requirement"
         
     types_url = "project-templates/" + str(template_id) + "/requirements/types"
     types = spira_client.make_spira_api_get_request(types_url)
@@ -42,7 +42,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
 
 
     # --- Test Cases ---
-    formatted_results += "  ## Test Case"
+    formatted_results += "## Test Case"
         
     types_url = "project-templates/" + str(template_id) + "/test-cases/types"
     types = spira_client.make_spira_api_get_request(types_url)
@@ -60,7 +60,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
     formatted_results += "\n\n------------------------------\n\n"
 
     # --- Tasks ---
-    formatted_results += "  ## Task"
+    formatted_results += "## Task"
         
     types_url = "project-templates/" + str(template_id) + "/tasks/types"
     types = spira_client.make_spira_api_get_request(types_url)
@@ -78,7 +78,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
     formatted_results += "\n\n------------------------------\n\n"
 
     # --- Risks ---
-    formatted_results += "  ## Risk"
+    formatted_results += "## Risk"
         
     types_url = "project-templates/" + str(template_id) + "/risks/types"
     types = spira_client.make_spira_api_get_request(types_url)
@@ -97,7 +97,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
 
 
     # --- Incidents ---
-    formatted_results += "  ## Incident"
+    formatted_results += "## Incident"
         
     types_url = "project-templates/" + str(template_id) + "/incidents/types"
     types = spira_client.make_spira_api_get_request(types_url)
@@ -116,7 +116,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
 
 
     # --- Documents ---
-    formatted_results += "  ## Document"
+    formatted_results += "## Document"
         
     types_url = "project-templates/" + str(template_id) + "/document-types"
     types = spira_client.make_spira_api_get_request(types_url)
