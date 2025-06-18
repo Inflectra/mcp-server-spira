@@ -14,12 +14,35 @@ This server supports all three editions of Spira:
 The Spira MCP server current implements the following features:
 
 ### My Work
+This feature provides easy access to the list of artifacts that have been assigned to the current user
 
 - **My Tasks:** Provides operations for working with the Spira tasks I have been assigned
 - **My Requirements:** Provides operations for working with the Spira requirements I have been assigned
 - **My Incidents:** Provides operations for working with the Spira incidents I have been assigned
 - **My Test Cases:** Provides operations for working with the Spira test cases I have been assigned
 - **My Test Sets:** Provides operations for working with the Spira test sets I have been assigned
+
+### Workspaces
+This feature provides tools that let you retrieve and modify the different workspaces inside Spira
+
+### Program Artifacts
+This feature provides tools that let you retrieve and modify the different artifacts inside a Spira program
+
+- **Milestones:** Provides operations for working with the Spira milestones in a program
+
+### Product Artifacts
+This feature provides tools that let you retrieve and modify the different artifacts inside a Spira product
+
+- **Releases:** Provides operations for working with the Spira releases in a product
+
+### Template Configuration
+This feature provides tools that let you view and modify the configuration and settings of Spira product templates
+
+- **Artifact Types:** Retrieves information on the artifact types in a product template, and their sub-types
+- **Custom Properties:** Retrieves information on the artifact types in a product template, and their custom properties
+
+### Automation
+This feature provides tools that let you integrate automated DevOps tools such as test automation frameworks and CI/CD pipelines
 
 ## Getting Started
 
