@@ -25,6 +25,10 @@ This feature provides easy access to the list of artifacts that have been assign
 ### Workspaces
 This feature provides tools that let you retrieve and modify the different workspaces inside Spira
 
+- **Programs:** Provides operations for working with Spira programs
+- **Products:** Provides operations for working with Spira products
+- **Product Templates:** Provides operations for working with Spira product templates
+
 ### Program Artifacts
 This feature provides tools that let you retrieve and modify the different artifacts inside a Spira program
 
