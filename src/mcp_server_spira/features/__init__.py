@@ -1,5 +1,8 @@
 # Inflectra Spira MCP features package
-from mcp_server_spira.features import mywork
+from mcp_server_spira.features import (
+    mywork, productartifacts, programartifacts, templateconfiguration, workspaces
+)
+
 
 
 def register_all(mcp):
@@ -10,3 +13,7 @@ def register_all(mcp):
         mcp: The FastMCP server instance
     """
     mywork.register(mcp)
+    productartifacts.register(mcp)
+    programartifacts.register(mcp)
+    templateconfiguration.register(mcp)
+    workspaces.register(mcp)

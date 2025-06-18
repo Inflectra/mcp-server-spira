@@ -17,6 +17,7 @@ def format_incident(incident) -> str:
 - **Status:** {incident['IncidentStatusName']}
 - **Type:** {incident['IncidentTypeName']}
 - **Priority:** {incident['PriorityName']}
+- **Severity:** {incident['SeverityName']}
 - **Due Date:** {incident['StartDate']}
 """
     return incident_info
@@ -49,7 +50,6 @@ def format_test_set(test_set) -> str:
 ## Test Set [TX:{test_set['TestSetId']}] - {test_set['Name']}
 {'' if test_set['Description'] is None else test_set['Description']}
 - **Status:** {test_set['TestSetStatusName']}
-- **Type:** {test_set['TestCaseTypeName']}
 - **Release:** {test_set['ReleaseVersionNumber']}
 - **Recurrence:** {test_set['RecurrenceName']}
 - **Due Date:** {test_set['PlannedDate']}
