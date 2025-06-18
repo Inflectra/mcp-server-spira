@@ -85,3 +85,28 @@ def format_program(program) -> str:
 - **Portfolio ID:** [PF:{program['PortfolioId']}]
 """
     return program_info
+
+def format_milestone(milestone) -> str:
+    milestone_info = f"""
+## Milestone [GM:{milestone['MilestoneId']}] - {milestone['Name']}
+{'' if milestone['Description'] is None else milestone['Description']}
+- **Status:** {milestone['StatusName']}
+- **Type:** [PT:{milestone['TypeName']}]
+- **% Complete:** {milestone['PercentComplete']}%
+- **Start Date:** {milestone['StartDate']}
+- **End Date:** {milestone['EndDate']}
+"""
+    return milestone_info
+
+def format_release(release) -> str:
+    release_info = f"""
+## Release [RL:{release['ReleaseId']}] - {release['Name']}
+{'' if release['Description'] is None else release['Description']}
+- **Version #:** {release['VersionNumber']}
+- **Status:** {release['ReleaseStatusName']}
+- **Type:** [PT:{release['ReleaseTypeName']}]
+- **% Complete:** {release['PercentComplete']}%
+- **Start Date:** {release['StartDate']}
+- **End Date:** {release['EndDate']}
+"""
+    return release_info
