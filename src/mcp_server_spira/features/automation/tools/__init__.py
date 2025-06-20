@@ -2,7 +2,7 @@
 Automation tools for Spira by Inflectra
 """
 from mcp_server_spira.features.automation.tools import (
-    automatedtestruns
+    automatedtestruns, builds
 )
 
 
@@ -14,4 +14,5 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
     automatedtestruns.register_tools(mcp)
+    builds.register_tools(mcp)
     
