@@ -48,6 +48,9 @@ This feature provides tools that let you view and modify the configuration and s
 ### Automation
 This feature provides tools that let you integrate automated DevOps tools such as test automation frameworks and CI/CD pipelines
 
+- **Automated Test Runs:** Provides operations for recording automated test run results into Spira
+- **Builds:** Provides operations for recording the results of CI/CD builds into Spira
+
 ## Getting Started
 
 ### Prerequisites
