@@ -2,7 +2,8 @@
 Program artifact tools for Spira by Inflectra
 """
 from mcp_server_spira.features.programartifacts.tools import (
-    milestones
+    milestones,
+    capabilities
 )
 
 
@@ -14,4 +15,4 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
     milestones.register_tools(mcp)
-    
+    capabilities.register_tools(mcp)
