@@ -110,3 +110,16 @@ def format_release(release) -> str:
 - **End Date:** {release['EndDate']}
 """
     return release_info
+
+def format_risk(risk) -> str:
+    risk_info = f"""
+## Risk [RK:{risk['RiskId']}] - {risk['Name']}
+{'' if risk['Description'] is None else risk['Description']}
+- **Status:** {risk['RiskStatusName']}
+- **Type:** {risk['RiskTypeName']}
+- **Probability:** {risk['ProbabilityName']}
+- **Impact:** {risk['ImpactName']}
+- **Exposure:** {risk['ExposureName']}
+- **Due Date:** {risk['EndDate']}
+"""
+    return risk_info

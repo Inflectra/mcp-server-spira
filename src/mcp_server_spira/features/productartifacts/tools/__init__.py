@@ -2,7 +2,11 @@
 Product artifact tools for Spira by Inflectra
 """
 from mcp_server_spira.features.productartifacts.tools import (
-    releases
+    releases,
+    requirements,
+    incidents,
+    tasks,
+    risks
 )
 
 
@@ -14,4 +18,7 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
     releases.register_tools(mcp)
-    
+    requirements.register_tools(mcp)
+    incidents.register_tools(mcp)
+    tasks.register_tools(mcp)
+    risks.register_tools(mcp)
