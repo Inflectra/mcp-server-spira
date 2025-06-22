@@ -117,9 +117,31 @@ def format_risk(risk) -> str:
 {'' if risk['Description'] is None else risk['Description']}
 - **Status:** {risk['RiskStatusName']}
 - **Type:** {risk['RiskTypeName']}
-- **Probability:** {risk['ProbabilityName']}
-- **Impact:** {risk['ImpactName']}
-- **Exposure:** {risk['ExposureName']}
-- **Due Date:** {risk['EndDate']}
+- **Probability:** {risk['RiskProbabilityName']}
+- **Impact:** {risk['RiskImpactName']}
+- **Exposure:** {risk['RiskExposure']}
+- **Due Date:** {risk['ReviewDate']}
 """
     return risk_info
+
+def format_capability(capability) -> str:
+    """
+    Format a program capability into a readable string.
+    
+    Args:
+        capability: The capability data from the API
+        
+    Returns:
+        Formatted string containing the capability information
+    """
+    capability_info = f"""
+## Capability [CP:{capability['CapabilityId']}] - {capability['Name']}
+{'' if capability['Description'] is None else capability['Description']}
+- **Status:** {capability['StatusName']}
+- **Type:** {capability['TypeName']}
+- **Priority:** {capability['PriorityName']}
+- **% Complete:** {capability['PercentComplete']}%
+- **Milestone:** {capability['MilestoneName']}
+- **# Requirements:** {capability['RequirementCount']}
+"""
+    return capability_info

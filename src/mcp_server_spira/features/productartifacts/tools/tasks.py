@@ -13,14 +13,14 @@ def _get_tasks_impl(spira_client, product_id: int) -> str:
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PG:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
                 
     Returns:
         Formatted string containing the list of tasks
     """
     try:
         # Get the list of tasks in the product
-        tasks_url = f"projects/{product_id}/tasks"
+        tasks_url = f"projects/{product_id}/tasks/new?creation_date=1900-01-01T00:00:00.000&start_row=1&number_of_rows=500"
         tasks = spira_client.make_spira_api_get_request(tasks_url)
 
         if not tasks:
@@ -28,7 +28,7 @@ def _get_tasks_impl(spira_client, product_id: int) -> str:
 
         # Format the tasks into human readable data
         formatted_results = []
-        for task in tasks[:25]:  # Only show first 25 tasks
+        for task in tasks:
             task_info = format_task(task)
             formatted_results.append(task_info)
 
@@ -56,7 +56,7 @@ def register_tools(mcp) -> None:
         - Access the full description and selected fields of tasks
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PG:45, just use 45. 
+            product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
         
         Returns:
             Formatted string containing comprehensive information for the
