@@ -142,9 +142,8 @@ def format_automation_host(host) -> str:
 ## Automation Host [AH:{host['AutomationHostId']}] - {host['Name']}
 {'' if host['Description'] is None else host['Description']}
 - **Token:** {host['Token']}
-- **URL:** {host['URL']}
-- **Status:** {host['AutomationHostStatusName']}
-- **Type:** {host['AutomationEngineTypeName']}
+- **Active:** {host['Active']}
+- **Last Contact:** {host['LastContactDate']}
 """
     return host_info
 
