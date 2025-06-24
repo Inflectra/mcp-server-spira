@@ -45,6 +45,13 @@ def format_test_case(test_case) -> str:
 """
     return test_case_info
 
+def format_test_case_folder(test_case_folder) -> str:
+    test_case_folder_info = f"""
+# Test Folder: {test_case_folder['Name']}
+{'' if test_case_folder['Description'] is None else test_case_folder['Description']}
+"""
+    return test_case_folder_info
+
 def format_test_set(test_set) -> str:
     test_set_info = f"""
 ## Test Set [TX:{test_set['TestSetId']}] - {test_set['Name']}
@@ -55,6 +62,13 @@ def format_test_set(test_set) -> str:
 - **Due Date:** {test_set['PlannedDate']}
 """
     return test_set_info
+
+def format_test_set_folder(test_set_folder) -> str:
+    test_set_folder_info = f"""
+# Test Set Folder: {test_set_folder['Name']}
+{'' if test_set_folder['Description'] is None else test_set_folder['Description']}
+"""
+    return test_set_folder_info
 
 def format_product(product) -> str:
     product_info = f"""
