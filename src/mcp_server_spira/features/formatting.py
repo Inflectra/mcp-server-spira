@@ -117,12 +117,36 @@ def format_risk(risk) -> str:
 {'' if risk['Description'] is None else risk['Description']}
 - **Status:** {risk['RiskStatusName']}
 - **Type:** {risk['RiskTypeName']}
-- **Probability:** {risk['RiskProbabilityName']}
-- **Impact:** {risk['RiskImpactName']}
-- **Exposure:** {risk['RiskExposure']}
-- **Due Date:** {risk['ReviewDate']}
+- **Probability:** {risk['ProbabilityName']}
+- **Impact:** {risk['ImpactName']}
+- **Exposure:** {risk['ExposureName']}
+- **Due Date:** {risk['EndDate']}
 """
     return risk_info
+
+def format_test_run(test_run) -> str:
+    test_run_info = f"""
+## Test Run [TR:{test_run['TestRunId']}] - {test_run['Name']}
+{'' if test_run['Description'] is None else test_run['Description']}
+- **Status:** {test_run['ExecutionStatusName']}
+- **Test Case:** TC:{test_run['TestCaseId']}
+- **Tester:** {test_run['TesterName']}
+- **Start Date:** {test_run['StartDate']}
+- **End Date:** {test_run['EndDate']}
+- **Build:** {test_run['BuildName']}
+"""
+    return test_run_info
+
+def format_automation_host(host) -> str:
+    host_info = f"""
+## Automation Host [AH:{host['AutomationHostId']}] - {host['Name']}
+{'' if host['Description'] is None else host['Description']}
+- **Token:** {host['Token']}
+- **URL:** {host['URL']}
+- **Status:** {host['AutomationHostStatusName']}
+- **Type:** {host['AutomationEngineTypeName']}
+"""
+    return host_info
 
 def format_capability(capability) -> str:
     """

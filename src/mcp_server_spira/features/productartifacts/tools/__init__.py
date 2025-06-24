@@ -6,7 +6,9 @@ from mcp_server_spira.features.productartifacts.tools import (
     requirements,
     incidents,
     tasks,
-    risks
+    risks,
+    testruns,
+    automationhosts
 )
 
 
@@ -22,3 +24,5 @@ def register_tools(mcp) -> None:
     incidents.register_tools(mcp)
     tasks.register_tools(mcp)
     risks.register_tools(mcp)
+    testruns.register_tools(mcp)
+    automationhosts.register_tools(mcp)
