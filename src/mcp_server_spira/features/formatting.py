@@ -131,10 +131,10 @@ def format_risk(risk) -> str:
 {'' if risk['Description'] is None else risk['Description']}
 - **Status:** {risk['RiskStatusName']}
 - **Type:** {risk['RiskTypeName']}
-- **Probability:** {risk['ProbabilityName']}
-- **Impact:** {risk['ImpactName']}
-- **Exposure:** {risk['ExposureName']}
-- **Due Date:** {risk['EndDate']}
+- **Probability:** {risk['RiskProbabilityName']}
+- **Impact:** {risk['RiskImpactName']}
+- **Exposure:** {risk['RiskExposure']}
+- **Review Date:** {risk['ReviewDate']}
 """
     return risk_info
 
