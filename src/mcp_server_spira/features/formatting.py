@@ -1,4 +1,7 @@
 # General artifact formatting features
+from mcp_server_spira.utils.general import get_execution_status_name
+
+
 def format_task(task) -> str:
     task_info = f"""
 ## Task [TK:{task['TaskId']}] - {task['Name']}
@@ -141,13 +144,12 @@ def format_risk(risk) -> str:
 def format_test_run(test_run) -> str:
     test_run_info = f"""
 ## Test Run [TR:{test_run['TestRunId']}] - {test_run['Name']}
-{'' if test_run['Description'] is None else test_run['Description']}
-- **Status:** {test_run['ExecutionStatusName']}
+- **Status:** {get_execution_status_name(test_run['ExecutionStatusId'])}
 - **Test Case:** TC:{test_run['TestCaseId']}
-- **Tester:** {test_run['TesterName']}
+- **Test Set:** TX:{test_run['TestSetId']}
+- **Release:** {test_run['ReleaseVersionNumber']}
 - **Start Date:** {test_run['StartDate']}
 - **End Date:** {test_run['EndDate']}
-- **Build:** {test_run['BuildName']}
 """
     return test_run_info
 
