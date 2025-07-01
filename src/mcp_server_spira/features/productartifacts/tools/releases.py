@@ -13,7 +13,7 @@ def _get_releases_impl(spira_client, product_id: int) -> str:
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PG:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
                 
     Returns:
         Formatted string containing the list of releases
@@ -56,7 +56,7 @@ def register_tools(mcp) -> None:
         - Access the full description and selected fields of releases
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PG:45, just use 45. 
+            product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
         
         Returns:
             Formatted string containing comprehensive information for the

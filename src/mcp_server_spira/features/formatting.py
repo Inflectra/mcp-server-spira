@@ -1,4 +1,7 @@
 # General artifact formatting features
+from mcp_server_spira.utils.general import get_execution_status_name
+
+
 def format_task(task) -> str:
     task_info = f"""
 ## Task [TK:{task['TaskId']}] - {task['Name']}
@@ -45,6 +48,13 @@ def format_test_case(test_case) -> str:
 """
     return test_case_info
 
+def format_test_case_folder(test_case_folder) -> str:
+    test_case_folder_info = f"""
+# Test Folder: {test_case_folder['Name']}
+{'' if test_case_folder['Description'] is None else test_case_folder['Description']}
+"""
+    return test_case_folder_info
+
 def format_test_set(test_set) -> str:
     test_set_info = f"""
 ## Test Set [TX:{test_set['TestSetId']}] - {test_set['Name']}
@@ -55,6 +65,13 @@ def format_test_set(test_set) -> str:
 - **Due Date:** {test_set['PlannedDate']}
 """
     return test_set_info
+
+def format_test_set_folder(test_set_folder) -> str:
+    test_set_folder_info = f"""
+# Test Set Folder: {test_set_folder['Name']}
+{'' if test_set_folder['Description'] is None else test_set_folder['Description']}
+"""
+    return test_set_folder_info
 
 def format_product(product) -> str:
     product_info = f"""
@@ -110,3 +127,60 @@ def format_release(release) -> str:
 - **End Date:** {release['EndDate']}
 """
     return release_info
+
+def format_risk(risk) -> str:
+    risk_info = f"""
+## Risk [RK:{risk['RiskId']}] - {risk['Name']}
+{'' if risk['Description'] is None else risk['Description']}
+- **Status:** {risk['RiskStatusName']}
+- **Type:** {risk['RiskTypeName']}
+- **Probability:** {risk['RiskProbabilityName']}
+- **Impact:** {risk['RiskImpactName']}
+- **Exposure:** {risk['RiskExposure']}
+- **Review Date:** {risk['ReviewDate']}
+"""
+    return risk_info
+
+def format_test_run(test_run) -> str:
+    test_run_info = f"""
+## Test Run [TR:{test_run['TestRunId']}] - {test_run['Name']}
+- **Status:** {get_execution_status_name(test_run['ExecutionStatusId'])}
+- **Test Case:** TC:{test_run['TestCaseId']}
+- **Test Set:** TX:{test_run['TestSetId']}
+- **Release:** {test_run['ReleaseVersionNumber']}
+- **Start Date:** {test_run['StartDate']}
+- **End Date:** {test_run['EndDate']}
+"""
+    return test_run_info
+
+def format_automation_host(host) -> str:
+    host_info = f"""
+## Automation Host [AH:{host['AutomationHostId']}] - {host['Name']}
+{'' if host['Description'] is None else host['Description']}
+- **Token:** {host['Token']}
+- **Active:** {host['Active']}
+- **Last Contact:** {host['LastContactDate']}
+"""
+    return host_info
+
+def format_capability(capability) -> str:
+    """
+    Format a program capability into a readable string.
+    
+    Args:
+        capability: The capability data from the API
+        
+    Returns:
+        Formatted string containing the capability information
+    """
+    capability_info = f"""
+## Capability [CP:{capability['CapabilityId']}] - {capability['Name']}
+{'' if capability['Description'] is None else capability['Description']}
+- **Status:** {capability['StatusName']}
+- **Type:** {capability['TypeName']}
+- **Priority:** {capability['PriorityName']}
+- **% Complete:** {capability['PercentComplete']}%
+- **Milestone:** {capability['MilestoneName']}
+- **# Requirements:** {capability['RequirementCount']}
+"""
+    return capability_info
