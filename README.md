@@ -32,12 +32,20 @@ This feature provides tools that let you retrieve and modify the different works
 ### Program Artifacts
 This feature provides tools that let you retrieve and modify the different artifacts inside a Spira program
 
+- **Capabilities:** Provides operations for working with the Spira capabilities in a program backlog
 - **Milestones:** Provides operations for working with the Spira milestones in a program
 
 ### Product Artifacts
 This feature provides tools that let you retrieve and modify the different artifacts inside a Spira product
 
+- **Requirements:** Provides operations for working with the Spira requirements in a product
 - **Releases:** Provides operations for working with the Spira releases in a product
+- **Test Cases:** Provides operations for working with the Spira test case folders and test cases in a product
+- **Test Sets:** Provides operations for working with the Spira test set folders and test sets in a product
+- **Test Runs:** Provides operations for working with the Spira test runs in a product
+- **Tasks:** Provides operations for working with the Spira tasks in a product
+- **Incidents:** Provides operations for working with the Spira incidents (e.g. bugs, enhancements, issues, etc.) in a product
+- **Automation Hosts:** Provides operations for working with the Spira automation hosts in a product
 
 ### Template Configuration
 This feature provides tools that let you view and modify the configuration and settings of Spira product templates
