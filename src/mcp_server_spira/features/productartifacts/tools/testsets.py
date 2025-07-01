@@ -61,7 +61,7 @@ def _get_test_sets_in_folder(spira_client, product_id: int, formatted_results: l
             test_set_folder_id = str(test_set_folder['TestSetFolderId'])
 
         # Get the test sets in the folder
-        test_sets_url = f"projects/{product_id}/test-set-folders/{test_set_folder_id}/test-sets/search?starting_row=1&number_of_rows=1000&sort_field=Name&sort_direction=ASC&release_id={release_id}"
+        test_sets_url = f"projects/{product_id}/test-set-folders/{test_set_folder_id}/test-sets?starting_row=1&number_of_rows=1000&sort_field=Name&sort_direction=ASC&release_id={release_id}"
         test_sets = spira_client.make_spira_api_get_request(test_sets_url)
 
         # Loop through all the test sets and format
