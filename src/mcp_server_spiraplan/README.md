@@ -26,7 +26,7 @@ To run the server, you need to create a `.env` file in the root of the project w
 ```
 INFLECTRA_SPIRA_BASE_URL=https://jimballic.spiraservice.net/
 INFLECTRA_SPIRA_USERNAME=auser
-INFLECTRA_SPIRA_API_KEY=D3vop$1
+INFLECTRA_SPIRA_API_KEY=your_api_key_here
 ```
 
-Replace `D3vop$1` with your actual Spira API Key (RSS Token).
+Replace `your_api_key_here` with your actual Spira API Key (RSS Token).
