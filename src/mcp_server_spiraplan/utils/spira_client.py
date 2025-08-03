@@ -6,6 +6,9 @@ This module provides helper functions for connecting to Inflectra Spira.
 import os
 import httpx
 from typing import Optional, Tuple, Any
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Constants
 USER_AGENT = "mcp-server/1.0"
@@ -18,7 +21,8 @@ def get_base_url() -> Optional[str]:
     Returns:
         String containing the base URL for your instance of Inflectra Spira
     """
-    return "https://jimballic.spiraservice.net/"
+    base_url = os.environ.get("INFLECTRA_SPIRA_BASE_URL")
+    return base_url
 
 def get_credentials() -> Tuple[Optional[str], Optional[str]]:
     """
@@ -27,11 +31,8 @@ def get_credentials() -> Tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple containing (username, api_key)
     """
-    username = "auser"
-    # The user's password for testing is D3vop$1, which should be used as the API key.
-    # For security reasons, we are leaving this as a placeholder.
-    # Please replace the value below with your actual API key.
-    api_key = "REPLACE_WITH_YOUR_API_KEY"
+    username = os.environ.get("INFLECTRA_SPIRA_USERNAME")
+    api_key = os.environ.get("INFLECTRA_SPIRA_API_KEY")
     return username, api_key
 
 class SpiraClient:

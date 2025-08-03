@@ -15,14 +15,18 @@ To build and run this server as a Docker container, follow these steps:
 2.  **Run the Docker container:**
     After building the image, run the following command to start the server:
     ```bash
-    docker run -p 8442:8000 mcp-server-spiraplan
+    docker run -p 8000:8000 mcp-server-spiraplan
     ```
     The server will be accessible at `http://localhost:8000`.
 
 ## Configuration
 
-The server is pre-configured with the following settings:
-- `INFLECTRA_SPIRA_BASE_URL`: `https://jimballic.spiraservice.net/`
-- `INFLECTRA_SPIRA_USERNAME`: `auser`
+To run the server, you need to create a `.env` file in the root of the project with the following variables:
 
-You need to provide your own API key. Open the file `src/mcp_server_spiraplan/utils/spira_client.py` and replace the placeholder `"REPLACE_WITH_YOUR_API_KEY"` with your actual Spira API key. The user password for testing is `D3vop$1`.
+```
+INFLECTRA_SPIRA_BASE_URL=https://jimballic.spiraservice.net/
+INFLECTRA_SPIRA_USERNAME=auser
+INFLECTRA_SPIRA_API_KEY=D3vop$1
+```
+
+Replace `D3vop$1` with your actual Spira API Key (RSS Token).
