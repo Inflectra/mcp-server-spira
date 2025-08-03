@@ -15,7 +15,7 @@ To build and run this server as a Docker container, follow these steps:
 2.  **Run the Docker container:**
     After building the image, run the following command to start the server:
     ```bash
-    docker run -p 8000:8000 mcp-server-spiraplan
+    docker run -p 8442:8000 mcp-server-spiraplan
     ```
     The server will be accessible at `http://localhost:8000`.
 
