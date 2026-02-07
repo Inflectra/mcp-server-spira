@@ -17,11 +17,142 @@ classifiers = [
     'Operating System :: OS Independent',
 ]
 
+[tool.ruff]
+# Target Python 3.12+
+target-version = "py312"
+
+# Line length to match Black
+line-length = 100
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# Enable specific rule sets
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # Line too long (handled by Black)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__.py files
+"__init__.py" = ["F401"]
+# Allow print statements in scripts
+"scripts/*.py" = ["T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["mcp_server_spira"]
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.venv
+  | __pycache__
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Start lenient, tighten later
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# Ignore missing imports for third-party libraries without stubs
+[[tool.mypy.overrides]]
+module = [
+    "mcp.*",
+    "httpx.*",
+    "mcp_server_spira.features.common.errors",
+    "yaml",
+    "generate_tool_docs",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 pythonpath = "src"
+testpaths = ["tests"]
 addopts = [
     "--import-mode=importlib",
+    "--cov=mcp_server_spira",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=0",
+    "-v",
 ]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+    "precommit: Pre-commit validation tests (mirrors pre-commit hooks)",
+]
+filterwarnings = [
+    # Ignore deprecation warning from pytest-spiratest plugin
+    "ignore:datetime.datetime.utcnow\\(\\) is deprecated:DeprecationWarning:pytest_spiratest_integration",
+]
+
+[tool.coverage.run]
+source = ["src/mcp_server_spira"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+    "*/setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+# Don't complain about missing coverage on precommit validation tests
+# These tests run external commands and don't execute Python code to measure
+[tool.coverage.paths]
+source = ["src"]
+
+[tool.coverage.html]
+directory = "htmlcov"
 
 [build-system]
 requires = ["setuptools >= 77.0.3"]

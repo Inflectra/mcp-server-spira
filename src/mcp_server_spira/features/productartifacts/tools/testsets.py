@@ -4,9 +4,9 @@ Provides operations for working with the Spira product test sets
 This module provides MCP tools for retrieving and updating product test sets
 """
 
-from mcp_server_spira.features.formatting import format_test_set
-from mcp_server_spira.features.formatting import format_test_set_folder
 from mcp_server_spira.features.common import get_spira_client
+from mcp_server_spira.features.formatting import format_test_set, format_test_set_folder
+
 
 def _get_test_sets_impl(spira_client, product_id: int) -> str:
     """
@@ -14,13 +14,13 @@ def _get_test_sets_impl(spira_client, product_id: int) -> str:
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
-                
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+
     Returns:
         Formatted string containing the list of test sets, grouped by folder
     """
     try:
-        formatted_results = []
+        formatted_results: list[str] = []
 
         # First we need to get any test sets not in a folder
         _get_test_sets_in_folder(spira_client, product_id, formatted_results, None)
@@ -38,27 +38,30 @@ def _get_test_sets_impl(spira_client, product_id: int) -> str:
             _get_test_sets_in_folder(spira_client, product_id, formatted_results, test_set_folder)
 
         return "\n\n".join(formatted_results)
-    
+
     except Exception as e:
         return f"There was a problem using this tool: {e}"
 
-def _get_test_sets_in_folder(spira_client, product_id: int, formatted_results: list[str], test_set_folder):
+
+def _get_test_sets_in_folder(
+    spira_client, product_id: int, formatted_results: list[str], test_set_folder
+):
     """
     Implementation of retrieving the list of test sets in the specified product, grouped by folder
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
-                
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+
     Returns:
         Formatted string containing the list of test sets, grouped by folder
     """
     try:
         # Get the test set folder id
-        test_set_folder_id = 'null'
-        release_id = 'null'
+        test_set_folder_id = "null"
+        release_id = "null"
         if test_set_folder:
-            test_set_folder_id = str(test_set_folder['TestSetFolderId'])
+            test_set_folder_id = str(test_set_folder["TestSetFolderId"])
 
         # Get the test sets in the folder
         test_sets_url = f"projects/{product_id}/test-set-folders/{test_set_folder_id}/test-sets?starting_row=1&number_of_rows=1000&sort_field=Name&sort_direction=ASC&release_id={release_id}"
@@ -70,12 +73,15 @@ def _get_test_sets_in_folder(spira_client, product_id: int, formatted_results: l
             formatted_results.append(test_set_info)
 
     except Exception as e:
-        raise Exception(f"Error returned when getting the test sets in the folder. The error message was: {e}")
+        raise Exception(
+            f"Error returned when getting the test sets in the folder. The error message was: {e}"
+        ) from e
+
 
 def register_tools(mcp) -> None:
     """
     Register product test sets tools with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """
@@ -84,15 +90,15 @@ def register_tools(mcp) -> None:
     def get_test_sets(product_id: int) -> str:
         """
         Retrieves a list of the test sets in the specified product, grouped by folder
-        
+
         Use this tool when you need to:
         - View the list of test sets in the specified product
         - Get information about multiple test sets at once
         - Access the full description and selected fields of test sets
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PG:45, just use 45. 
-        
+            product_id: The numeric ID of the product. If the ID is PG:45, just use 45.
+
         Returns:
             Formatted string containing comprehensive information for the
             requested list of test sets, including name, id, description and key fields,

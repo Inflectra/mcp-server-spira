@@ -5,7 +5,7 @@ from mcp_server_spira.features.workspaces import tools
 def register(mcp):
     """
     Register all Workspaces components with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """

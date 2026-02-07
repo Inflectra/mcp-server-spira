@@ -1,0 +1,89 @@
+# Development Dependencies for Spira MCP Server
+# This file contains all dependencies needed for development, testing, and code quality.
+# Install with: pip install -r requirements-dev.txt
+
+# ============================================================================
+# Code Quality & Linting
+# ============================================================================
+
+# Ruff - Fast Python linter and formatter
+# Replaces: Black, flake8, isort, pyupgrade, pydocstyle, and more
+# Used for: Code linting, formatting, import sorting, and style checking
+ruff>=0.1.0,<1.0.0
+
+# Mypy - Static type checker
+# Used for: Type checking and catching type-related bugs
+mypy>=1.7.0,<2.0.0
+
+# Type stubs for third-party libraries
+types-PyYAML>=6.0.0  # Type stubs for PyYAML (used in tests)
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+# Pytest - Testing framework (already in project dependencies, but pinned here)
+# Used for: Running unit and integration tests
+pytest>=8.4.0,<9.0.0
+
+# Pytest-cov - Coverage plugin for pytest
+# Used for: Measuring test coverage and generating coverage reports
+pytest-cov>=4.1.0,<6.0.0
+
+# Pytest-mock - Mocking plugin for pytest
+# Used for: Creating mocks and stubs in tests
+pytest-mock>=3.12.0,<4.0.0
+
+# Pytest-spiratest - Spira integration for pytest
+# Used for: Reporting test results to Inflectra Spira
+pytest-spiratest>=1.0.0
+
+# Pytest-asyncio - Async testing support for pytest
+# Used for: Testing async code with asyncio
+pytest-asyncio>=0.23.0
+
+# Requests - HTTP library (required by pytest-spiratest)
+# Used for: Making HTTP requests to Spira API
+requests>=2.31.0
+
+# ============================================================================
+# Git Hooks & Automation
+# ============================================================================
+
+# Pre-commit - Git hook framework
+# Used for: Running automated checks before commits
+pre-commit>=3.5.0,<4.0.0
+
+# ============================================================================
+# Runtime Dependencies (from pyproject.toml)
+# ============================================================================
+# These are included here for convenience when setting up a dev environment
+# They are also specified in pyproject.toml as project dependencies
+
+# HTTPX - Modern HTTP client
+# Used for: Making API requests to Spira REST API
+httpx>=0.28.1,<1.0.0
+
+# MCP - Model Context Protocol SDK
+# Used for: Building the MCP server
+mcp[cli]>=1.9.2,<2.0.0
+
+# ============================================================================
+# Installation Instructions
+# ============================================================================
+# 1. Create a virtual environment:
+#    python -m venv .venv
+#
+# 2. Activate the virtual environment:
+#    - On Unix/macOS: source .venv/bin/activate
+#    - On Windows: .venv\Scripts\activate
+#
+# 3. Install development dependencies:
+#    pip install -r requirements-dev.txt
+#
+# 4. Install the package in editable mode:
+#    pip install -e .
+#
+# 5. Set up pre-commit hooks:
+#    pre-commit install
+# ============================================================================

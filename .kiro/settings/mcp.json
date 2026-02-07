@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "inflectra-spira-local": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/simonbor/git/mcp-server-spira",
+        "run",
+        "main.py"
+      ],
+      "env": {
+        "INFLECTRA_SPIRA_BASE_URL": "https://staging.spiraservice.net",
+        "INFLECTRA_SPIRA_USERNAME": "administrator",
+        "INFLECTRA_SPIRA_API_KEY": "{865C2327-021F-4C56-8829-F81F9376D681}"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "get_my_tasks",
+        "get_my_incidents",
+        "get_my_requirements",
+        "get_my_test_cases",
+        "get_my_test_sets",
+        "get_products",
+        "get_programs",
+        "get_product_templates"
+      ]
+    }
+  }
+}

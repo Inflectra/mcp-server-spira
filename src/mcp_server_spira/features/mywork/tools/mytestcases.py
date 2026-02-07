@@ -4,8 +4,9 @@ Provides operations for working with the Spira test cases I have been assigned
 This module provides MCP tools for retrieving and updating my assigned test cases.
 """
 
-from mcp_server_spira.features.formatting import format_test_case
 from mcp_server_spira.features.common import get_spira_client
+from mcp_server_spira.features.formatting import format_test_case
+
 
 def _get_my_testcases_impl(spira_client) -> str:
     """
@@ -13,7 +14,7 @@ def _get_my_testcases_impl(spira_client) -> str:
 
     Args:
         spira_client: The Inflectra Spira API client instance
-                
+
     Returns:
         Formatted string containing the list of assigned test cases
     """
@@ -34,11 +35,12 @@ def _get_my_testcases_impl(spira_client) -> str:
         return "\n\n".join(formatted_results)
     except Exception as e:
         return f"There was a problem using this tool: {e}"
-    
+
+
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """
@@ -47,13 +49,13 @@ def register_tools(mcp) -> None:
     def get_my_testcases() -> str:
         """
         Retrieves a list of the open test cases that are assigned to me
-        
+
         Use this tool when you need to:
         - View the complete details of a specific testcase
         - Examine the current state, assigned user, and other properties
         - Get information about multiple testcases at once
         - Access the full description and selected fields of testcases
-                    
+
         Returns:
             Formatted string containing comprehensive information for the
             requested list of testcases, including name, id, description and key fields,
@@ -64,4 +66,3 @@ def register_tools(mcp) -> None:
             return _get_my_testcases_impl(spira_client)
         except Exception as e:
             return f"Error: {str(e)}"
-        

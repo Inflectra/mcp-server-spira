@@ -10,6 +10,7 @@ Prerequisites: You need to have the following environment variables defined:
 - INFLECTRA_SPIRA_API_KEY: The API Key (RSS Token) for your Spira instance
 
 """
+
 import argparse
 
 from mcp.server.fastmcp import FastMCP
@@ -24,16 +25,17 @@ mcp = FastMCP("inflectra-spira")
 register_all(mcp)
 register_all_prompts(mcp)
 
+
 def main():
     """Entry point for the command-line script."""
-    parser = argparse.ArgumentParser(
-        description="Run the Inflectra Spira MCP server")
+    parser = argparse.ArgumentParser(description="Run the Inflectra Spira MCP server")
     # Add more command-line arguments as needed
-    
+
     parser.parse_args()  # Store args if needed later
-    
+
     # Start the server
     mcp.run()
+
 
 if __name__ == "__main__":
     main()

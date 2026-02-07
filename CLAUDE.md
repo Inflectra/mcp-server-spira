@@ -23,7 +23,7 @@ mcp-server-spira/
 │       │   ├── common.py      # Common utilities for features
 │       │   ├── projects/      # Project management features
 │       │   │   └── tools/     # Project management tools
-│       │   ├── programs/      # Program management features 
+│       │   ├── programs/      # Program management features
 │       │   │   └── tools/     # Program management tools
 │       │   └── mywork/        # My assigned work features
 │       │       └── tools/     # My assigned work tools
@@ -103,15 +103,15 @@ def _get_data_impl(client, param1, param2):
 def get_data(param1, param2):
     """
     Docstring following the standard pattern.
-    
+
     Use this tool when you need to:
     - First use case
     - Second use case
-    
+
     Args:
         param1: Description
         param2: Description
-        
+
     Returns:
         Description of the return value format
     """
@@ -142,7 +142,7 @@ IMPORTANT: Any special considerations or warnings.
 Args:
     param1: Description of first parameter
     param2: Description of second parameter
-    
+
 Returns:
     Detailed description of what is returned and in what format
 """
@@ -171,13 +171,13 @@ from mcp_server_spira.utils.spira_client import SpiraClient, get_client
 def get_spira_client() -> SpiraClient:
     """
     Get the Spira API client.
-    
+
     Returns:
         SpiraClient instance
-        
+
     """
     # Get Spira client
-    spira_client = get_client()        
+    spira_client = get_client()
     return spira_client
 ```
 
@@ -243,7 +243,7 @@ def _get_my_tasks_impl(spira_client) -> str:
 
     Args:
         spira_client: The Inflectra Spira API client instance
-                
+
     Returns:
         Formatted string containing the list of assigned tasks
     """
@@ -265,7 +265,7 @@ def _get_my_tasks_impl(spira_client) -> str:
 def register_tools(mcp) -> None:
     """
     Register my work tools with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """
@@ -274,13 +274,13 @@ def register_tools(mcp) -> None:
     def get_my_tasks() -> str:
         """
         Retrieves a list of the open tasks that are assigned to me
-        
+
         Use this tool when you need to:
         - View the complete details of a specific task
         - Examine the current state, assigned user, and other properties
         - Get information about multiple tasks at once
         - Access the full description and selected fields of tasks
-                    
+
         Returns:
             Formatted string containing comprehensive information for the
             requested list of tasks, including name, id, description and key fields,
@@ -291,7 +291,7 @@ def register_tools(mcp) -> None:
             return _get_my_tasks_impl(spira_client)
         except Exception as e:
             return f"Error: {str(e)}"
-        
+
 ```
 
 ### Example: Registering a New Feature
@@ -306,7 +306,7 @@ from mcp_server_spira.features.mywork.tools import (
 def register_tools(mcp) -> None:
     """
     Register all work item tools with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """
@@ -324,7 +324,7 @@ from mcp_server_spira.features import mywork
 def register_all(mcp):
     """
     Register all features with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """

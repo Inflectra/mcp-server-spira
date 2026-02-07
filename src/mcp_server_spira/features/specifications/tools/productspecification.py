@@ -1,6 +1,6 @@
 """
 Provides operations for retrieving the product specification files that
-can be used to build the functionality of the product using AI. 
+can be used to build the functionality of the product using AI.
 This is used by Agentic AI development tools such as Amazon Kiro
 for building applications from a formal spec.
 
@@ -18,12 +18,15 @@ This module provides the following MCP tools for retrieving the entire product s
     - get_specification_test_cases - returns the data for populating the test-cases.md file
 """
 
-from mcp.server.fastmcp.utilities.logging import get_logger
-from mcp_server_spira.features.common import get_spira_client
 from typing import Any
+
+from mcp.server.fastmcp.utilities.logging import get_logger
+
+from mcp_server_spira.features.common import get_spira_client
 
 # Get a logger instance, typically named after the current module
 logger = get_logger(__name__)
+
 
 def _get_product_by_id(spira_client, product_id: int) -> Any:
     """
@@ -32,7 +35,7 @@ def _get_product_by_id(spira_client, product_id: int) -> Any:
     Args:
         spira_client: The Inflectra Spira API client instance
         product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
-                
+
     Returns:
         The product object from Spira
     """
@@ -47,16 +50,17 @@ def _get_product_by_id(spira_client, product_id: int) -> Any:
         return product
     except Exception as e:
         raise e
-    
+
+
 def _get_release_by_id(spira_client, product_id: int, release_id: int) -> Any:
     """
     Retrieves a single release in the specified product with the specified ID
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                
+
     Returns:
         The Spira release object
     """
@@ -67,21 +71,24 @@ def _get_release_by_id(spira_client, product_id: int, release_id: int) -> Any:
 
         if not release:
             return "There is no release with the specified ID."
-        
+
         # Return the object
-        return release        
+        return release
     except Exception as e:
         raise e
 
-def _get_specification_requirements(spira_client, product_id: int, release_id: int | None) -> list[Any]:
+
+def _get_specification_requirements(
+    spira_client, product_id: int, release_id: int | None
+) -> list[Any]:
     """
     Gets the list of requirements in the product/release
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12. (optional)
-                
+
     Returns:
         List of requirements
     """
@@ -95,7 +102,7 @@ def _get_specification_requirements(spira_client, product_id: int, release_id: i
         if release_id:
             while more_results:
                 requirements_url = f"projects/{product_id}/requirements/search?starting_row={starting_row}&number_of_rows={number_of_rows}"
-                body = [{'PropertyName': 'ReleaseId', 'IntValue': release_id}]
+                body = [{"PropertyName": "ReleaseId", "IntValue": release_id}]
                 results = spira_client.make_spira_api_post_request(requirements_url, body)
                 if not results:
                     more_results = False
@@ -116,55 +123,64 @@ def _get_specification_requirements(spira_client, product_id: int, release_id: i
     except Exception as e:
         raise e
 
-def _add_requirement_scenarios(spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]):
+
+def _add_requirement_scenarios(
+    spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]
+):
     """
     Gets the list of scenarios for a requirement and adds them to the output
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         requirement_id: The numeric ID of the requirement. If the ID is RQ:12, just use 12
         formatted_specification: The output text in markdown format
     """
     scenarios_url = f"projects/{product_id}/requirements/{requirement_id}/steps"
     scenarios = spira_client.make_spira_api_get_request(scenarios_url)
     if scenarios:
-        formatted_specification.append('#### Acceptance Criteria\n\n')
+        formatted_specification.append("#### Acceptance Criteria\n\n")
         for scenario in scenarios:
-            position = scenario['Position']
-            description =scenario['Description']
+            position = scenario["Position"]
+            description = scenario["Description"]
             text = f"{position}. {description}\n"
             formatted_specification.append(text)
-        formatted_specification.append('\n')
+        formatted_specification.append("\n")
 
-def _add_requirement_test_cases(spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]):
+
+def _add_requirement_test_cases(
+    spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]
+):
     """
     Gets the list of test cases for a requirement and adds them to the output
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         requirement_id: The numeric ID of the requirement. If the ID is RQ:12, just use 12
         formatted_specification: The output text in markdown format
     """
     req_test_cases_url = f"projects/{product_id}/requirements/{requirement_id}/test-cases"
     req_test_cases = spira_client.make_spira_api_get_request(req_test_cases_url)
     if req_test_cases:
-        formatted_specification.append('#### Test Cases\n\n')
+        formatted_specification.append("#### Test Cases\n\n")
         for req_test_case in req_test_cases:
-            test_case_id = req_test_case['TestCaseId']
+            test_case_id = req_test_case["TestCaseId"]
 
             # Get the full details of the test case
             test_case_url = f"projects/{product_id}/test-cases/{test_case_id}"
             test_case = spira_client.make_spira_api_get_request(test_case_url)
-            
+
             if test_case:
-                name = test_case['Name']
-                formatted_specification.append(f"##### Test Case TC:{test_case_id}: {test_case['Name']}\n")
-                if test_case['Description']:
-                    description = f"**{test_case['TestCaseTypeName']}:** {test_case['Description']}\n"
-                    formatted_specification.append(description)    
-                formatted_specification.append('\n')
+                formatted_specification.append(
+                    f"##### Test Case TC:{test_case_id}: {test_case['Name']}\n"
+                )
+                if test_case["Description"]:
+                    description = (
+                        f"**{test_case['TestCaseTypeName']}:** {test_case['Description']}\n"
+                    )
+                    formatted_specification.append(description)
+                formatted_specification.append("\n")
 
                 # Get the test case steps
                 test_steps_url = f"projects/{product_id}/test-cases/{test_case_id}/test-steps"
@@ -172,15 +188,16 @@ def _add_requirement_test_cases(spira_client, product_id: int, requirement_id: i
 
                 # Format the test steps as a table
                 if test_steps:
-                    formatted_specification.append('##### Steps\n\n')
+                    formatted_specification.append("##### Steps\n\n")
                     formatted_specification.append("<table>")
-                    formatted_specification.append("<tr><th>Step #</th><th>Description</th><th>Expected Result</th><th>Sample Data</th></tr>")
+                    formatted_specification.append(
+                        "<tr><th>Step #</th><th>Description</th><th>Expected Result</th><th>Sample Data</th></tr>"
+                    )
                     for test_step in test_steps:
-                        test_step_id = test_step['TestStepId']
-                        position = test_step['Position']
-                        description = test_step['Description']
-                        expected_result = test_step['ExpectedResult']
-                        sample_data = test_step['SampleData']
+                        position = test_step["Position"]
+                        description = test_step["Description"]
+                        expected_result = test_step["ExpectedResult"]
+                        sample_data = test_step["SampleData"]
                         formatted_specification.append("<tr>")
                         formatted_specification.append(f"<td>{position}.</td>")
                         formatted_specification.append(f"<td>{description}.</td>")
@@ -189,21 +206,24 @@ def _add_requirement_test_cases(spira_client, product_id: int, requirement_id: i
                         formatted_specification.append("</tr>")
                     formatted_specification.append("</table>")
 
-        formatted_specification.append('\n')
+        formatted_specification.append("\n")
 
-def _add_requirement_tasks(spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]):
+
+def _add_requirement_tasks(
+    spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]
+):
     """
     Gets the list of tasks for a requirement and adds them to the output
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         requirement_id: The numeric ID of the requirement. If the ID is RQ:12, just use 12
         formatted_specification: The output text in markdown format
     """
 
     # First, get the count of the number of total matching tasks
-    body = [{'PropertyName': 'RequirementId', 'IntValue': requirement_id}]
+    body = [{"PropertyName": "RequirementId", "IntValue": requirement_id}]
     tasks_url = f"projects/{product_id}/tasks/count "
     task_count = spira_client.make_spira_api_post_request(tasks_url, body)
 
@@ -218,17 +238,17 @@ def _add_requirement_tasks(spira_client, product_id: int, requirement_id: int, f
         tasks.extend(results)
 
     if tasks:
-        formatted_specification.append('#### Tasks\n\n')
+        formatted_specification.append("#### Tasks\n\n")
         for task in tasks:
-            task_id = task['TaskId']            
-            name = task['Name']
+            task_id = task["TaskId"]
             formatted_specification.append(f"##### Task TK:{task_id}: {task['Name']}\n")
-            if task['Description']:
+            if task["Description"]:
                 description = f"**{task['TaskTypeName']}:** {task['Description']}\n"
-                formatted_specification.append(description)    
-            formatted_specification.append('\n')
+                formatted_specification.append(description)
+            formatted_specification.append("\n")
 
-        formatted_specification.append('\n')
+        formatted_specification.append("\n")
+
 
 def _get_specification_risks(spira_client, product_id: int, release_id: int | None) -> list[Any]:
     """
@@ -236,9 +256,9 @@ def _get_specification_risks(spira_client, product_id: int, release_id: int | No
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12. (optional)
-                
+
     Returns:
         List of risks
     """
@@ -251,7 +271,7 @@ def _get_specification_risks(spira_client, product_id: int, release_id: int | No
 
         # See if we are filtering by release or not
         if release_id:
-            body = [{'PropertyName': 'ReleaseId', 'IntValue': release_id}]
+            body = [{"PropertyName": "ReleaseId", "IntValue": release_id}]
 
         while more_results:
             risks_url = f"projects/{product_id}/risks?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field=RiskExposure&sort_direction=DESC"
@@ -262,43 +282,48 @@ def _get_specification_risks(spira_client, product_id: int, release_id: int | No
                 starting_row += number_of_rows
             risks.extend(results)
 
-
         return risks
     except Exception as e:
         raise e
 
-def _add_risk_mitigations(spira_client, product_id: int, risk_id: int, formatted_specification: list[str]):
+
+def _add_risk_mitigations(
+    spira_client, product_id: int, risk_id: int, formatted_specification: list[str]
+):
     """
     Gets the list of mitigations for a risk and adds them to the output
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         risk_id: The numeric ID of the risk. If the ID is RK:12, just use 12
         formatted_specification: The output text in markdown format
     """
     mitigations_url = f"projects/{product_id}/risks/{risk_id}/mitigations"
     mitigations = spira_client.make_spira_api_get_request(mitigations_url)
     if mitigations:
-        formatted_specification.append('#### Mitigations\n\n')
+        formatted_specification.append("#### Mitigations\n\n")
         for mitigation in mitigations:
-            position = mitigation['Position']
-            description =mitigation['Description']
+            position = mitigation["Position"]
+            description = mitigation["Description"]
             text = f"{position}. {description}\n"
             formatted_specification.append(text)
-        formatted_specification.append('\n')
+        formatted_specification.append("\n")
 
-def _get_specification_requirements_impl(spira_client, product_id: int, release_id: int | None) -> str:
+
+def _get_specification_requirements_impl(
+    spira_client, product_id: int, release_id: int | None
+) -> str:
     """
     Implementation of retrieving the requirements markdown specification for the specified product
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                     If no release is specified, then the specification for the entire
-                    project is returned 
-                
+                    project is returned
+
     Returns:
         Formatted string containing the product requirements specification
     """
@@ -308,27 +333,29 @@ def _get_specification_requirements_impl(spira_client, product_id: int, release_
         # Get the product information
         logger.info("Getting the product overview")
         product = _get_product_by_id(spira_client, product_id)
-        product_name = product['Name']
+        product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
             release = _get_release_by_id(spira_client, product_id, release_id)
-            release_version_number = release['VersionNumber']
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]')
+            release_version_number = release["VersionNumber"]
+            formatted_specification.append(
+                f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
+            )
         else:
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}]')
-        formatted_specification.append('\n')
+            formatted_specification.append(f"# Specification for {product_name} [PR:{product_id}]")
+        formatted_specification.append("\n")
 
         # Populate the product overview
-        if product['Description']:
-            formatted_specification.append(f'## Product Overview')
-            formatted_specification.append(product['Description'])
-            formatted_specification.append('\n')
+        if product["Description"]:
+            formatted_specification.append("## Product Overview")
+            formatted_specification.append(product["Description"])
+            formatted_specification.append("\n")
 
         # Create the sub-header for the Requirements.md section
-        formatted_specification.append('\n')
-        formatted_specification.append(f'## Requirements Document')
+        formatted_specification.append("\n")
+        formatted_specification.append("## Requirements Document")
 
         # Get the list of requirements in the product, or just the release
         requirements = _get_specification_requirements(spira_client, product_id, release_id)
@@ -336,15 +363,21 @@ def _get_specification_requirements_impl(spira_client, product_id: int, release_
         if requirements:
             # Format the requirements into human readable data
             for requirement in requirements:
-                requirement_id = requirement['RequirementId']
-                formatted_specification.append(f"### Requirement RQ:{requirement_id}: {requirement['Name']}\n")
-                if requirement['Description']:
-                    description = f"**{requirement['RequirementTypeName']}:** {requirement['Description']}\n"
-                    formatted_specification.append(description)    
-                formatted_specification.append('\n')
+                requirement_id = requirement["RequirementId"]
+                formatted_specification.append(
+                    f"### Requirement RQ:{requirement_id}: {requirement['Name']}\n"
+                )
+                if requirement["Description"]:
+                    description = (
+                        f"**{requirement['RequirementTypeName']}:** {requirement['Description']}\n"
+                    )
+                    formatted_specification.append(description)
+                formatted_specification.append("\n")
 
                 # See if we have any scenarios for this requirement
-                _add_requirement_scenarios(spira_client, product_id, requirement_id, formatted_specification)
+                _add_requirement_scenarios(
+                    spira_client, product_id, requirement_id, formatted_specification
+                )
 
                 # See if we have any defined test cases for this requirement
                 # We disabled this and instead now return the test cases in a separate call
@@ -352,21 +385,22 @@ def _get_specification_requirements_impl(spira_client, product_id: int, release_
                 # _add_requirement_test_cases(spira_client, product_id, requirement_id, formatted_specification)
 
         return "\n".join(formatted_specification)
-    
+
     except Exception as e:
         return f"There was a problem using this tool: {e}"
-    
+
+
 def _get_specification_design_impl(spira_client, product_id: int, release_id: int | None) -> str:
     """
     Implementation of retrieving the design markdown specification for the specified product
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                     If no release is specified, then the specification for the entire
-                    project is returned 
-                
+                    project is returned
+
     Returns:
         Formatted string containing the product design specification
     """
@@ -376,27 +410,29 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
         # Get the product information
         logger.info("Getting the product overview")
         product = _get_product_by_id(spira_client, product_id)
-        product_name = product['Name']
+        product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
             release = _get_release_by_id(spira_client, product_id, release_id)
-            release_version_number = release['VersionNumber']
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]')
+            release_version_number = release["VersionNumber"]
+            formatted_specification.append(
+                f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
+            )
         else:
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}]')
-        formatted_specification.append('\n')
+            formatted_specification.append(f"# Specification for {product_name} [PR:{product_id}]")
+        formatted_specification.append("\n")
 
         # Populate the product overview
-        if product['Description']:
-            formatted_specification.append(f'## Product Overview')
-            formatted_specification.append(product['Description'])
-            formatted_specification.append('\n')
+        if product["Description"]:
+            formatted_specification.append("## Product Overview")
+            formatted_specification.append(product["Description"])
+            formatted_specification.append("\n")
 
         # Create the sub-header for the Design.md section
-        formatted_specification.append('\n')
-        formatted_specification.append(f'## Design Document')
+        formatted_specification.append("\n")
+        formatted_specification.append("## Design Document")
 
         # Get the list of risks in the product, or just the release
         risks = _get_specification_risks(spira_client, product_id, release_id)
@@ -404,32 +440,33 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
         if risks:
             # Format the risks into human readable data
             for risk in risks:
-                risk_id = risk['RiskId']
+                risk_id = risk["RiskId"]
                 formatted_specification.append(f"### Risk RK:{risk_id}: {risk['Name']}\n")
-                if risk['Description']:
+                if risk["Description"]:
                     description = f"**{risk['RiskTypeName']}:** {risk['Description']}\n"
-                    formatted_specification.append(description)    
-                formatted_specification.append('\n')
+                    formatted_specification.append(description)
+                formatted_specification.append("\n")
 
                 # See if we have any mitigations for this risk
                 _add_risk_mitigations(spira_client, product_id, risk_id, formatted_specification)
 
         return "\n".join(formatted_specification)
-    
+
     except Exception as e:
         return f"There was a problem using this tool: {e}"
-    
+
+
 def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int | None) -> str:
     """
     Implementation of retrieving the tasks markdown specification for the specified product
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                     If no release is specified, then the specification for the entire
-                    project is returned 
-                
+                    project is returned
+
     Returns:
         Formatted string containing the product tasks specification
     """
@@ -439,57 +476,66 @@ def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int
         # Get the product information
         logger.info("Getting the product overview")
         product = _get_product_by_id(spira_client, product_id)
-        product_name = product['Name']
+        product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
             release = _get_release_by_id(spira_client, product_id, release_id)
-            release_version_number = release['VersionNumber']
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]')
+            release_version_number = release["VersionNumber"]
+            formatted_specification.append(
+                f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
+            )
         else:
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}]')
-        formatted_specification.append('\n')
+            formatted_specification.append(f"# Specification for {product_name} [PR:{product_id}]")
+        formatted_specification.append("\n")
 
         # Populate the product overview
-        if product['Description']:
-            formatted_specification.append(f'## Product Overview')
-            formatted_specification.append(product['Description'])
-            formatted_specification.append('\n')
+        if product["Description"]:
+            formatted_specification.append("## Product Overview")
+            formatted_specification.append(product["Description"])
+            formatted_specification.append("\n")
 
         # Get the list of requirements in the product, or just the release
         requirements = _get_specification_requirements(spira_client, product_id, release_id)
 
         # Create the sub-header for the Tasks.md section
-        formatted_specification.append('\n')
-        formatted_specification.append(f'## Implementation Plan')
+        formatted_specification.append("\n")
+        formatted_specification.append("## Implementation Plan")
 
         # Loop through the requirements and add the tasks
         if requirements:
             # Format the requirements into human readable data
             for requirement in requirements:
-                requirement_id = requirement['RequirementId']
-                formatted_specification.append(f"### Requirement RQ:{requirement_id}: {requirement['Name']}\n")
+                requirement_id = requirement["RequirementId"]
+                formatted_specification.append(
+                    f"### Requirement RQ:{requirement_id}: {requirement['Name']}\n"
+                )
 
                 # See if we have any defined tasks for this requirement
-                _add_requirement_tasks(spira_client, product_id, requirement_id, formatted_specification)
+                _add_requirement_tasks(
+                    spira_client, product_id, requirement_id, formatted_specification
+                )
 
         return "\n".join(formatted_specification)
-    
+
     except Exception as e:
         return f"There was a problem using this tool: {e}"
-    
-def _get_specification_test_cases_impl(spira_client, product_id: int, release_id: int | None) -> str:
+
+
+def _get_specification_test_cases_impl(
+    spira_client, product_id: int, release_id: int | None
+) -> str:
     """
     Implementation of retrieving the test cases markdown specification for the specified product
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                     If no release is specified, then the specification for the entire
-                    project is returned 
-                
+                    project is returned
+
     Returns:
         Formatted string containing the product test cases specification
     """
@@ -499,35 +545,37 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
         # Get the product information
         logger.info("Getting the product overview")
         product = _get_product_by_id(spira_client, product_id)
-        product_name = product['Name']
+        product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
             release = _get_release_by_id(spira_client, product_id, release_id)
-            release_version_number = release['VersionNumber']
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]')
+            release_version_number = release["VersionNumber"]
+            formatted_specification.append(
+                f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
+            )
         else:
-            formatted_specification.append(f'# Specification for {product_name} [PR:{product_id}]')
-        formatted_specification.append('\n')
+            formatted_specification.append(f"# Specification for {product_name} [PR:{product_id}]")
+        formatted_specification.append("\n")
 
         # Populate the product overview
-        if product['Description']:
-            formatted_specification.append(f'## Product Overview')
-            formatted_specification.append(product['Description'])
-            formatted_specification.append('\n')
+        if product["Description"]:
+            formatted_specification.append("## Product Overview")
+            formatted_specification.append(product["Description"])
+            formatted_specification.append("\n")
 
         # Create the sub-header for the test-cases.md section
-        formatted_specification.append('\n')
-        formatted_specification.append(f'## Test Cases')
+        formatted_specification.append("\n")
+        formatted_specification.append("## Test Cases")
 
         # Get the list of test cases in the product, or just the release
         test_cases = []
         starting_row = 1
         number_of_rows = 250
         more_results = True
-        sort_field = 'TestCaseId'
-        sort_direction = 'ASC'        
+        sort_field = "TestCaseId"
+        sort_direction = "ASC"
         while more_results:
             test_cases_url = f"projects/{product_id}/test-cases?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field={sort_field}&sort_direction={sort_direction}&release_id={release_id}"
             results = spira_client.make_spira_api_get_request(test_cases_url)
@@ -541,17 +589,20 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
             # Format the test cases into human readable data
             for test_case_item in test_cases:
                 # Get the full details of the test case (with steps)
-                test_case_id = test_case_item['TestCaseId']
+                test_case_id = test_case_item["TestCaseId"]
                 test_case_url = f"projects/{product_id}/test-cases/{test_case_id}"
                 test_case = spira_client.make_spira_api_get_request(test_case_url)
-                
+
                 if test_case:
-                    name = test_case['Name']
-                    formatted_specification.append(f"##### Test Case TC:{test_case_id}: {test_case['Name']}\n")
-                    if test_case['Description']:
-                        description = f"**{test_case['TestCaseTypeName']}:** {test_case['Description']}\n"
-                        formatted_specification.append(description)    
-                    formatted_specification.append('\n')
+                    formatted_specification.append(
+                        f"##### Test Case TC:{test_case_id}: {test_case['Name']}\n"
+                    )
+                    if test_case["Description"]:
+                        description = (
+                            f"**{test_case['TestCaseTypeName']}:** {test_case['Description']}\n"
+                        )
+                        formatted_specification.append(description)
+                    formatted_specification.append("\n")
 
                     # Get the test case steps
                     test_steps_url = f"projects/{product_id}/test-cases/{test_case_id}/test-steps"
@@ -559,15 +610,16 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
 
                     # Format the test steps as a table
                     if test_steps:
-                        formatted_specification.append('##### Steps\n\n')
+                        formatted_specification.append("##### Steps\n\n")
                         formatted_specification.append("<table>")
-                        formatted_specification.append("<tr><th>Step #</th><th>Description</th><th>Expected Result</th><th>Sample Data</th></tr>")
+                        formatted_specification.append(
+                            "<tr><th>Step #</th><th>Description</th><th>Expected Result</th><th>Sample Data</th></tr>"
+                        )
                         for test_step in test_steps:
-                            test_step_id = test_step['TestStepId']
-                            position = test_step['Position']
-                            description = test_step['Description']
-                            expected_result = test_step['ExpectedResult']
-                            sample_data = test_step['SampleData']
+                            position = test_step["Position"]
+                            description = test_step["Description"]
+                            expected_result = test_step["ExpectedResult"]
+                            sample_data = test_step["SampleData"]
                             formatted_specification.append("<tr>")
                             formatted_specification.append(f"<td>{position}.</td>")
                             formatted_specification.append(f"<td>{description}.</td>")
@@ -577,14 +629,15 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
                         formatted_specification.append("</table>")
 
         return "\n".join(formatted_specification)
-    
+
     except Exception as e:
         return f"There was a problem using this tool: {e}"
+
 
 def register_tools(mcp) -> None:
     """
     Register product specification tools with the MCP server.
-    
+
     Args:
         mcp: The FastMCP server instance
     """
@@ -595,7 +648,7 @@ def register_tools(mcp) -> None:
         Retrieves the requirements specification file for the requested Spira product,
         with the option to only return the specification for a selected product
         release.
-        
+
         Use this tool when you need to download the requirements part of a product specification
         so that it can be used in an agentic development environment such as Amazon Kiro
 
@@ -603,8 +656,8 @@ def register_tools(mcp) -> None:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                         If no release is specified, then the specification for the entire
-                        project is returned 
-        
+                        project is returned
+
         Returns:
             Formatted string in markdown that contains the requirements specification for the requested
             Spira product (or just the specific release in that product).
@@ -616,14 +669,14 @@ def register_tools(mcp) -> None:
             return _get_specification_requirements_impl(spira_client, product_id, release_id)
         except Exception as e:
             return f"Error: {str(e)}"
-        
+
     @mcp.tool()
     def get_specification_design(product_id: int, release_id: int | None) -> str:
         """
         Retrieves the design specification file for the requested Spira product,
         with the option to only return the specification for a selected product
         release.
-        
+
         Use this tool when you need to download the design part of a product specification
         so that it can be used in an agentic development environment such as Amazon Kiro
 
@@ -631,8 +684,8 @@ def register_tools(mcp) -> None:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                         If no release is specified, then the specification for the entire
-                        project is returned 
-        
+                        project is returned
+
         Returns:
             Formatted string in markdown that contains the design specification for the requested
             Spira product (or just the specific release in that product).
@@ -644,14 +697,14 @@ def register_tools(mcp) -> None:
             return _get_specification_design_impl(spira_client, product_id, release_id)
         except Exception as e:
             return f"Error: {str(e)}"
-        
+
     @mcp.tool()
     def get_specification_tasks(product_id: int, release_id: int | None) -> str:
         """
         Retrieves the tasks specification file for the requested Spira product,
         with the option to only return the specification for a selected product
         release.
-        
+
         Use this tool when you need to download the tasks part of a product specification
         so that it can be used in an agentic development environment such as Amazon Kiro
 
@@ -659,8 +712,8 @@ def register_tools(mcp) -> None:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                         If no release is specified, then the specification for the entire
-                        project is returned 
-        
+                        project is returned
+
         Returns:
             Formatted string in markdown that contains the tasks specification for the requested
             Spira product (or just the specific release in that product).
@@ -679,7 +732,7 @@ def register_tools(mcp) -> None:
         Retrieves the test cases specification file for the requested Spira product,
         with the option to only return the specification for a selected product
         release.
-        
+
         Use this tool when you need to download the test cases part of a product specification
         so that it can be used in an agentic development environment such as Amazon Kiro
         This file will include:
@@ -693,8 +746,8 @@ def register_tools(mcp) -> None:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
                         If no release is specified, then the specification for the entire
-                        project is returned 
-        
+                        project is returned
+
         Returns:
             Formatted string in markdown that contains the test cases specification for the requested
             Spira product (or just the specific release in that product).
