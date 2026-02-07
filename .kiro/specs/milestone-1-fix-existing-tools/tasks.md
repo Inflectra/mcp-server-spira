@@ -117,43 +117,43 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - Update docstring with incident-specific field descriptions
     - _Requirements: AC-1.1.2, AC-1.3.1 through AC-1.3.10_
 
-  - [ ] 4.4 Write unit and integration tests for get_my_incidents
+  - [x] 4.4 Write unit and integration tests for get_my_incidents
     - Write unit tests with mocked Spira client (same scenarios as get_my_tasks)
     - Write integration tests in `tests/integration/test_myincidents_json.py`
     - Test successful retrieval, pagination, validation, error handling
     - Test with real API to verify JSON structure and data preservation
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-  - [ ] 4.5 Convert get_my_requirements to JSON with pagination
+  - [x] 4.5 Convert get_my_requirements to JSON with pagination
     - Follow same pattern as get_my_tasks
     - Update docstring with requirement-specific field descriptions
     - _Requirements: AC-1.1.3, AC-1.3.1 through AC-1.3.10_
 
-  - [ ] 4.6 Write unit and integration tests for get_my_requirements
+  - [x] 4.6 Write unit and integration tests for get_my_requirements
     - Write unit tests with mocked Spira client (same scenarios as get_my_tasks)
     - Write integration tests in `tests/integration/test_myrequirements_json.py`
     - Test successful retrieval, pagination, validation, error handling
     - Test with real API to verify JSON structure and data preservation
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-  - [ ] 4.7 Convert get_my_test_cases to JSON with pagination
+  - [x] 4.7 Convert get_my_test_cases to JSON with pagination
     - Follow same pattern as get_my_tasks
     - Update docstring with test case-specific field descriptions
     - _Requirements: AC-1.1.4, AC-1.3.1 through AC-1.3.10_
 
-  - [ ] 4.8 Write unit and integration tests for get_my_test_cases
+  - [x] 4.8 Write unit and integration tests for get_my_test_cases
     - Write unit tests with mocked Spira client (same scenarios as get_my_tasks)
     - Write integration tests in `tests/integration/test_mytestcases_json.py`
     - Test successful retrieval, pagination, validation, error handling
     - Test with real API to verify JSON structure and data preservation
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-  - [ ] 4.9 Convert get_my_test_sets to JSON with pagination
+  - [x] 4.9 Convert get_my_test_sets to JSON with pagination
     - Follow same pattern as get_my_tasks
     - Update docstring with test set-specific field descriptions
     - _Requirements: AC-1.1.5, AC-1.3.1 through AC-1.3.10_
 
-  - [ ] 4.10 Write unit and integration tests for get_my_test_sets
+  - [x] 4.10 Write unit and integration tests for get_my_test_sets
     - Write unit tests with mocked Spira client (same scenarios as get_my_tasks)
     - Write integration tests in `tests/integration/test_mytestsets_json.py`
     - Test successful retrieval, pagination, validation, error handling
