@@ -15,6 +15,7 @@ from mcp_server_spira.features.mywork.tools.myrequirements import (
 )
 
 
+@pytest.mark.unit
 class TestGetMyRequirementsImpl:
     """Tests for _get_my_requirements_impl function."""
 
@@ -311,6 +312,7 @@ class TestGetMyRequirementsImpl:
             assert parsed["pagination"]["has_more"] == expected_has_more
 
 
+@pytest.mark.unit
 class TestGetMyRequirementsToolIntegration:
     """Integration tests for get_my_requirements tool with validation."""
 

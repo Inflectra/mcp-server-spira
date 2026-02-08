@@ -36,7 +36,7 @@ pytest-mock>=3.12.0,<4.0.0
 
 # Pytest-spiratest - Spira integration for pytest
 # Used for: Reporting test results to Inflectra Spira
-pytest-spiratest>=1.0.0
+pytest-spiratest>=2.1.0
 
 # Pytest-asyncio - Async testing support for pytest
 # Used for: Testing async code with asyncio

@@ -15,6 +15,7 @@ from mcp_server_spira.features.mywork.tools.mytasks import (
 )
 
 
+@pytest.mark.unit
 class TestGetMyTasksImpl:
     """Tests for _get_my_tasks_impl function."""
 
@@ -289,6 +290,7 @@ class TestGetMyTasksImpl:
             assert parsed["pagination"]["has_more"] == expected_has_more
 
 
+@pytest.mark.unit
 class TestGetMyTasksToolIntegration:
     """Integration tests for get_my_tasks tool with validation."""
 

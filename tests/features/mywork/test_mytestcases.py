@@ -15,6 +15,7 @@ from mcp_server_spira.features.mywork.tools.mytestcases import (
 )
 
 
+@pytest.mark.unit
 class TestGetMyTestCasesImpl:
     """Tests for _get_my_testcases_impl function."""
 
@@ -300,6 +301,7 @@ class TestGetMyTestCasesImpl:
             assert parsed["pagination"]["has_more"] == expected_has_more
 
 
+@pytest.mark.unit
 class TestGetMyTestCasesToolIntegration:
     """Integration tests for get_my_testcases tool with validation."""
 
