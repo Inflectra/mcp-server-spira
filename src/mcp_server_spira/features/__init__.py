@@ -1,6 +1,7 @@
 # Inflectra Spira MCP features package
 from mcp_server_spira.features import (
     automation,
+    formatting,
     mywork,
     productartifacts,
     programartifacts,
@@ -24,3 +25,4 @@ def register_all(mcp):
     workspaces.register(mcp)
     automation.register(mcp)
     specifications.register(mcp)
+    formatting.register(mcp)

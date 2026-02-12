@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://api.inflectra.com/Spira/Services/v7_0/RestService.svc"
+      "url": "http://localhost/spira/Services/v7_0/RestService.svc"
     }
   ],
   "tags": [
@@ -413,7 +413,7 @@
     },
     {
       "name": "Test Set",
-      "description": "This resource lets you create, view, edit and delete test sets in the system"
+      "description": "This resource allows you to retrieve, create, modify and delete test sets in a specific project in the system."
     },
     {
       "name": "Test Set Comment",
@@ -3151,6 +3151,25 @@
       }
     },
     "/data-syncs": {
+      "get": {
+        "operationId": "DataSyncSystem_Retrieve",
+        "summary": "Retrieves a list of data-sync plug-ins that need to be synchronized with",
+        "tags": ["Data Sync"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/RemoteDataSyncSystem"}
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "DataSyncSystem_Create",
         "summary": "Creates a new data sync system entry",
@@ -3171,25 +3190,6 @@
             "content": {
               "application/json": {
                 "schema": {"$ref": "#/components/schemas/RemoteDataSyncSystem"}
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "operationId": "DataSyncSystem_Retrieve",
-        "summary": "Retrieves a list of data-sync plug-ins that need to be synchronized with",
-        "tags": ["Data Sync"],
-        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {"$ref": "#/components/schemas/RemoteDataSyncSystem"}
-                }
               }
             }
           }
@@ -8285,6 +8285,43 @@
         }
       }
     },
+    "/projects/{project_id}/inflectra-ai": {
+      "put": {
+        "operationId": "InflectraAi_UpdateForProject",
+        "summary": "Updates the Inflectra.ai enabled status for a specific project",
+        "tags": ["Inflectra.ai Admin"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "enabled",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "enabled",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {"type": "object"}
+              }
+            }
+          }
+        }
+      }
+    },
     "/projects/{project_id}/pull-requests": {
       "get": {
         "operationId": "PullRequest_Retrieve",
@@ -8987,6 +9024,85 @@
             "schema": {"type": "string"}
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/RemoteBuild"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/releases/{release_id}/builds/search": {
+      "post": {
+        "operationId": "Build_RetrieveByReleaseIdSearch",
+        "summary": "Retrieves the list of builds that are associated with a specific Release",
+        "tags": ["Release Build"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "release_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_by",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/RemoteFilter"}
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response",
@@ -11278,6 +11394,90 @@
         }
       }
     },
+    "/projects/{project_id}/risks/search": {
+      "post": {
+        "operationId": "Risk_RetrieveSearch",
+        "summary": "Retrieves a list of risks in the system that match the provided filter/sort",
+        "tags": ["Risk"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_field",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_direction",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_field",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_direction",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/RemoteFilter"}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/RemoteRisk"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/projects/{project_id}/risks/types/{Risk_type_id}/workflow/transitions": {
       "get": {
         "operationId": "Risk_RetrieveWorkflowTransitionsForUser",
@@ -12104,6 +12304,38 @@
       }
     },
     "/projects/{project_id}/task-folders": {
+      "post": {
+        "operationId": "Task_CreateFolder",
+        "summary": "Creates a new task folder in the system",
+        "tags": ["Task Folder"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/RemoteTaskFolder"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/RemoteTaskFolder"}
+              }
+            }
+          }
+        }
+      },
       "put": {
         "operationId": "Task_UpdateFolder",
         "summary": "Updates a test folder in the system",
@@ -12158,38 +12390,6 @@
                   "type": "array",
                   "items": {"$ref": "#/components/schemas/RemoteTaskFolder"}
                 }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "operationId": "Task_CreateFolder",
-        "summary": "Creates a new task folder in the system",
-        "tags": ["Task Folder"],
-        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {"type": "string"}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {"$ref": "#/components/schemas/RemoteTaskFolder"}
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {"$ref": "#/components/schemas/RemoteTaskFolder"}
               }
             }
           }
@@ -12602,6 +12802,90 @@
             "schema": {"type": "string"}
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/RemoteTask"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/tasks/search": {
+      "post": {
+        "operationId": "Task_RetrieveSearch",
+        "summary": "Retrieves a list of tasks in the system that match the provided filter/sort",
+        "tags": ["Task"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_field",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_direction",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_field",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_direction",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/RemoteFilter"}
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response",
@@ -16166,38 +16450,6 @@
       }
     },
     "/projects/{project_id}/test-sets": {
-      "post": {
-        "operationId": "TestSet_Create",
-        "summary": "Creates a new test set in the system. You must send at least the \"Name\" (string), \"Description\" (string), \"TestSetStatusId\" (integer between 1 and 5), and \"TestRunTypeId\" (integer between 1 and 2) fields in the body",
-        "tags": ["Test Set"],
-        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {"type": "string"}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {"$ref": "#/components/schemas/RemoteTestSet"}
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {"$ref": "#/components/schemas/RemoteTestSet"}
-              }
-            }
-          }
-        }
-      },
       "put": {
         "operationId": "TestSet_Update",
         "summary": "Updates a test set in the system",
@@ -16307,6 +16559,38 @@
                   "type": "array",
                   "items": {"$ref": "#/components/schemas/RemoteTestSet"}
                 }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "TestSet_Create",
+        "summary": "Creates a new test set in the system. You must send at least the \"Name\" (string), \"Description\" (string), \"TestSetStatusId\" (integer between 1 and 5), and \"TestRunTypeId\" (integer between 1 and 2) fields in the body",
+        "tags": ["Test Set"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/RemoteTestSet"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/RemoteTestSet"}
               }
             }
           }
@@ -25035,30 +25319,6 @@
       }
     },
     "/timesheets/entries": {
-      "put": {
-        "operationId": "TimesheetEntry_Update",
-        "summary": "Updates a timesheet entry in the system",
-        "tags": ["Timesheet Entries"],
-        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {"$ref": "#/components/schemas/RemoteTimesheetEntry"}
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {"type": "object"}
-              }
-            }
-          }
-        }
-      },
       "post": {
         "operationId": "TimesheetEntry_Create",
         "summary": "Creates a new timesheet entry in the system",
@@ -25082,9 +25342,57 @@
             }
           }
         }
+      },
+      "put": {
+        "operationId": "TimesheetEntry_Update",
+        "summary": "Updates a timesheet entry in the system",
+        "tags": ["Timesheet Entries"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/RemoteTimesheetEntry"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {"type": "object"}
+              }
+            }
+          }
+        }
       }
     },
     "/timesheets/entries/{timesheet_entry_id}": {
+      "get": {
+        "operationId": "TimesheetEntry_RetrieveById",
+        "summary": "Retrieves a single timesheet entry in the system",
+        "tags": ["Timesheet Entries"],
+        "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "timesheet_entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/RemoteTimesheetEntry"}
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "operationId": "TimesheetEntry_Delete",
         "summary": "Deletes a timesheet entry in the system",
@@ -25108,26 +25416,80 @@
             }
           }
         }
-      },
-      "get": {
-        "operationId": "TimesheetEntry_RetrieveById",
-        "summary": "Retrieves a single timesheet entry in the system",
+      }
+    },
+    "/timesheets/entries/search": {
+      "post": {
+        "operationId": "TimesheetEntry_RetrieveSearch",
+        "summary": "Retrieves a list of timesheet entries in the system that match the provided filter/sort",
         "tags": ["Timesheet Entries"],
         "security": [{"basicAuth": []}, {"apiKeyHeader": []}],
         "parameters": [
           {
-            "name": "timesheet_entry_id",
+            "name": "starting_row",
             "in": "path",
             "required": true,
             "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_field",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_direction",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "starting_row",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "number_of_rows",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_field",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "sort_direction",
+            "in": "query",
+            "schema": {"type": "string"}
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/RemoteFilter"}
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
-                "schema": {"$ref": "#/components/schemas/RemoteTimesheetEntry"}
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/RemoteTimesheetEntry"}
+                }
               }
             }
           }
