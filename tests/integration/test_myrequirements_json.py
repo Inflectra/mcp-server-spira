@@ -445,9 +445,9 @@ class TestGetMyRequirementsJSONIntegration:
         for i, (json_requirement, raw_requirement) in enumerate(
             zip(parsed["data"], raw_requirements, strict=False)
         ):
-            assert (
-                json_requirement["RequirementId"] == raw_requirement["RequirementId"]
-            ), f"Mismatch at index {i}"
+            assert json_requirement["RequirementId"] == raw_requirement["RequirementId"], (
+                f"Mismatch at index {i}"
+            )
 
         print("   ✓ JSON output matches raw API data")
 

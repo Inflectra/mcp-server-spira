@@ -251,63 +251,95 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
 - [ ] 10. Convert product artifacts tools to JSON
-  - Transform all product artifact tools to return JSON
+  - Transform all product artifact tools to use consistent POST /search endpoints
+  - All endpoints support RemoteFilter arrays for future filtering capabilities
   - Add input validation and error handling
+  - Use server-side pagination (unlike "my work" tools which use client-side)
   - _Requirements: US-1.1 (Structured JSON), US-1.4 (Validation)_
+  - **Note**: All tools use empty filter array `[]` for now; dedicated filter tool will be added in future milestone
 
-  - [ ] 10.1 Convert get_tasks (product) to JSON
+  - [x] 10.1 Convert get_tasks (product) to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/tasks/search`
+    - **Query Parameters**: starting_row, number_of_rows, sort_field, sort_direction
+    - **Request Body**: `[]` (empty RemoteFilter array - no filtering for now)
     - Update tool to return JSON with `{"data": [...]}` structure
     - Add `product_id` validation (must be positive integer)
     - Update docstring with task field descriptions from OpenAPI
-    - Remove hardcoded row limits (return all tasks)
+    - Support server-side pagination via starting_row and number_of_rows
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.2 Convert get_incidents (product) to JSON
+  - [x] 10.2 Convert get_incidents (product) to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/incidents/search`
+    - **Query Parameters**: start_row, number_rows, sort_by
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with incident field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.3 Convert get_requirements (product) to JSON
+  - [x] 10.3 Convert get_requirements (product) to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/requirements/search`
+    - **Query Parameters**: starting_row, number_of_rows
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with requirement field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.4 Convert get_test_cases (product) to JSON
+  - [x] 10.4 Convert get_test_cases (product) to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/test-cases/search`
+    - **Query Parameters**: starting_row, number_of_rows, sort_field, sort_direction
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with test case field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.5 Convert get_test_sets (product) to JSON
+  - [x] 10.5 Convert get_test_sets (product) to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/test-sets/search`
+    - **Query Parameters**: starting_row, number_of_rows, sort_field, sort_direction
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with test set field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.6 Convert get_releases to JSON
+  - [x] 10.6 Convert get_releases to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/releases/search`
+    - **Query Parameters**: starting_row, number_of_rows, sort_field, sort_direction
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with release field descriptions
     - Handle both get_releases (list) and get_release_by_id (single)
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.7 Convert get_risks to JSON
+  - [x] 10.7 Convert get_risks to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/risks/search`
+    - **Query Parameters**: starting_row, number_of_rows, sort_field, sort_direction
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with risk field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.8 Convert get_test_runs to JSON
+  - [x] 10.8 Convert get_test_runs to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/test-runs/search`
+    - **Query Parameters**: starting_row, number_of_rows, sort_field, sort_direction
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with test run field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.9 Convert get_automation_hosts to JSON
+  - [x] 10.9 Convert get_automation_hosts to JSON
+    - **API Endpoint**: `POST /projects/{product_id}/automation-hosts/search`
+    - **Query Parameters**: starting_row, number_of_rows
+    - **Request Body**: `[]` (empty RemoteFilter array)
     - Follow same pattern as get_tasks
     - Update docstring with automation host field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 10.10 Write unit tests for all product artifact tools
+  - [x] 10.10 Write unit tests for all product artifact tools
     - Write unit tests with mocked Spira client for all 9 tools
-    - Test successful data retrieval, JSON structure validation, error handling
+    - Test successful data retrieval with POST requests and empty filter arrays
+    - Test JSON structure validation, error handling
     - Test input validation (product_id must be positive)
     - Verify all fields are preserved in JSON output
+    - Test pagination parameters (starting_row/start_row, number_of_rows/number_rows)
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
 - [ ] 11. Convert program artifacts tools to JSON

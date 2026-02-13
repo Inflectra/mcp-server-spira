@@ -436,9 +436,9 @@ class TestGetMyIncidentsJSONIntegration:
         for i, (json_incident, raw_incident) in enumerate(
             zip(parsed["data"], raw_incidents, strict=False)
         ):
-            assert (
-                json_incident["IncidentId"] == raw_incident["IncidentId"]
-            ), f"Mismatch at index {i}"
+            assert json_incident["IncidentId"] == raw_incident["IncidentId"], (
+                f"Mismatch at index {i}"
+            )
 
         print("   ✓ JSON output matches raw API data")
 
