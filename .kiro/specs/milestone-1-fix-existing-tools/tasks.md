@@ -342,48 +342,48 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - Test pagination parameters (starting_row/start_row, number_of_rows/number_rows)
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-- [ ] 11. Convert program artifacts tools to JSON
+- [x] 11. Convert program artifacts tools to JSON
   - Transform program artifact tools to return JSON
   - Add input validation and error handling
   - _Requirements: US-1.1 (Structured JSON), US-1.4 (Validation)_
 
-  - [ ] 11.1 Convert get_capabilities to JSON
+  - [x] 11.1 Convert get_capabilities to JSON
     - Update tool to return JSON with `{"data": [...]}` structure
     - Add `program_id` validation (must be positive integer)
     - Update docstring with capability field descriptions from OpenAPI
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 11.2 Convert get_milestones to JSON
+  - [x] 11.2 Convert get_milestones to JSON
     - Follow same pattern as get_capabilities
     - Update docstring with milestone field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 11.3 Write unit tests for program artifact tools
+  - [x] 11.3 Write unit tests for program artifact tools
     - Write unit tests with mocked Spira client for both tools
     - Test successful data retrieval, JSON structure validation, error handling
     - Test input validation (program_id must be positive)
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-- [ ] 12. Convert automation tools to JSON
+- [x] 12. Convert automation tools to JSON
   - Transform automation tools to return JSON
   - Add input validation and error handling
   - _Requirements: US-1.1 (Structured JSON), US-1.4 (Validation)_
 
-  - [ ] 12.1 Convert record_automated_test_run to JSON
+  - [x] 12.1 Convert record_automated_test_run to JSON
     - Update tool to return JSON response with test run ID
     - Add validation for all input parameters
     - Update docstring with comprehensive parameter descriptions
     - Return structured error responses for validation failures
     - _Requirements: AC-1.1.7 through AC-1.1.10, AC-1.4.1 through AC-1.4.9_
 
-  - [ ] 12.2 Convert create_build to JSON
+  - [x] 12.2 Convert create_build to JSON
     - Update tool to return JSON response with build ID
     - Add validation for all input parameters
     - Update docstring with comprehensive parameter descriptions
     - Return structured error responses for validation failures
     - _Requirements: AC-1.1.7 through AC-1.1.10, AC-1.4.1 through AC-1.4.9_
 
-  - [ ] 12.3 Write unit tests for automation tools
+  - [x] 12.3 Write unit tests for automation tools
     - Write unit tests with mocked Spira client for both tools
     - Test successful operations, JSON structure validation, error handling
     - Test input validation for all parameters
