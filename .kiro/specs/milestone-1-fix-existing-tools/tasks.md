@@ -250,7 +250,7 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - Test error handling for all functions
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-- [ ] 10. Convert product artifacts tools to JSON
+- [x] 10. Convert product artifacts tools to JSON
   - Transform all product artifact tools to use consistent POST /search endpoints
   - All endpoints support RemoteFilter arrays for future filtering capabilities
   - Add input validation and error handling
@@ -389,23 +389,23 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - Test input validation for all parameters
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-- [ ] 13. Convert template configuration tools to JSON
+- [x] 13. Convert template configuration tools to JSON
   - Transform template configuration tools to return JSON
   - Add input validation and error handling
   - _Requirements: US-1.1 (Structured JSON), US-1.4 (Validation)_
 
-  - [ ] 13.1 Convert get_artifact_types to JSON
+  - [x] 13.1 Convert get_artifact_types to JSON
     - Update tool to return JSON with `{"data": [...]}` structure
     - Add `template_id` validation (must be positive integer)
     - Update docstring with artifact type field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 13.2 Convert get_custom_properties to JSON
+  - [x] 13.2 Convert get_custom_properties to JSON
     - Follow same pattern as get_artifact_types
     - Update docstring with custom property field descriptions
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 13.3 Write unit tests for template configuration tools
+  - [x] 13.3 Write unit tests for template configuration tools
     - Write unit tests with mocked Spira client for both tools
     - Test successful data retrieval, JSON structure validation, error handling
     - Test input validation (template_id must be positive)

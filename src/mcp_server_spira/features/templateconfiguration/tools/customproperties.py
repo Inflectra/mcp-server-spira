@@ -5,6 +5,12 @@ This module provides MCP tools for retrieving artifact types, and their associat
 """
 
 from mcp_server_spira.features.common import get_spira_client
+from mcp_server_spira.features.common.responses import (
+    ErrorCodes,
+    format_error_response,
+    format_success_response,
+)
+from mcp_server_spira.features.common.validation import ParameterValidator
 
 
 def _get_custom_properties_impl(spira_client, template_id: int) -> str:
@@ -16,116 +22,72 @@ def _get_custom_properties_impl(spira_client, template_id: int) -> str:
         template_id: The numeric ID of the product template. If the ID is PT:45, just use 45.
 
     Returns:
-        Formatted string containing the list of artifact types and associated custom properties
+        JSON string containing the list of artifact types and associated custom properties
     """
+    try:
+        artifact_custom_properties = []
 
-    formatted_results = "# Artifact Types\n\n"
+        # Define artifact types to query
+        artifact_types = [
+            "Requirement",
+            "Release",
+            "TestCase",
+            "Task",
+            "Risk",
+            "Incident",
+            "TestSet",
+            "TestStep",
+            "TestRun",
+            "AutomationHost",
+            "Document",
+        ]
 
-    # --- Requirements ---
-    formatted_results += "## Requirement"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "Requirement"
-    )
-    formatted_results += custom_prop_results
+        # Retrieve custom properties for each artifact type
+        for artifact_type_name in artifact_types:
+            custom_props = _get_custom_properties_for_artifact_type(
+                spira_client, template_id, artifact_type_name
+            )
 
-    # --- Releases ---
-    formatted_results += "## Release"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "Release"
-    )
-    formatted_results += custom_prop_results
+            if custom_props:
+                artifact_custom_properties.append(
+                    {"ArtifactTypeName": artifact_type_name, "CustomProperties": custom_props}
+                )
 
-    # --- Test Cases ---
-    formatted_results += "## Test Case"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "TestCase"
-    )
-    formatted_results += custom_prop_results
+        return format_success_response(data=artifact_custom_properties)
 
-    # --- Tasks ---
-    formatted_results += "## Task"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "Task"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Risks ---
-    formatted_results += "## Risk"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "Risk"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Incidents ---
-    formatted_results += "## Incident"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "Incident"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Test Sets ---
-    formatted_results += "## Test Set"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "TestSet"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Test Steps ---
-    formatted_results += "## Test Step"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "TestStep"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Test Runs ---
-    formatted_results += "## Test Run"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "TestRun"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Automation Hosts ---
-    formatted_results += "## Automation Host"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "AutomationHost"
-    )
-    formatted_results += custom_prop_results
-
-    # --- Documents ---
-    formatted_results += "## Documents"
-    custom_prop_results = _get_custom_properties_for_artifact_type(
-        spira_client, template_id, "Document"
-    )
-    formatted_results += custom_prop_results
-
-    return formatted_results
+    except Exception as e:
+        return format_error_response(
+            error="Failed to retrieve custom properties",
+            error_code=ErrorCodes.API_ERROR,
+            details={"message": str(e), "template_id": template_id},
+            suggestion="Check API connectivity and verify the template_id is valid",
+        )
 
 
 def _get_custom_properties_for_artifact_type(
     spira_client, template_id: int, artifact_type_name: str
-) -> str:
+) -> list:
+    """
+    Retrieves custom properties for a specific artifact type.
+
+    Args:
+        spira_client: The Inflectra Spira API client instance
+        template_id: The numeric ID of the product template
+        artifact_type_name: The name of the artifact type (e.g., "Requirement", "TestCase")
+
+    Returns:
+        List of custom property dictionaries, or empty list if none found
+    """
     try:
         custom_props_url = (
             "project-templates/" + str(template_id) + "/custom-properties/" + artifact_type_name
         )
         custom_props = spira_client.make_spira_api_get_request(custom_props_url)
 
-        if not custom_props:
-            return ""
-
-        # Format the custom prop into human readable data
-        custom_prop_results = []
-        for custom_prop in custom_props:
-            custom_prop_info = f"""   {custom_prop["PropertyNumber"]}. {custom_prop["Name"]} (ID={custom_prop["CustomPropertyId"]})"""
-            custom_prop_results.append(custom_prop_info)
-
-        formatted_results = "\n".join(custom_prop_results)
-        formatted_results += "\n\n------------------------------\n\n"
-
-        return formatted_results
+        return custom_props if custom_props else []
 
     except Exception:
-        return ""
+        return []
 
 
 def register_tools(mcp) -> None:
@@ -150,12 +112,120 @@ def register_tools(mcp) -> None:
             template_id: The numeric ID of the product template. If the ID is PT:45, just use 45.
 
         Returns:
-            Formatted string containing comprehensive information for the
-            requested list of artifact types and corresponding custom properties
-            formatted as markdown with clear section headings
+            JSON string with structure:
+            {
+                "data": [
+                    {
+                        "ArtifactTypeName": "Requirement",
+                        "CustomProperties": [
+                            {
+                                "CustomPropertyId": 1,
+                                "PropertyNumber": 1,
+                                "Name": "Business Unit",
+                                "CustomPropertyTypeId": 1,
+                                "CustomPropertyTypeName": "Text",
+                                "IsDeleted": false,
+                                "IsRequired": false,
+                                "IsRichText": false,
+                                "Options": null
+                            }
+                        ]
+                    },
+                    {
+                        "ArtifactTypeName": "TestCase",
+                        "CustomProperties": [
+                            {
+                                "CustomPropertyId": 5,
+                                "PropertyNumber": 2,
+                                "Name": "Test Environment",
+                                "CustomPropertyTypeId": 2,
+                                "CustomPropertyTypeName": "List",
+                                "IsDeleted": false,
+                                "IsRequired": true,
+                                "IsRichText": false,
+                                "Options": [
+                                    {"CustomPropertyValueId": 1, "Name": "Development"},
+                                    {"CustomPropertyValueId": 2, "Name": "Staging"}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "ArtifactTypeName": "Task",
+                        "CustomProperties": [...]
+                    }
+                ]
+            }
+
+        Key Fields:
+            - ArtifactTypeName: The name of the artifact type (Requirement, Release, TestCase, Task, Risk, Incident, TestSet, TestStep, TestRun, AutomationHost, Document)
+            - CustomProperties: Array of custom properties for this artifact type
+            - CustomPropertyId: Unique identifier for the custom property
+            - PropertyNumber: Display order number for the property
+            - Name: Display name of the custom property
+            - CustomPropertyTypeId/CustomPropertyTypeName: Type of the property (Text, List, Date, User, etc.)
+            - IsDeleted: Whether the property has been deleted (boolean)
+            - IsRequired: Whether the property is required when creating artifacts (boolean)
+            - IsRichText: Whether the property supports rich text formatting (boolean)
+            - Options: Array of valid values for list-type properties (null for other types)
+
+        When to Use:
+            - Discovering available custom properties in a template
+            - Validating custom property IDs before creating/updating artifacts
+            - Understanding which custom properties are required
+            - Listing custom properties for user selection in UI
+            - Determining valid values for list-type custom properties
+
+        Related Tools:
+            - get_artifact_types: Get artifact types and sub-types
+            - get_product_template: Get template details
+
+        Error Responses:
+            {
+                "error": "Invalid template_id parameter",
+                "error_code": "INVALID_VALUE",
+                "details": {
+                    "parameter": "template_id",
+                    "value": -1,
+                    "expected": ">= 1"
+                },
+                "suggestion": "template_id must be >= 1"
+            }
+
+        Example Usage:
+            # Get all custom properties for a template
+            props_json = get_custom_properties(template_id=1)
+            props = json.loads(props_json)
+
+            # Find required custom properties for requirements
+            for artifact in props["data"]:
+                if artifact["ArtifactTypeName"] == "Requirement":
+                    for prop in artifact["CustomProperties"]:
+                        if prop["IsRequired"]:
+                            print(f"Required: {prop['Name']} (ID: {prop['CustomPropertyId']})")
+
+            # Find list-type custom properties with their options
+            for artifact in props["data"]:
+                for prop in artifact["CustomProperties"]:
+                    if prop["CustomPropertyTypeName"] == "List" and prop["Options"]:
+                        print(f"{prop['Name']} options:")
+                        for option in prop["Options"]:
+                            print(f"  - {option['Name']} (ID: {option['CustomPropertyValueId']})")
         """
         try:
+            # Validate template_id
+            validation_error = ParameterValidator.validate_positive_integer(
+                template_id, "template_id"
+            )
+            if validation_error:
+                return format_error_response(**validation_error)
+
             spira_client = get_spira_client()
             return _get_custom_properties_impl(spira_client, template_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error="Failed to retrieve custom properties",
+                error_code=ErrorCodes.API_ERROR,
+                details={"message": str(e)},
+                suggestion="Check API connectivity and authentication",
+            )

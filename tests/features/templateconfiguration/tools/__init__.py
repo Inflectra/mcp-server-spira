@@ -1,0 +1,1 @@
+"""Template configuration tools tests"""
