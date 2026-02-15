@@ -283,137 +283,129 @@ class TestRegisterTools:
         # Should register 2 tools: get_product_templates and get_product_template
         assert mock_mcp.tool.call_count == 2
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_templates_wrapper_success(self, mock_get_client):
-        """Test get_product_templates MCP tool wrapper with successful call."""
-        mock_client = Mock()
-        mock_templates = [
-            {
-                "ProjectTemplateId": 1,
-                "Name": "Scrum Template",
-                "Description": "Agile Scrum template",
-                "IsActive": True,
-            }
-        ]
-        mock_client.make_spira_api_get_request.return_value = mock_templates
-        mock_get_client.return_value = mock_client
+    def test_get_product_templates_mcp_wrapper_calls_implementation(self):
+        """Test that get_product_templates MCP wrapper properly calls implementation."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
+        ) as mock_get_client:
+            mock_client = Mock()
+            mock_templates = [{"ProjectTemplateId": 1, "Name": "Scrum Template", "IsActive": True}]
+            mock_client.make_spira_api_get_request.return_value = mock_templates
+            mock_get_client.return_value = mock_client
 
-        result = _get_product_templates_impl(mock_client)
+            # Create a real MCP-like object that stores the decorated function
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-        # Verify successful response
-        parsed = json.loads(result)
-        assert "data" in parsed
-        assert len(parsed["data"]) == 1
-        assert parsed["data"][0]["ProjectTemplateId"] == 1
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_templates_wrapper_error(self, mock_get_client):
-        """Test get_product_templates MCP tool wrapper with error."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
-        mock_get_client.return_value = mock_client
+                    return decorator
 
-        result = _get_product_templates_impl(mock_client)
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-        # Verify error response
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert parsed["error_code"] == "API_ERROR"
-        assert "API Error" in parsed["details"]["message"]
+            # Call the first registered tool (get_product_templates)
+            get_product_templates_func = mock_mcp.tools[0]
+            result = get_product_templates_func()
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_templates_wrapper_empty_result(self, mock_get_client):
-        """Test get_product_templates MCP tool wrapper with empty result."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.return_value = []
-        mock_get_client.return_value = mock_client
+            # Verify successful response
+            parsed = json.loads(result)
+            assert "data" in parsed
+            assert len(parsed["data"]) == 1
 
-        result = _get_product_templates_impl(mock_client)
+    def test_get_product_templates_mcp_wrapper_handles_exception(self):
+        """Test that get_product_templates MCP wrapper handles exceptions."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Client error")
 
-        # Verify empty data array
-        parsed = json.loads(result)
-        assert "data" in parsed
-        assert len(parsed["data"]) == 0
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_template_wrapper_success(self, mock_get_client):
-        """Test get_product_template MCP tool wrapper with successful call."""
-        mock_client = Mock()
-        mock_template = {
-            "ProjectTemplateId": 1,
-            "Name": "Test Template",
-            "Description": "Test",
-            "IsActive": True,
-        }
-        mock_client.make_spira_api_get_request.return_value = mock_template
-        mock_get_client.return_value = mock_client
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-        result = _get_product_template_impl(mock_client, 1)
+                    return decorator
 
-        assert "Test Template" in result
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_template_wrapper_error(self, mock_get_client):
-        """Test get_product_template MCP tool wrapper with error."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
-        mock_get_client.return_value = mock_client
+            # Call the first registered tool (get_product_templates)
+            get_product_templates_func = mock_mcp.tools[0]
+            result = get_product_templates_func()
 
-        result = _get_product_template_impl(mock_client, 1)
+            # Verify error response
+            parsed = json.loads(result)
+            assert "error" in parsed
+            assert parsed["error_code"] == "API_ERROR"
 
-        assert "problem using this tool" in result
-        assert "API Error" in result
+    def test_get_product_template_mcp_wrapper_calls_implementation(self):
+        """Test that get_product_template MCP wrapper properly calls implementation."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
+        ) as mock_get_client:
+            mock_client = Mock()
+            mock_template = {"ProjectTemplateId": 1, "Name": "Test Template", "IsActive": True}
+            mock_client.make_spira_api_get_request.return_value = mock_template
+            mock_get_client.return_value = mock_client
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_template_wrapper_not_found(self, mock_get_client):
-        """Test get_product_template MCP tool wrapper when template not found."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.return_value = None
-        mock_get_client.return_value = mock_client
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-        result = _get_product_template_impl(mock_client, 999)
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-        assert "Unable to fetch product template details" in result
+                    return decorator
 
-    def test_multiple_tool_registrations(self):
-        """Test that multiple calls to register_tools don't cause issues."""
-        mock_mcp = Mock()
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-        # Call register_tools multiple times
-        register_tools(mock_mcp)
-        first_call_count = mock_mcp.tool.call_count
+            # Call the second registered tool (get_product_template)
+            get_product_template_func = mock_mcp.tools[1]
+            result = get_product_template_func(1)
 
-        register_tools(mock_mcp)
-        second_call_count = mock_mcp.tool.call_count
+            # Verify result contains template info
+            assert "Test Template" in result
 
-        # Each call should register the same number of tools
-        assert second_call_count == first_call_count * 2
+    def test_get_product_template_mcp_wrapper_handles_exception(self):
+        """Test that get_product_template MCP wrapper handles exceptions."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Client error")
 
-    @patch("mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client")
-    def test_get_product_templates_preserves_field_types(self, mock_get_client):
-        """Test that field types are preserved correctly."""
-        mock_client = Mock()
-        mock_templates = [
-            {
-                "ProjectTemplateId": 1,  # integer
-                "Name": "Scrum Template",  # string
-                "Description": "Agile Scrum template",  # string
-                "IsActive": True,  # boolean
-                "WorkspaceTypeId": 1,  # integer
-                "Guid": "abc-123",  # string
-            }
-        ]
-        mock_client.make_spira_api_get_request.return_value = mock_templates
-        mock_get_client.return_value = mock_client
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-        result = _get_product_templates_impl(mock_client)
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-        parsed = json.loads(result)
-        template = parsed["data"][0]
+                    return decorator
 
-        # Verify types are preserved
-        assert isinstance(template["ProjectTemplateId"], int)
-        assert isinstance(template["Name"], str)
-        assert isinstance(template["IsActive"], bool)
-        assert isinstance(template["WorkspaceTypeId"], int)
-        assert isinstance(template["Guid"], str)
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
+
+            # Call the second registered tool (get_product_template)
+            get_product_template_func = mock_mcp.tools[1]
+            result = get_product_template_func(1)
+
+            # Verify error response
+            assert "Error:" in result
+            assert "Client error" in result

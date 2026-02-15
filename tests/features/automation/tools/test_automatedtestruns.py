@@ -340,3 +340,97 @@ class TestRecordAutomatedTestRun:
             result_data = json.loads(result)
             assert result_data["data"]["test_run_id"] == f"TR:{100 + status_id}"
             assert result_data["data"]["message"] == "Test run recorded successfully"
+
+
+class TestRecordAutomatedTestRunMCPWrapper:
+    """Test suite for MCP wrapper of record_automated_test_run"""
+
+    def test_mcp_wrapper_success(self):
+        """Test MCP wrapper with successful execution"""
+        from unittest.mock import MagicMock, patch
+
+        from mcp_server_spira.features.automation.tools.automatedtestruns import register_tools
+
+        # Create mock MCP server
+        mock_mcp = MagicMock()
+        tool_func = None
+
+        def capture_tool():
+            def decorator(func):
+                nonlocal tool_func
+                tool_func = func
+                return func
+
+            return decorator
+
+        mock_mcp.tool = capture_tool
+        register_tools(mock_mcp)
+
+        # Mock the Spira client
+        with patch(
+            "mcp_server_spira.features.automation.tools.automatedtestruns.get_spira_client"
+        ) as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.make_spira_api_post_request.return_value = {"TestRunId": 123}
+            mock_get_client.return_value = mock_client
+
+            # Call the tool
+            assert tool_func is not None
+            result = tool_func(
+                product_id=55,
+                test_name="test_login",
+                short_message="Test passed",
+                long_message="All assertions passed",
+                error_count=0,
+                test_case_id=456,
+                execution_status_id=2,
+            )
+
+            # Verify result
+            result_data = json.loads(result)
+            assert result_data["data"]["test_run_id"] == "TR:123"
+
+    def test_mcp_wrapper_exception_handling(self):
+        """Test MCP wrapper handles exceptions from implementation"""
+        from unittest.mock import MagicMock, patch
+
+        from mcp_server_spira.features.automation.tools.automatedtestruns import register_tools
+
+        # Create mock MCP server
+        mock_mcp = MagicMock()
+        tool_func = None
+
+        def capture_tool():
+            def decorator(func):
+                nonlocal tool_func
+                tool_func = func
+                return func
+
+            return decorator
+
+        mock_mcp.tool = capture_tool
+        register_tools(mock_mcp)
+
+        # Mock get_spira_client to raise exception
+        with patch(
+            "mcp_server_spira.features.automation.tools.automatedtestruns.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Connection failed")
+
+            # Call the tool
+            assert tool_func is not None
+            result = tool_func(
+                product_id=55,
+                test_name="test_login",
+                short_message="Test passed",
+                long_message="All assertions passed",
+                error_count=0,
+                test_case_id=456,
+                execution_status_id=2,
+            )
+
+            # Verify error response
+            result_data = json.loads(result)
+            assert "error" in result_data
+            assert result_data["error_code"] == "API_ERROR"
+            assert "Connection failed" in result_data["error"]

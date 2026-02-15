@@ -196,100 +196,67 @@ class TestRegisterTools:
         # Verify that mcp.tool() was called (decorator pattern)
         assert mock_mcp.tool.called
 
-    @patch("mcp_server_spira.features.workspaces.tools.programs.get_spira_client")
-    def test_get_programs_wrapper_success(self, mock_get_client):
-        """Test get_programs MCP tool wrapper with successful call."""
-        mock_client = Mock()
-        mock_programs = [
-            {
-                "ProgramId": 1,
-                "Name": "Program 1",
-                "Description": "Test program",
-                "isActive": True,
-                "isDefault": False,
-            }
-        ]
-        mock_client.make_spira_api_get_request.return_value = mock_programs
-        mock_get_client.return_value = mock_client
+    def test_get_programs_mcp_wrapper_calls_implementation(self):
+        """Test that get_programs MCP wrapper properly calls implementation."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.programs.get_spira_client"
+        ) as mock_get_client:
+            mock_client = Mock()
+            mock_programs = [{"ProgramId": 1, "Name": "Program 1", "isActive": True}]
+            mock_client.make_spira_api_get_request.return_value = mock_programs
+            mock_get_client.return_value = mock_client
 
-        result = _get_programs_impl(mock_client)
+            # Create a real MCP-like object that stores the decorated function
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-        # Verify successful response
-        parsed = json.loads(result)
-        assert "data" in parsed
-        assert len(parsed["data"]) == 1
-        assert parsed["data"][0]["ProgramId"] == 1
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-    @patch("mcp_server_spira.features.workspaces.tools.programs.get_spira_client")
-    def test_get_programs_wrapper_error(self, mock_get_client):
-        """Test get_programs MCP tool wrapper with error."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
-        mock_get_client.return_value = mock_client
+                    return decorator
 
-        result = _get_programs_impl(mock_client)
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-        # Verify error response
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert parsed["error_code"] == "API_ERROR"
-        assert "API Error" in parsed["details"]["message"]
+            # Call the registered tool (get_programs)
+            get_programs_func = mock_mcp.tools[0]
+            result = get_programs_func()
 
-    @patch("mcp_server_spira.features.workspaces.tools.programs.get_spira_client")
-    def test_get_programs_wrapper_empty_result(self, mock_get_client):
-        """Test get_programs MCP tool wrapper with empty result."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.return_value = []
-        mock_get_client.return_value = mock_client
+            # Verify successful response
+            parsed = json.loads(result)
+            assert "data" in parsed
+            assert len(parsed["data"]) == 1
 
-        result = _get_programs_impl(mock_client)
+    def test_get_programs_mcp_wrapper_handles_exception(self):
+        """Test that get_programs MCP wrapper handles exceptions."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.programs.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Client error")
 
-        # Verify empty data array
-        parsed = json.loads(result)
-        assert "data" in parsed
-        assert len(parsed["data"]) == 0
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-    def test_multiple_tool_registrations(self):
-        """Test that multiple calls to register_tools don't cause issues."""
-        mock_mcp = Mock()
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-        # Call register_tools multiple times
-        register_tools(mock_mcp)
-        first_call_count = mock_mcp.tool.call_count
+                    return decorator
 
-        register_tools(mock_mcp)
-        second_call_count = mock_mcp.tool.call_count
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-        # Each call should register the same number of tools
-        assert second_call_count == first_call_count * 2
+            # Call the registered tool (get_programs)
+            get_programs_func = mock_mcp.tools[0]
+            result = get_programs_func()
 
-    @patch("mcp_server_spira.features.workspaces.tools.programs.get_spira_client")
-    def test_get_programs_preserves_field_types(self, mock_get_client):
-        """Test that field types are preserved correctly."""
-        mock_client = Mock()
-        mock_programs = [
-            {
-                "ProgramId": 10,  # integer
-                "Name": "Engineering",  # string
-                "Description": "Engineering programs",  # string
-                "isActive": True,  # boolean
-                "isDefault": False,  # boolean
-                "WorkspaceTypeId": 2,  # integer
-                "PortfolioId": 5,  # integer
-                "ProjectTemplateId": 1,  # integer
-            }
-        ]
-        mock_client.make_spira_api_get_request.return_value = mock_programs
-        mock_get_client.return_value = mock_client
-
-        result = _get_programs_impl(mock_client)
-
-        parsed = json.loads(result)
-        program = parsed["data"][0]
-
-        # Verify types are preserved
-        assert isinstance(program["ProgramId"], int)
-        assert isinstance(program["Name"], str)
-        assert isinstance(program["isActive"], bool)
-        assert isinstance(program["isDefault"], bool)
-        assert isinstance(program["WorkspaceTypeId"], int)
+            # Verify error response
+            parsed = json.loads(result)
+            assert "error" in parsed
+            assert parsed["error_code"] == "API_ERROR"

@@ -538,3 +538,89 @@ class TestGetArtifactTypesValidation:
             result_data = json.loads(result)
             assert "data" in result_data
             assert "error" not in result_data
+
+
+class TestGetArtifactTypesMCPWrapper:
+    """Test suite for MCP wrapper of get_artifact_types"""
+
+    def test_mcp_wrapper_success(self):
+        """Test MCP wrapper with successful execution"""
+        from collections.abc import Callable
+        from typing import Any
+        from unittest.mock import MagicMock, patch
+
+        from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
+            register_tools,
+        )
+
+        # Create mock MCP server
+        mock_mcp = MagicMock()
+        tool_func: Callable[..., Any] | None = None
+
+        def capture_tool(name=None):
+            def decorator(func):
+                nonlocal tool_func
+                tool_func = func
+                return func
+
+            return decorator
+
+        mock_mcp.tool = capture_tool
+        register_tools(mock_mcp)
+
+        # Mock the Spira client
+        with patch(
+            "mcp_server_spira.features.templateconfiguration.tools.artifacttypes.get_spira_client"
+        ) as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.make_spira_api_get_request.return_value = []
+            mock_get_client.return_value = mock_client
+
+            # Call the tool
+            assert tool_func is not None
+            result = tool_func(template_id=1)
+
+            # Verify result
+            result_data = json.loads(result)
+            assert "data" in result_data
+
+    def test_mcp_wrapper_exception_handling(self):
+        """Test MCP wrapper handles exceptions from implementation"""
+        from collections.abc import Callable
+        from typing import Any
+        from unittest.mock import MagicMock, patch
+
+        from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
+            register_tools,
+        )
+
+        # Create mock MCP server
+        mock_mcp = MagicMock()
+        tool_func: Callable[..., Any] | None = None
+
+        def capture_tool(name=None):
+            def decorator(func):
+                nonlocal tool_func
+                tool_func = func
+                return func
+
+            return decorator
+
+        mock_mcp.tool = capture_tool
+        register_tools(mock_mcp)
+
+        # Mock get_spira_client to raise exception
+        with patch(
+            "mcp_server_spira.features.templateconfiguration.tools.artifacttypes.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Connection failed")
+
+            # Call the tool
+            assert tool_func is not None
+            result = tool_func(template_id=1)
+
+            # Verify error response
+            result_data = json.loads(result)
+            assert "error" in result_data
+            assert result_data["error_code"] == "API_ERROR"
+            assert "Connection failed" in result_data["details"]["message"]

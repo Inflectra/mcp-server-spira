@@ -23,6 +23,8 @@ from typing import Any
 from mcp.server.fastmcp.utilities.logging import get_logger
 
 from mcp_server_spira.features.common import get_spira_client
+from mcp_server_spira.features.common.responses import format_error_response
+from mcp_server_spira.features.common.validation import ParameterValidator
 
 # Get a logger instance, typically named after the current module
 logger = get_logger(__name__)
@@ -654,21 +656,68 @@ def register_tools(mcp) -> None:
 
         Args:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+                       Must be a positive integer.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                        If no release is specified, then the specification for the entire
-                        project is returned
+                       Must be a positive integer or None. If None, the specification
+                       for the entire project is returned.
 
         Returns:
-            Formatted string in markdown that contains the requirements specification for the requested
-            Spira product (or just the specific release in that product).
+            On success: Formatted string in markdown that contains the requirements
+            specification for the requested Spira product (or just the specific release
+            in that product). The data returned should be saved into a file called
+            requirements.md
 
-            The data returned should be saved into a file called requirements.md
+            On error: JSON string with error details including error message, error code,
+            and suggestions for resolution.
+
+        Example Success Response:
+            # Specification for My Product [PR:55]
+            ## Product Overview
+            ...
+
+        Example Error Response:
+            {
+              "error": "Invalid product_id parameter",
+              "error_code": "INVALID_VALUE",
+              "details": {
+                "parameter": "product_id",
+                "value": -1,
+                "expected": ">= 1"
+              },
+              "suggestion": "product_id must be >= 1"
+            }
         """
         try:
+            # Validate product_id
+            validator = ParameterValidator()
+            error = validator.validate_positive_integer(product_id, "product_id")
+            if error:
+                return format_error_response(
+                    error=error["error"],
+                    error_code=error["error_code"],
+                    details=error["details"],
+                    suggestion=error["suggestion"],
+                )
+
+            # Validate release_id if provided
+            if release_id is not None:
+                error = validator.validate_positive_integer(release_id, "release_id")
+                if error:
+                    return format_error_response(
+                        error=error["error"],
+                        error_code=error["error_code"],
+                        details=error["details"],
+                        suggestion=error["suggestion"],
+                    )
+
             spira_client = get_spira_client()
             return _get_specification_requirements_impl(spira_client, product_id, release_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error=f"Failed to retrieve requirements specification: {str(e)}",
+                error_code="API_ERROR",
+                suggestion="Check API connectivity and authentication",
+            )
 
     @mcp.tool()
     def get_specification_design(product_id: int, release_id: int | None) -> str:
@@ -682,21 +731,68 @@ def register_tools(mcp) -> None:
 
         Args:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+                       Must be a positive integer.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                        If no release is specified, then the specification for the entire
-                        project is returned
+                       Must be a positive integer or None. If None, the specification
+                       for the entire project is returned.
 
         Returns:
-            Formatted string in markdown that contains the design specification for the requested
-            Spira product (or just the specific release in that product).
+            On success: Formatted string in markdown that contains the design
+            specification for the requested Spira product (or just the specific release
+            in that product). The data returned should be saved into a file called
+            design.md
 
-            The data returned should be saved into a file called design.md
+            On error: JSON string with error details including error message, error code,
+            and suggestions for resolution.
+
+        Example Success Response:
+            # Specification for My Product [PR:55]
+            ## Product Overview
+            ...
+
+        Example Error Response:
+            {
+              "error": "Invalid product_id parameter",
+              "error_code": "INVALID_VALUE",
+              "details": {
+                "parameter": "product_id",
+                "value": -1,
+                "expected": ">= 1"
+              },
+              "suggestion": "product_id must be >= 1"
+            }
         """
         try:
+            # Validate product_id
+            validator = ParameterValidator()
+            error = validator.validate_positive_integer(product_id, "product_id")
+            if error:
+                return format_error_response(
+                    error=error["error"],
+                    error_code=error["error_code"],
+                    details=error["details"],
+                    suggestion=error["suggestion"],
+                )
+
+            # Validate release_id if provided
+            if release_id is not None:
+                error = validator.validate_positive_integer(release_id, "release_id")
+                if error:
+                    return format_error_response(
+                        error=error["error"],
+                        error_code=error["error_code"],
+                        details=error["details"],
+                        suggestion=error["suggestion"],
+                    )
+
             spira_client = get_spira_client()
             return _get_specification_design_impl(spira_client, product_id, release_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error=f"Failed to retrieve design specification: {str(e)}",
+                error_code="API_ERROR",
+                suggestion="Check API connectivity and authentication",
+            )
 
     @mcp.tool()
     def get_specification_tasks(product_id: int, release_id: int | None) -> str:
@@ -710,21 +806,68 @@ def register_tools(mcp) -> None:
 
         Args:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+                       Must be a positive integer.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                        If no release is specified, then the specification for the entire
-                        project is returned
+                       Must be a positive integer or None. If None, the specification
+                       for the entire project is returned.
 
         Returns:
-            Formatted string in markdown that contains the tasks specification for the requested
-            Spira product (or just the specific release in that product).
+            On success: Formatted string in markdown that contains the tasks
+            specification for the requested Spira product (or just the specific release
+            in that product). The data returned should be saved into a file called
+            tasks.md
 
-            The data returned should be saved into a file called tasks.md
+            On error: JSON string with error details including error message, error code,
+            and suggestions for resolution.
+
+        Example Success Response:
+            # Specification for My Product [PR:55]
+            ## Product Overview
+            ...
+
+        Example Error Response:
+            {
+              "error": "Invalid product_id parameter",
+              "error_code": "INVALID_VALUE",
+              "details": {
+                "parameter": "product_id",
+                "value": -1,
+                "expected": ">= 1"
+              },
+              "suggestion": "product_id must be >= 1"
+            }
         """
         try:
+            # Validate product_id
+            validator = ParameterValidator()
+            error = validator.validate_positive_integer(product_id, "product_id")
+            if error:
+                return format_error_response(
+                    error=error["error"],
+                    error_code=error["error_code"],
+                    details=error["details"],
+                    suggestion=error["suggestion"],
+                )
+
+            # Validate release_id if provided
+            if release_id is not None:
+                error = validator.validate_positive_integer(release_id, "release_id")
+                if error:
+                    return format_error_response(
+                        error=error["error"],
+                        error_code=error["error_code"],
+                        details=error["details"],
+                        suggestion=error["suggestion"],
+                    )
+
             spira_client = get_spira_client()
             return _get_specification_tasks_impl(spira_client, product_id, release_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error=f"Failed to retrieve tasks specification: {str(e)}",
+                error_code="API_ERROR",
+                suggestion="Check API connectivity and authentication",
+            )
 
     @mcp.tool()
     def get_specification_test_cases(product_id: int, release_id: int | None) -> str:
@@ -744,18 +887,65 @@ def register_tools(mcp) -> None:
 
         Args:
             product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+                       Must be a positive integer.
             release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                        If no release is specified, then the specification for the entire
-                        project is returned
+                       Must be a positive integer or None. If None, the specification
+                       for the entire project is returned.
 
         Returns:
-            Formatted string in markdown that contains the test cases specification for the requested
-            Spira product (or just the specific release in that product).
+            On success: Formatted string in markdown that contains the test cases
+            specification for the requested Spira product (or just the specific release
+            in that product). The data returned should be saved into a file called
+            test-cases.md
 
-            The data returned should be saved into a file called test-cases.md
+            On error: JSON string with error details including error message, error code,
+            and suggestions for resolution.
+
+        Example Success Response:
+            # Specification for My Product [PR:55]
+            ## Product Overview
+            ...
+
+        Example Error Response:
+            {
+              "error": "Invalid product_id parameter",
+              "error_code": "INVALID_VALUE",
+              "details": {
+                "parameter": "product_id",
+                "value": -1,
+                "expected": ">= 1"
+              },
+              "suggestion": "product_id must be >= 1"
+            }
         """
         try:
+            # Validate product_id
+            validator = ParameterValidator()
+            error = validator.validate_positive_integer(product_id, "product_id")
+            if error:
+                return format_error_response(
+                    error=error["error"],
+                    error_code=error["error_code"],
+                    details=error["details"],
+                    suggestion=error["suggestion"],
+                )
+
+            # Validate release_id if provided
+            if release_id is not None:
+                error = validator.validate_positive_integer(release_id, "release_id")
+                if error:
+                    return format_error_response(
+                        error=error["error"],
+                        error_code=error["error_code"],
+                        details=error["details"],
+                        suggestion=error["suggestion"],
+                    )
+
             spira_client = get_spira_client()
             return _get_specification_test_cases_impl(spira_client, product_id, release_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error=f"Failed to retrieve test cases specification: {str(e)}",
+                error_code="API_ERROR",
+                suggestion="Check API connectivity and authentication",
+            )

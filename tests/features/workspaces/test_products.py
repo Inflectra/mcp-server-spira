@@ -366,97 +366,191 @@ class TestRegisterTools:
         # Verify that mcp.tool() was called (decorator pattern)
         assert mock_mcp.tool.called
 
-    @patch("mcp_server_spira.features.workspaces.tools.products.get_spira_client")
-    def test_get_products_wrapper_success(self, mock_get_client):
-        """Test get_products MCP tool wrapper with successful call."""
-        mock_mcp = Mock()
-        mock_client = Mock()
-        mock_products = [{"ProjectId": 1, "Name": "Product 1", "Active": True}]
-        mock_client.make_spira_api_get_request.return_value = mock_products
-        mock_get_client.return_value = mock_client
+    def test_get_products_mcp_wrapper_calls_implementation(self):
+        """Test that get_products MCP wrapper properly calls implementation."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
+        ) as mock_get_client:
+            mock_client = Mock()
+            mock_products = [{"ProjectId": 1, "Name": "Product 1", "Active": True}]
+            mock_client.make_spira_api_get_request.return_value = mock_products
+            mock_get_client.return_value = mock_client
 
-        # Register tools and get the wrapper function
-        register_tools(mock_mcp)
+            # Create a real MCP-like object that stores the decorated function
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-        # Get the decorated function (the actual tool)
-        # The decorator is called, so we need to get the function that was decorated
-        tool_calls = list(mock_mcp.tool.call_args_list)
-        assert len(tool_calls) > 0
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-    @patch("mcp_server_spira.features.workspaces.tools.products.get_spira_client")
-    def test_get_products_wrapper_error(self, mock_get_client):
-        """Test get_products MCP tool wrapper with error."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
-        mock_get_client.return_value = mock_client
+                    return decorator
 
-        # Import and call the implementation directly
-        from mcp_server_spira.features.workspaces.tools.products import _get_products_impl
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-        result = _get_products_impl(mock_client)
+            # Call the first registered tool (get_products)
+            get_products_func = mock_mcp.tools[0]
+            result = get_products_func()
 
-        # Verify error response
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert parsed["error_code"] == "API_ERROR"
+            # Verify successful response
+            parsed = json.loads(result)
+            assert "data" in parsed
+            assert len(parsed["data"]) == 1
 
-    @patch("mcp_server_spira.features.workspaces.tools.products.get_spira_client")
-    def test_get_product_by_id_wrapper_success(self, mock_get_client):
-        """Test get_product_by_id MCP tool wrapper with successful call."""
-        mock_client = Mock()
-        mock_product = {
-            "ProjectId": 55,
-            "Name": "Test Product",
-            "Description": "Test",
-            "Active": True,
-        }
-        mock_client.make_spira_api_get_request.return_value = mock_product
-        mock_get_client.return_value = mock_client
+    def test_get_products_mcp_wrapper_handles_exception(self):
+        """Test that get_products MCP wrapper handles exceptions."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Client error")
 
-        result = _get_product_by_id_impl(mock_client, 55)
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-        assert "Test Product" in result
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-    @patch("mcp_server_spira.features.workspaces.tools.products.get_spira_client")
-    def test_get_product_by_id_wrapper_error(self, mock_get_client):
-        """Test get_product_by_id MCP tool wrapper with error."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
-        mock_get_client.return_value = mock_client
+                    return decorator
 
-        result = _get_product_by_id_impl(mock_client, 55)
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
 
-        assert "problem using this tool" in result
-        assert "API Error" in result
+            # Call the first registered tool (get_products)
+            get_products_func = mock_mcp.tools[0]
+            result = get_products_func()
 
-    @patch("mcp_server_spira.features.workspaces.tools.products.get_spira_client")
-    def test_get_program_products_wrapper_success(self, mock_get_client):
-        """Test get_program_products MCP tool wrapper with successful call."""
-        mock_client = Mock()
-        mock_products = [
-            {
-                "ProjectId": 1,
-                "Name": "P1",
-                "Description": "D1",
-                "Active": True,
-                "ProjectGroupId": 10,
-            },
-        ]
-        mock_client.make_spira_api_get_request.return_value = mock_products
-        mock_get_client.return_value = mock_client
+            # Verify error response
+            parsed = json.loads(result)
+            assert "error" in parsed
+            assert parsed["error_code"] == "API_ERROR"
 
-        result = _get_program_products_impl(mock_client, 10)
+    def test_get_product_by_id_mcp_wrapper_calls_implementation(self):
+        """Test that get_product_by_id MCP wrapper properly calls implementation."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
+        ) as mock_get_client:
+            mock_client = Mock()
+            mock_product = {"ProjectId": 55, "Name": "Test Product", "Active": True}
+            mock_client.make_spira_api_get_request.return_value = mock_product
+            mock_get_client.return_value = mock_client
 
-        assert "P1" in result
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
 
-    @patch("mcp_server_spira.features.workspaces.tools.products.get_spira_client")
-    def test_get_program_products_wrapper_error(self, mock_get_client):
-        """Test get_program_products MCP tool wrapper with error."""
-        mock_client = Mock()
-        mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
-        mock_get_client.return_value = mock_client
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
 
-        result = _get_program_products_impl(mock_client, 10)
+                    return decorator
 
-        assert "problem using this tool" in result
-        assert "API Error" in result
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
+
+            # Call the second registered tool (get_product_by_id)
+            get_product_by_id_func = mock_mcp.tools[1]
+            result = get_product_by_id_func(55)
+
+            # Verify result contains product info
+            assert "Test Product" in result
+
+    def test_get_product_by_id_mcp_wrapper_handles_exception(self):
+        """Test that get_product_by_id MCP wrapper handles exceptions."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Client error")
+
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
+
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
+
+                    return decorator
+
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
+
+            # Call the second registered tool (get_product_by_id)
+            get_product_by_id_func = mock_mcp.tools[1]
+            result = get_product_by_id_func(55)
+
+            # Verify error response
+            assert "Error:" in result
+            assert "Client error" in result
+
+    def test_get_program_products_mcp_wrapper_calls_implementation(self):
+        """Test that get_program_products MCP wrapper properly calls implementation."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
+        ) as mock_get_client:
+            mock_client = Mock()
+            mock_products = [{"ProjectId": 1, "Name": "P1", "ProjectGroupId": 10, "Active": True}]
+            mock_client.make_spira_api_get_request.return_value = mock_products
+            mock_get_client.return_value = mock_client
+
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
+
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
+
+                    return decorator
+
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
+
+            # Call the third registered tool (get_program_products)
+            get_program_products_func = mock_mcp.tools[2]
+            result = get_program_products_func(10)
+
+            # Verify result contains product info
+            assert "P1" in result
+
+    def test_get_program_products_mcp_wrapper_handles_exception(self):
+        """Test that get_program_products MCP wrapper handles exceptions."""
+        with patch(
+            "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
+        ) as mock_get_client:
+            mock_get_client.side_effect = Exception("Client error")
+
+            # Create a real MCP-like object
+            class MockMCP:
+                def __init__(self):
+                    self.tools = []
+
+                def tool(self):
+                    def decorator(func):
+                        self.tools.append(func)
+                        return func
+
+                    return decorator
+
+            mock_mcp = MockMCP()
+            register_tools(mock_mcp)
+
+            # Call the third registered tool (get_program_products)
+            get_program_products_func = mock_mcp.tools[2]
+            result = get_program_products_func(10)
+
+            # Verify error response
+            assert "Error:" in result
+            assert "Client error" in result

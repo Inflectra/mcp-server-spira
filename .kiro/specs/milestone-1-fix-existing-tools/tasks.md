@@ -411,35 +411,83 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - Test input validation (template_id must be positive)
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-- [ ] 14. Convert specification tools to JSON
+- [x] 14. Convert specification tools to JSON
   - Transform specification tools to return JSON or keep as markdown (special case)
   - Add input validation and error handling
   - _Requirements: US-1.1 (Structured JSON), US-1.4 (Validation)_
 
-  - [ ] 14.1 Review specification tools for conversion strategy
+  - [x] 14.1 Review specification tools for conversion strategy
     - Analyze get_specification_requirements, get_specification_design, get_specification_tasks, get_specification_test_cases
     - Determine if these should return JSON or remain as markdown (they generate documentation)
     - Document decision and rationale
     - _Requirements: AC-1.1.7 through AC-1.1.10_
 
-  - [ ] 14.2 Add input validation to specification tools
+  - [x] 14.2 Add input validation to specification tools
     - Add `product_id` and `release_id` validation (must be positive integers or null)
     - Return structured error responses for validation failures
     - Update docstrings with comprehensive parameter descriptions
     - _Requirements: AC-1.4.1 through AC-1.4.9_
 
-  - [ ] 14.3 Write unit tests for specification tools
+  - [x] 14.3 Write unit tests for specification tools
     - Write unit tests with mocked Spira client for all 4 tools
     - Test successful data retrieval, error handling
     - Test input validation for all parameters
     - Achieve >= 80% coverage for this module
     - _Requirements: AC-1.8.1 through AC-1.8.10_
 
-- [ ] 15. Checkpoint - Verify all tools converted
+- [-] 15. Checkpoint - Verify all tools converted
   - Ensure all tools return valid JSON (or documented markdown for special cases)
   - Verify consistent error handling across all tools
   - Confirm >= 80% test coverage for all tool modules
   - Ask the user if questions arise
+
+  - [x] 15.1 Fix test failures and verify all tests passing
+    - Fix style issues in verification script
+    - Run full test suite and confirm all tests pass
+    - _Requirements: AC-1.8.10_
+
+  - [x] 15.2 Add workspace tools test coverage
+    - Add unit tests for `_get_product_by_id_impl` helper function
+    - Add unit tests for `_get_program_products_impl` helper function
+    - Add unit tests for `_get_product_template_impl` helper function
+    - Add tests for MCP tool wrappers
+    - Target: Increase workspace tools coverage from 73-74% to >85%
+    - _Requirements: AC-1.8.1 through AC-1.8.10_
+
+  - [x] 15.3 Add program artifact tools test coverage
+    - Add unit tests for MCP tool wrappers in capabilities.py
+    - Add unit tests for MCP tool wrappers in milestones.py
+    - Add tests for error handling paths
+    - Target: Increase program artifact tools coverage from 76% to >85%
+    - _Requirements: AC-1.8.1 through AC-1.8.10_
+
+  - [x] 15.4 Complete high coverage modules
+    - Add edge case tests for formatting/common.py
+    - Add MCP wrapper tests for templateconfiguration tools
+    - Add MCP wrapper tests for automation tools
+    - Add edge case tests for formatting/tools/format_artifacts.py
+    - Target: Increase modules from 87-97% to >95%
+    - _Requirements: AC-1.8.1 through AC-1.8.10_
+
+  - [x] 15.5 Add product artifact tools test coverage (high priority)
+    - Add unit tests for productartifacts/tools/tasks.py
+    - Add unit tests for productartifacts/tools/incidents.py
+    - Add unit tests for productartifacts/tools/requirements.py
+    - Add unit tests for productartifacts/tools/testcases.py
+    - Add unit tests for productartifacts/tools/testsets.py
+    - Test helper function implementations (_get_tasks_impl, etc.)
+    - Test MCP tool wrappers
+    - Test validation error paths
+    - Test API error handling
+    - Target: Increase coverage from 48-52% to >70%
+    - _Requirements: AC-1.8.1 through AC-1.8.10_
+
+  - [x] 15.6 Verify 80%+ coverage achieved
+    - Run full test suite with coverage report
+    - Verify overall coverage is >= 80%
+    - Verify all critical modules have adequate coverage
+    - Document final coverage metrics
+    - _Requirements: AC-1.8.9, AC-1.8.10_
 
 - [ ] 16. Update project documentation and versioning
   - Document breaking changes and migration path
