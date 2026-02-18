@@ -28,6 +28,11 @@ def _get_my_testsets_impl(spira_client, limit: int, offset: int) -> str:
         JSON string with paginated test set data
     """
     try:
+        # Validate pagination parameters
+        validation_error = ParameterValidator.validate_pagination_params(limit, offset)
+        if validation_error:
+            return format_error_response(**validation_error)
+
         # Get the list of open testsets for the current user
         testsets_url = "test-sets"
         all_testsets = spira_client.make_spira_api_get_request(testsets_url)

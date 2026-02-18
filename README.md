@@ -190,21 +190,607 @@ To run the MCP server from within Kiro, you don't use the commands above, instea
 
 ## Usage Examples
 
-### Get Assigned Artifacts
+### Quick Start Examples
+
+#### Get Assigned Artifacts
 
 ```
-Get me my assigned tasks in Spira/
+Get me my assigned tasks in Spira
 ```
 
 ```
-Get me my assigned requirements in Spira/
+Get me my assigned requirements in Spira
 ```
 
-
-### View Project Structure
+#### View Project Structure
 
 ```
 List all projects in my organization and show me the iterations for the Development team
+```
+
+---
+
+## Detailed Usage Guide
+
+### JSON Output Examples
+
+All data-retrieval tools return structured JSON for programmatic processing by LLMs.
+
+#### Example 1: Get My Tasks (with Pagination)
+
+```python
+# Get first 25 tasks (default)
+result = get_my_tasks()
+
+# Response structure:
+{
+  "data": [
+    {
+      "TaskId": 123,
+      "Name": "Fix login bug",
+      "Description": "Users cannot log in with special characters",
+      "TaskStatusId": 2,
+      "TaskStatusName": "In Progress",
+      "TaskTypeId": 1,
+      "TaskTypeName": "Development",
+      "TaskPriorityId": 1,
+      "TaskPriorityName": "Critical",
+      "OwnerId": 5,
+      "OwnerName": "John Doe",
+      "EstimatedEffort": 120,
+      "ActualEffort": 60,
+      "RemainingEffort": 60,
+      "ProjectedEffort": 120,
+      "CompletionPercent": 50,
+      "StartDate": "2024-01-15T09:00:00Z",
+      "EndDate": "2024-01-16T17:00:00Z",
+      "CreationDate": "2024-01-10T08:00:00Z",
+      "LastUpdateDate": "2024-01-15T14:30:00Z",
+      "ReleaseId": 10,
+      "ReleaseVersionNumber": "1.5.0",
+      "RequirementId": 45,
+      "RequirementName": "User Authentication",
+      "ProjectId": 55,
+      "ProjectName": "Web Application",
+      "ComponentId": 3,
+      "CreatorId": 4,
+      "TaskFolderId": null,
+      "CustomProperties": [],
+      "Tags": "bug,security",
+      "IsAttachments": false
+    }
+  ],
+  "pagination": {
+    "limit": 25,
+    "offset": 0,
+    "returned_count": 25,
+    "total_count": 150,
+    "has_more": true,
+    "pagination_type": "client-side"
+  }
+}
+```
+
+#### Example 2: Get Products (Workspace Tool)
+
+```python
+# Get all products user has access to
+result = get_products()
+
+# Response structure:
+{
+  "data": [
+    {
+      "ProjectId": 55,
+      "Name": "Web Application",
+      "Description": "Main web application project",
+      "Active": true,
+      "CreationDate": "2023-01-15T10:00:00Z",
+      "ProjectGroupId": 10,
+      "ProjectTemplateId": 1,
+      "Website": "https://example.com",
+      "WorkingHours": 8,
+      "WorkingDays": 5,
+      "StartDate": "2023-01-01T00:00:00Z",
+      "EndDate": "2024-12-31T00:00:00Z",
+      "PercentComplete": 45,
+      "RequirementCount": 150
+    }
+  ]
+}
+```
+
+#### Example 3: Get Incidents (Product Artifact Tool)
+
+```python
+# Get incidents for a specific product
+result = get_incidents(product_id=55)
+
+# Response structure:
+{
+  "data": [
+    {
+      "IncidentId": 456,
+      "Name": "Login page crashes on mobile",
+      "Description": "The login page crashes when accessed from mobile devices",
+      "IncidentStatusId": 1,
+      "IncidentStatusName": "New",
+      "IncidentStatusOpenStatus": true,
+      "IncidentTypeId": 1,
+      "IncidentTypeName": "Bug",
+      "PriorityId": 1,
+      "PriorityName": "1 - Critical",
+      "SeverityId": 1,
+      "SeverityName": "1 - Critical",
+      "OwnerId": 5,
+      "OwnerName": "John Doe",
+      "OpenerId": 4,
+      "OpenerName": "Jane Smith",
+      "EstimatedEffort": 240,
+      "ActualEffort": 120,
+      "RemainingEffort": 120,
+      "ProjectedEffort": 240,
+      "CompletionPercent": 50,
+      "StartDate": "2024-01-15T09:00:00Z",
+      "EndDate": "2024-01-18T17:00:00Z",
+      "ClosedDate": null,
+      "CreationDate": "2024-01-14T10:00:00Z",
+      "LastUpdateDate": "2024-01-16T14:30:00Z",
+      "DetectedReleaseId": 8,
+      "DetectedReleaseVersionNumber": "1.4.0",
+      "ResolvedReleaseId": 10,
+      "ResolvedReleaseVersionNumber": "1.5.0",
+      "ProjectId": 55,
+      "ProjectName": "Web Application"
+    }
+  ]
+}
+```
+
+---
+
+### Pagination Usage Patterns
+
+#### Pattern 1: Get First Page (Default)
+
+```python
+# Get first 25 items (default behavior)
+result = get_my_tasks()
+data = json.loads(result)
+
+print(f"Showing {data['pagination']['returned_count']} of {data['pagination']['total_count']} tasks")
+# Output: Showing 25 of 150 tasks
+```
+
+#### Pattern 2: Get More Items
+
+```python
+# Get first 100 items
+result = get_my_tasks(limit=100, offset=0)
+data = json.loads(result)
+
+# Check if more items exist
+if data['pagination']['has_more']:
+    print(f"There are {data['pagination']['total_count'] - 100} more tasks")
+```
+
+#### Pattern 3: Paginate Through All Results
+
+```python
+# Get all tasks by paginating
+all_tasks = []
+limit = 50
+offset = 0
+
+while True:
+    result = get_my_tasks(limit=limit, offset=offset)
+    data = json.loads(result)
+
+    all_tasks.extend(data["data"])
+
+    if not data["pagination"]["has_more"]:
+        break
+
+    offset += limit
+
+print(f"Retrieved {len(all_tasks)} total tasks")
+```
+
+#### Pattern 4: Get Specific Page
+
+```python
+# Get page 3 (items 51-75)
+page = 3
+limit = 25
+offset = (page - 1) * limit
+
+result = get_my_tasks(limit=limit, offset=offset)
+```
+
+---
+
+### Formatting Tool Usage
+
+The `format_artifacts_as_markdown` tool converts JSON to human-readable markdown for **complex workflows** where data has been filtered or processed.
+
+#### When to Use Formatting Tool
+
+✅ **Use when:**
+- You've filtered JSON data (can't re-call API with filters)
+- You've aggregated or sorted data
+- You need consistent formatting across operations
+- You're combining multiple artifact types
+
+❌ **Don't use when:**
+- Simple display of unmodified API results (LLM can format naturally)
+- Programmatic processing (work with JSON directly)
+
+#### Example 1: Filter and Format
+
+```python
+# Get tasks
+tasks_json = get_my_tasks(limit=100)
+tasks = json.loads(tasks_json)
+
+# Filter for critical priority
+critical_tasks = [t for t in tasks["data"] if t["TaskPriorityName"] == "Critical"]
+
+# Format filtered results for display
+critical_json = json.dumps({"data": critical_tasks})
+markdown = format_artifacts_as_markdown(critical_json, "task")
+
+# Output:
+"""
+## Task [TK:123] - Fix login bug
+Users cannot log in with special characters
+- **Status:** In Progress
+- **Type:** Development
+- **Priority:** Critical
+- **Owner:** John Doe
+- **Effort:** 60/120 min (50% complete)
+- **Due Date:** 2024-01-16
+- **Release:** 1.5.0
+
+## Task [TK:124] - Update security documentation
+...
+"""
+```
+
+#### Example 2: Combine Multiple Artifact Types
+
+```python
+# Get tasks and incidents
+tasks = get_my_tasks()
+incidents = get_my_incidents()
+
+# Format both for combined display
+combined_markdown = (
+    "# My Tasks\n\n" +
+    format_artifacts_as_markdown(tasks, "task") +
+    "\n\n# My Incidents\n\n" +
+    format_artifacts_as_markdown(incidents, "incident")
+)
+```
+
+#### Example 3: Sort and Format
+
+```python
+# Get tasks
+tasks_json = get_my_tasks(limit=100)
+tasks = json.loads(tasks_json)
+
+# Sort by due date
+sorted_tasks = sorted(
+    tasks["data"],
+    key=lambda t: t.get("EndDate", "9999-12-31")
+)
+
+# Format sorted results
+sorted_json = json.dumps({"data": sorted_tasks})
+markdown = format_artifacts_as_markdown(sorted_json, "task")
+```
+
+---
+
+### Error Handling Examples
+
+All tools return structured error responses for validation failures and API errors.
+
+#### Example 1: Validation Error
+
+```python
+# Invalid pagination parameter
+result = get_my_tasks(limit=1000, offset=0)
+
+# Error response:
+{
+  "error": "Invalid pagination parameters",
+  "error_code": "INVALID_PARAMETER",
+  "details": {
+    "parameter": "limit",
+    "value": 1000,
+    "expected": "1-500"
+  },
+  "suggestion": "Use limit between 1 and 500"
+}
+```
+
+#### Example 2: Invalid Product ID
+
+```python
+# Negative product ID
+result = get_tasks(product_id=-1)
+
+# Error response:
+{
+  "error": "Invalid product_id parameter",
+  "error_code": "INVALID_VALUE",
+  "details": {
+    "parameter": "product_id",
+    "value": -1,
+    "expected": ">= 1"
+  },
+  "suggestion": "product_id must be >= 1"
+}
+```
+
+#### Example 3: API Error
+
+```python
+# API connection failure
+result = get_my_tasks()
+
+# Error response:
+{
+  "error": "Failed to retrieve tasks",
+  "error_code": "API_ERROR",
+  "details": {
+    "message": "Connection timeout"
+  },
+  "suggestion": "Check API connectivity and authentication"
+}
+```
+
+#### Error Handling Pattern
+
+```python
+result = get_my_tasks(limit=25, offset=0)
+data = json.loads(result)
+
+# Check for errors
+if "error" in data:
+    print(f"Error: {data['error']}")
+    print(f"Code: {data['error_code']}")
+    if "suggestion" in data:
+        print(f"Suggestion: {data['suggestion']}")
+    # Handle error appropriately
+else:
+    # Process successful response
+    tasks = data["data"]
+    pagination = data["pagination"]
+    print(f"Retrieved {pagination['returned_count']} tasks")
+```
+
+---
+
+### Common Workflow Examples
+
+#### Workflow 1: Find Overdue Tasks
+
+```python
+from datetime import datetime
+
+# Get all my tasks
+tasks_json = get_my_tasks(limit=100)
+tasks = json.loads(tasks_json)
+
+# Filter overdue tasks
+now = datetime.now()
+overdue = [
+    t for t in tasks["data"]
+    if t.get("EndDate") and datetime.fromisoformat(t["EndDate"].replace("Z", "+00:00")) < now
+]
+
+print(f"Found {len(overdue)} overdue tasks")
+```
+
+#### Workflow 2: Calculate Workload
+
+```python
+# Get all my tasks
+tasks_json = get_my_tasks(limit=500)
+tasks = json.loads(tasks_json)
+
+# Calculate effort totals
+total_estimated = sum(t.get("EstimatedEffort", 0) for t in tasks["data"])
+total_actual = sum(t.get("ActualEffort", 0) for t in tasks["data"])
+total_remaining = sum(t.get("RemainingEffort", 0) for t in tasks["data"])
+
+print(f"Workload Summary:")
+print(f"  Estimated: {total_estimated/60:.1f} hours")
+print(f"  Actual: {total_actual/60:.1f} hours")
+print(f"  Remaining: {total_remaining/60:.1f} hours")
+```
+
+#### Workflow 3: Group Tasks by Release
+
+```python
+from collections import defaultdict
+
+# Get all my tasks
+tasks_json = get_my_tasks(limit=100)
+tasks = json.loads(tasks_json)
+
+# Group by release
+by_release = defaultdict(list)
+for task in tasks["data"]:
+    release = task.get("ReleaseVersionNumber", "Unscheduled")
+    by_release[release].append(task)
+
+# Display summary
+for release, tasks in by_release.items():
+    print(f"{release}: {len(tasks)} tasks")
+```
+
+#### Workflow 4: Find Related Incidents
+
+```python
+# Get my tasks
+tasks_json = get_my_tasks(limit=100)
+tasks = json.loads(tasks_json)
+
+# Get my incidents
+incidents_json = get_my_incidents(limit=100)
+incidents = json.loads(incidents_json)
+
+# Find incidents with same release
+task_releases = {t.get("ReleaseId") for t in tasks["data"] if t.get("ReleaseId")}
+related_incidents = [
+    i for i in incidents["data"]
+    if i.get("ResolvedReleaseId") in task_releases
+]
+
+print(f"Found {len(related_incidents)} incidents related to your task releases")
+```
+
+---
+
+### Tool Categories and Examples
+
+#### MyWork Tools (with Pagination)
+
+```python
+# Get my tasks
+get_my_tasks(limit=25, offset=0)
+
+# Get my incidents
+get_my_incidents(limit=25, offset=0)
+
+# Get my requirements
+get_my_requirements(limit=25, offset=0)
+
+# Get my test cases
+get_my_testcases(limit=25, offset=0)
+
+# Get my test sets
+get_my_testsets(limit=25, offset=0)
+```
+
+#### Workspace Tools (no pagination)
+
+```python
+# Get all products
+get_products()
+
+# Get all programs
+get_programs()
+
+# Get all product templates
+get_product_templates()
+
+# Get specific product
+get_product_by_id(product_id=55)
+
+# Get products in a program
+get_program_products(program_id=10)
+
+# Get specific product template
+get_product_template(template_id=1)
+```
+
+#### Product Artifacts Tools
+
+```python
+# Get tasks in a product
+get_tasks(product_id=55)
+
+# Get incidents in a product
+get_incidents(product_id=55)
+
+# Get requirements in a product
+get_requirements(product_id=55)
+
+# Get test cases in a product
+get_test_cases(product_id=55)
+
+# Get test sets in a product
+get_test_sets(product_id=55)
+
+# Get releases in a product
+get_releases(product_id=55)
+
+# Get specific release
+get_release_by_id(product_id=55, release_id=10)
+
+# Get risks in a product
+get_risks(product_id=55)
+
+# Get test runs in a product
+get_test_runs(product_id=55)
+
+# Get automation hosts in a product
+get_automation_hosts(product_id=55)
+```
+
+#### Program Artifacts Tools
+
+```python
+# Get capabilities in a program
+get_capabilities(program_id=10)
+
+# Get milestones in a program
+get_milestones(program_id=10)
+```
+
+#### Template Configuration Tools
+
+```python
+# Get artifact types in a template
+get_artifact_types(template_id=1)
+
+# Get custom properties in a template
+get_custom_properties(template_id=1)
+```
+
+#### Automation Tools
+
+```python
+# Record automated test run
+record_automated_test_run(
+    product_id=55,
+    test_name="Login Test",
+    short_message="Test passed",
+    long_message="All login scenarios passed successfully",
+    error_count=0,
+    test_case_id=123,
+    execution_status_id=2  # 2 = Passed
+)
+
+# Create build
+create_build(
+    product_id=55,
+    release_id=10,
+    build_status_id=2,  # 2 = Passed
+    name="Build 1.5.0.123",
+    description="Production build for release 1.5.0",
+    commits=["abc123", "def456"]
+)
+```
+
+#### Specification Tools
+
+```python
+# Get requirements specification
+get_specification_requirements(product_id=55, release_id=10)
+
+# Get design specification
+get_specification_design(product_id=55, release_id=10)
+
+# Get tasks specification
+get_specification_tasks(product_id=55, release_id=10)
+
+# Get test cases specification
+get_specification_test_cases(product_id=55, release_id=10)
 ```
 
 ## Documentation

@@ -27,6 +27,11 @@ def _get_my_tasks_impl(spira_client, limit: int, offset: int) -> str:
         JSON string with paginated task data
     """
     try:
+        # Validate pagination parameters
+        validation_error = ParameterValidator.validate_pagination_params(limit, offset)
+        if validation_error:
+            return format_error_response(**validation_error)
+
         # Get the list of open tasks for the current user
         tasks_url = "tasks"
         all_tasks = spira_client.make_spira_api_get_request(tasks_url)

@@ -29,6 +29,11 @@ def _get_my_requirements_impl(spira_client, limit: int, offset: int) -> str:
         JSON string with paginated requirement data
     """
     try:
+        # Validate pagination parameters
+        validation_error = ParameterValidator.validate_pagination_params(limit, offset)
+        if validation_error:
+            return format_error_response(**validation_error)
+
         # Get the list of open requirements for the current user
         requirements_url = "requirements"
         all_requirements = spira_client.make_spira_api_get_request(requirements_url)

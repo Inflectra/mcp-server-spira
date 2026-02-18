@@ -25,6 +25,7 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
 5. Generate rich tool definitions and examples from OpenAPI spec
 6. Establish patterns for future tool development
 7. Achieve 80%+ test coverage for all modified tools
+8. Optimize tool documentation for efficient LLM parsing and reduced token usage
 
 ---
 
@@ -269,6 +270,46 @@ I want the version number to clearly indicate this is a breaking change so users
 
 **Rationale:**
 Version 1.0.0 signals a major release with breaking changes. Modern LLMs that use MCP are adaptable and will work with JSON output. The formatting tool provides a fallback for complex workflows.
+
+---
+
+### US-1.10: As an LLM, I need concise tool documentation for efficient parsing
+**Priority:** Medium
+**Story Points:** 3
+
+I want tool docstrings to be optimized for LLM consumption by reducing verbosity while maintaining clarity, so that I can parse tool definitions faster and use fewer tokens.
+
+**Acceptance Criteria:**
+- AC-1.10.1: Average docstring length reduced from ~150 lines to ~80 lines (47% reduction)
+- AC-1.10.2: Returns sections condensed from 50+ line JSON examples to 3-5 line structure descriptions
+- AC-1.10.3: Key Fields sections list only 8-10 most important fields per artifact type
+- AC-1.10.4: Key Fields sections reference shared documentation for complete field lists
+- AC-1.10.5: Error Response sections condensed to format description and common error codes
+- AC-1.10.6: Pagination notes standardized to single-line indicators
+- AC-1.10.7: Example Usage sections reduced to 3-5 lines with most common use case only
+- AC-1.10.8: Shared field reference document created at `docs/artifact_fields_reference.md`
+- AC-1.10.9: All 32 tools updated with optimized docstrings
+- AC-1.10.10: Optimized docstrings maintain clarity and essential information
+
+**Rationale:**
+Post-implementation review (TOOL_DOCUMENTATION_REVIEW.md) identified that comprehensive docstrings are too verbose for efficient LLM parsing. With 32 tools averaging ~150 lines per docstring (~4,800 lines total), LLMs spend significant tokens parsing documentation. Reducing verbosity by 47% while maintaining clarity will improve LLM performance and reduce token usage from ~60,000 to ~32,000 tokens.
+
+**Target Metrics:**
+- Total documentation: 4,800 lines → 2,560 lines (47% reduction)
+- Average docstring: 150 lines → 80 lines
+- Returns section: 50+ lines → 3-5 lines (save ~800 lines across 20 tools)
+- Key Fields section: 30+ lines → 10-15 lines (save ~400 lines across 20 tools)
+- Error Response section: 10 lines → 2-3 lines (save ~200 lines across 25 tools)
+- Pagination notes: 6 lines → 1 line (save ~60 lines across 15 tools)
+- Example Usage: 10+ lines → 3-5 lines (save ~125 lines across 25 tools)
+
+**Optimization Strategy:**
+1. Replace full JSON examples with concise structure descriptions
+2. List only essential fields, reference shared documentation for complete lists
+3. Simplify error response documentation to format and common codes
+4. Standardize pagination notes to single-line indicators
+5. Keep only most illustrative example per tool
+6. Create shared field reference to eliminate redundancy
 
 ---
 
@@ -682,12 +723,17 @@ The following are explicitly **not** included in this milestone:
 - 80%+ test coverage for modified code
 - 0 silent truncations in production
 - < 5% of tool calls result in validation errors
+- Average docstring length reduced to ~80 lines (47% reduction from ~150 lines)
+- Total documentation reduced to ~2,560 lines (47% reduction from ~4,800 lines)
+- Estimated LLM token usage reduced to ~32,000 tokens (47% reduction from ~60,000 tokens)
 
 ### Qualitative Metrics
 - LLMs can successfully filter and aggregate data
 - Tool documentation is clear without additional explanation
 - Developers can create new tools following established patterns
 - Human clarification requests are specific and actionable
+- Optimized docstrings maintain clarity while reducing verbosity
+- LLMs can parse tool definitions more efficiently
 
 ---
 

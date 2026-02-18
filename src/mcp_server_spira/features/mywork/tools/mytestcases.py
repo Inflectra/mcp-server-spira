@@ -28,6 +28,11 @@ def _get_my_testcases_impl(spira_client, limit: int, offset: int) -> str:
         JSON string with paginated test case data
     """
     try:
+        # Validate pagination parameters
+        validation_error = ParameterValidator.validate_pagination_params(limit, offset)
+        if validation_error:
+            return format_error_response(**validation_error)
+
         # Get the list of open testcases for the current user
         testcases_url = "test-cases"
         all_testcases = spira_client.make_spira_api_get_request(testcases_url)

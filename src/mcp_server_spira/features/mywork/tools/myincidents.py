@@ -28,6 +28,11 @@ def _get_my_incidents_impl(spira_client, limit: int, offset: int) -> str:
         JSON string with paginated incident data
     """
     try:
+        # Validate pagination parameters
+        validation_error = ParameterValidator.validate_pagination_params(limit, offset)
+        if validation_error:
+            return format_error_response(**validation_error)
+
         # Get the list of open incidents for the current user
         incidents_url = "incidents"
         all_incidents = spira_client.make_spira_api_get_request(incidents_url)
