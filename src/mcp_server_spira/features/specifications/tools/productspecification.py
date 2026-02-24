@@ -647,45 +647,29 @@ def register_tools(mcp) -> None:
     @mcp.tool()
     def get_specification_requirements(product_id: int, release_id: int | None) -> str:
         """
-        Retrieves the requirements specification file for the requested Spira product,
-        with the option to only return the specification for a selected product
-        release.
+        Retrieves the requirements specification file for the requested Spira product.
 
-        Use this tool when you need to download the requirements part of a product specification
-        so that it can be used in an agentic development environment such as Amazon Kiro
+        Use this for downloading the requirements part of a product specification
+        for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
-                       Must be a positive integer.
-            release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                       Must be a positive integer or None. If None, the specification
-                       for the entire project is returned.
+            product_id: The numeric ID of the product (e.g., 45 for PR:45)
+            release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
 
         Returns:
-            On success: Formatted string in markdown that contains the requirements
-            specification for the requested Spira product (or just the specific release
-            in that product). The data returned should be saved into a file called
-            requirements.md
+            Formatted markdown string containing the specification.
+            Includes: product overview, requirements with descriptions, acceptance criteria.
 
-            On error: JSON string with error details including error message, error code,
-            and suggestions for resolution.
+        Error Responses:
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
-        Example Success Response:
-            # Specification for My Product [PR:55]
-            ## Product Overview
-            ...
+        Example Usage:
+            # Get requirements for entire product
+            spec = get_specification_requirements(product_id=55, release_id=None)
 
-        Example Error Response:
-            {
-              "error": "Invalid product_id parameter",
-              "error_code": "INVALID_VALUE",
-              "details": {
-                "parameter": "product_id",
-                "value": -1,
-                "expected": ">= 1"
-              },
-              "suggestion": "product_id must be >= 1"
-            }
+            # Get requirements for specific release
+            spec = get_specification_requirements(product_id=55, release_id=12)
         """
         try:
             # Validate product_id
@@ -722,45 +706,29 @@ def register_tools(mcp) -> None:
     @mcp.tool()
     def get_specification_design(product_id: int, release_id: int | None) -> str:
         """
-        Retrieves the design specification file for the requested Spira product,
-        with the option to only return the specification for a selected product
-        release.
+        Retrieves the design specification file for the requested Spira product.
 
-        Use this tool when you need to download the design part of a product specification
-        so that it can be used in an agentic development environment such as Amazon Kiro
+        Use this for downloading the design part of a product specification
+        for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
-                       Must be a positive integer.
-            release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                       Must be a positive integer or None. If None, the specification
-                       for the entire project is returned.
+            product_id: The numeric ID of the product (e.g., 45 for PR:45)
+            release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
 
         Returns:
-            On success: Formatted string in markdown that contains the design
-            specification for the requested Spira product (or just the specific release
-            in that product). The data returned should be saved into a file called
-            design.md
+            Formatted markdown string containing the specification.
+            Includes: product overview, risks with descriptions, mitigations.
 
-            On error: JSON string with error details including error message, error code,
-            and suggestions for resolution.
+        Error Responses:
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
-        Example Success Response:
-            # Specification for My Product [PR:55]
-            ## Product Overview
-            ...
+        Example Usage:
+            # Get design for entire product
+            spec = get_specification_design(product_id=55, release_id=None)
 
-        Example Error Response:
-            {
-              "error": "Invalid product_id parameter",
-              "error_code": "INVALID_VALUE",
-              "details": {
-                "parameter": "product_id",
-                "value": -1,
-                "expected": ">= 1"
-              },
-              "suggestion": "product_id must be >= 1"
-            }
+            # Get design for specific release
+            spec = get_specification_design(product_id=55, release_id=12)
         """
         try:
             # Validate product_id
@@ -797,45 +765,29 @@ def register_tools(mcp) -> None:
     @mcp.tool()
     def get_specification_tasks(product_id: int, release_id: int | None) -> str:
         """
-        Retrieves the tasks specification file for the requested Spira product,
-        with the option to only return the specification for a selected product
-        release.
+        Retrieves the tasks specification file for the requested Spira product.
 
-        Use this tool when you need to download the tasks part of a product specification
-        so that it can be used in an agentic development environment such as Amazon Kiro
+        Use this for downloading the tasks part of a product specification
+        for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
-                       Must be a positive integer.
-            release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                       Must be a positive integer or None. If None, the specification
-                       for the entire project is returned.
+            product_id: The numeric ID of the product (e.g., 45 for PR:45)
+            release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
 
         Returns:
-            On success: Formatted string in markdown that contains the tasks
-            specification for the requested Spira product (or just the specific release
-            in that product). The data returned should be saved into a file called
-            tasks.md
+            Formatted markdown string containing the specification.
+            Includes: product overview, implementation plan with tasks grouped by requirement.
 
-            On error: JSON string with error details including error message, error code,
-            and suggestions for resolution.
+        Error Responses:
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
-        Example Success Response:
-            # Specification for My Product [PR:55]
-            ## Product Overview
-            ...
+        Example Usage:
+            # Get tasks for entire product
+            spec = get_specification_tasks(product_id=55, release_id=None)
 
-        Example Error Response:
-            {
-              "error": "Invalid product_id parameter",
-              "error_code": "INVALID_VALUE",
-              "details": {
-                "parameter": "product_id",
-                "value": -1,
-                "expected": ">= 1"
-              },
-              "suggestion": "product_id must be >= 1"
-            }
+            # Get tasks for specific release
+            spec = get_specification_tasks(product_id=55, release_id=12)
         """
         try:
             # Validate product_id
@@ -872,51 +824,29 @@ def register_tools(mcp) -> None:
     @mcp.tool()
     def get_specification_test_cases(product_id: int, release_id: int | None) -> str:
         """
-        Retrieves the test cases specification file for the requested Spira product,
-        with the option to only return the specification for a selected product
-        release.
+        Retrieves the test cases specification file for the requested Spira product.
 
-        Use this tool when you need to download the test cases part of a product specification
-        so that it can be used in an agentic development environment such as Amazon Kiro
-        This file will include:
-            - Detailed test scenarios and steps
-            - Expected results and pass/fail criteria
-            - Test data requirements
-            - Edge cases and negative testing scenarios
-            - Performance test specifications
+        Use this for downloading the test cases part of a product specification
+        for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
-                       Must be a positive integer.
-            release_id: The numeric ID of the release. If the ID is RL:12, just use 12.
-                       Must be a positive integer or None. If None, the specification
-                       for the entire project is returned.
+            product_id: The numeric ID of the product (e.g., 45 for PR:45)
+            release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
 
         Returns:
-            On success: Formatted string in markdown that contains the test cases
-            specification for the requested Spira product (or just the specific release
-            in that product). The data returned should be saved into a file called
-            test-cases.md
+            Formatted markdown string containing the specification.
+            Includes: product overview, test cases with steps, expected results, sample data.
 
-            On error: JSON string with error details including error message, error code,
-            and suggestions for resolution.
+        Error Responses:
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
-        Example Success Response:
-            # Specification for My Product [PR:55]
-            ## Product Overview
-            ...
+        Example Usage:
+            # Get test cases for entire product
+            spec = get_specification_test_cases(product_id=55, release_id=None)
 
-        Example Error Response:
-            {
-              "error": "Invalid product_id parameter",
-              "error_code": "INVALID_VALUE",
-              "details": {
-                "parameter": "product_id",
-                "value": -1,
-                "expected": ">= 1"
-              },
-              "suggestion": "product_id must be >= 1"
-            }
+            # Get test cases for specific release
+            spec = get_specification_test_cases(product_id=55, release_id=12)
         """
         try:
             # Validate product_id

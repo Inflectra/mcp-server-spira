@@ -80,15 +80,6 @@ def register_tools(mcp) -> None:
         server-side pagination. Use this for retrieving product-level
         requirement lists with filtering and sorting capabilities.
 
-        **API Endpoint**: POST /projects/{product_id}/requirements/search
-        **Query Parameters**: starting_row, number_of_rows
-        **Request Body**: [] (empty RemoteFilter array - no filtering
-            for now)
-
-        **Note**: This endpoint uses server-side pagination. The API
-        returns only the requested page of results. A dedicated filter
-        tool will be added in a future milestone.
-
         Args:
             product_id: The numeric ID of the product.
                 If the ID is PR:45, just use 45.
@@ -97,130 +88,32 @@ def register_tools(mcp) -> None:
             number_of_rows: The number of rows to return (default: 100)
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "RequirementId": 123,
-                        "Name": "User Authentication",
-                        "Description": "Implement secure user login system",
-                        "StatusId": 2,
-                        "StatusName": "In Progress",
-                        "RequirementTypeId": 1,
-                        "RequirementTypeName": "Feature",
-                        "ImportanceId": 1,
-                        "ImportanceName": "Critical",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "AuthorId": 4,
-                        "AuthorName": "Jane Smith",
-                        "EstimatePoints": 8.0,
-                        "EstimatedEffort": 480,
-                        "TaskEstimatedEffort": 450,
-                        "TaskActualEffort": 240,
-                        "TaskCount": 5,
-                        "PercentComplete": 50,
-                        "CoverageCountTotal": 10,
-                        "CoverageCountPassed": 6,
-                        "CoverageCountFailed": 2,
-                        "CoverageCountCaution": 1,
-                        "CoverageCountBlocked": 1,
-                        "StartDate": "2024-01-15T09:00:00Z",
-                        "EndDate": "2024-01-30T17:00:00Z",
-                        "CreationDate": "2024-01-10T08:00:00Z",
-                        "LastUpdateDate": "2024-01-20T14:30:00Z",
-                        "ReleaseId": 10,
-                        "ReleaseVersionNumber": "1.5.0",
-                        "ProjectId": 55,
-                        "ProjectName": "Web Application",
-                        "ComponentId": 3,
-                        "Summary": false,
-                        "IsSuspect": false,
-                        "CustomProperties": [],
-                        "Tags": "security,authentication",
-                        "IsAttachments": true
-                    }
-                ]
-            }
-
+            JSON string with structure: {"data": [requirement objects]}
+            See Key Fields section below for important requirement fields.
         Key Fields:
             - RequirementId: Unique identifier for the requirement
             - Name: The name of the requirement
-            - Description: The detailed description of the requirement
-            - StatusId/StatusName: Current status of the requirement
-            - RequirementTypeId/RequirementTypeName: Type of requirement
-                (Feature, Use Case, etc.)
+            - StatusId/StatusName: Current status
             - ImportanceId/ImportanceName: Priority/importance level
             - OwnerId/OwnerName: User the requirement is assigned to
-            - AuthorId/AuthorName: User who created the requirement
-            - EstimatePoints: Story points estimate (decimal)
-            - EstimatedEffort: Top-down effort estimate in minutes
-                (calculated from points)
-            - TaskEstimatedEffort: Bottom-up estimated effort from all
-                associated tasks (minutes)
-            - TaskActualEffort: Bottom-up actual effort from all
-                associated tasks (minutes)
-            - TaskCount: Number of tasks associated with this requirement
-            - PercentComplete: Percentage complete of the requirement
-            - CoverageCountTotal: Total number of test cases covering
-                this requirement
-            - CoverageCountPassed/Failed/Caution/Blocked: Test case
-                coverage breakdown by status
-            - StartDate: Scheduled start date for planning
-            - EndDate: Scheduled end date for planning
-            - CreationDate: When the requirement was originally created
-            - LastUpdateDate: When the requirement was last modified
+            - EstimatePoints: Story points estimate
+            - TaskCount: Number of associated tasks
+            - CoverageCountTotal: Total test cases covering this requirement
+            - PercentComplete: Percentage complete
             - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
-            - ProjectId/ProjectName: Project the requirement belongs to
-            - ComponentId: Component the requirement belongs to (null if none)
-            - Summary: Whether this is a summary requirement (parent)
-            - IsSuspect: Whether requirement is marked as suspect due to
-                dependent item changes
-            - CustomProperties: List of custom fields for this requirement
-            - Tags: Meta-tags associated with the requirement
-            - IsAttachments: Whether the requirement has attachments
 
-        When to Use:
-            - Getting requirement list for a specific product
-            - Retrieving requirements with server-side pagination
-            - Analyzing product-level requirement data
-            - Sprint planning and backlog grooming
-            - Tracking test coverage for requirements
-
+            Additional fields available: Description, RequirementTypeId/RequirementTypeName, AuthorId/AuthorName, EstimatedEffort, TaskEstimatedEffort, TaskActualEffort, CoverageCountPassed/Failed/Caution/Blocked, StartDate, EndDate, CreationDate, LastUpdateDate, ComponentId, Summary, IsSuspect, CustomProperties, Tags, IsAttachments
         Related Tools:
-            - get_my_requirements: Get requirements assigned to current user
-                (with client-side pagination)
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-
+            - get_my_requirements: Get requirements assigned to current user (with client-side pagination)
+            - format_artifacts_as_markdown: Format filtered/processed results for display
         Error Responses:
-            {
-                "error": "Invalid product_id parameter",
-                "error_code": "INVALID_VALUE",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "product_id must be >= 1"
-            }
-
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
         Example Usage:
-            # Get first 100 requirements from product 55
             requirements_json = get_requirements(product_id=55)
-            requirements = json.loads(requirements_json)
 
-            # Get next page of requirements
-            requirements_json = get_requirements(
-                product_id=55, starting_row=101, number_of_rows=100
-            )
-
-            # Process and filter results
-            requirements = json.loads(requirements_json)
-            critical_requirements = [
-                r for r in requirements["data"]
-                if r["ImportanceName"] == "Critical"
-            ]
+            # Get next page
+            requirements_json = get_requirements(product_id=55, starting_row=101, number_of_rows=100)
         """
         try:
             # Validate product_id

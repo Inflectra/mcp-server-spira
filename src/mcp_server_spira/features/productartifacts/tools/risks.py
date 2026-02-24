@@ -87,16 +87,6 @@ def register_tools(mcp) -> None:
         server-side pagination. Use this for retrieving product-level
         risk lists with filtering and sorting capabilities.
 
-        **API Endpoint**: POST /projects/{product_id}/risks/search
-        **Query Parameters**: starting_row, number_of_rows, sort_field,
-            sort_direction
-        **Request Body**: [] (empty RemoteFilter array - no filtering
-            for now)
-
-        **Note**: This endpoint uses server-side pagination. The API
-        returns only the requested page of results. A dedicated filter
-        tool will be added in a future milestone.
-
         Args:
             product_id: The numeric ID of the product.
                 If the ID is PR:45, just use 45.
@@ -109,106 +99,35 @@ def register_tools(mcp) -> None:
                 (default: "DESC")
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "RiskId": 123,
-                        "Name": "Database Performance Risk",
-                        "Description": "Risk of database performance degradation",
-                        "RiskStatusId": 2,
-                        "RiskStatusName": "Open",
-                        "RiskTypeId": 1,
-                        "RiskTypeName": "Technical",
-                        "RiskProbability": 3,
-                        "RiskImpact": 4,
-                        "RiskExposure": 12,
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "CreationDate": "2024-01-10T08:00:00Z",
-                        "LastUpdateDate": "2024-01-15T14:30:00Z",
-                        "ClosedDate": null,
-                        "RiskMitigations": [],
-                        "ProjectId": 55,
-                        "ProjectName": "Web Application",
-                        "ComponentId": 3,
-                        "ArtifactTypeId": 14,
-                        "ConcurrencyDate": "2024-01-15T14:30:00Z",
-                        "CustomProperties": [],
-                        "Tags": "performance,database",
-                        "IsAttachments": false
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [risk objects]}
+            See Key Fields section below for important risk fields.
 
         Key Fields:
             - RiskId: Unique identifier for the risk
             - Name: The name of the risk
-            - Description: Detailed description of the risk
-            - RiskStatusId/RiskStatusName: Current status of the risk
+            - RiskStatusId/RiskStatusName: Current status
             - RiskTypeId/RiskTypeName: Type of risk
-            - RiskProbability: Probability rating (1-5, 1=Very Low, 5=Very High)
-            - RiskImpact: Impact rating (1-5, 1=Very Low, 5=Very High)
+            - RiskProbability: Probability rating (1-5)
+            - RiskImpact: Impact rating (1-5)
             - RiskExposure: Calculated exposure (Probability × Impact)
             - OwnerId/OwnerName: User responsible for the risk
-            - CreationDate: When the risk was created
-            - LastUpdateDate: When the risk was last modified
-            - ClosedDate: When the risk was closed (null if still open)
-            - RiskMitigations: List of mitigation strategies
+            - ClosedDate: When closed (null if still open)
             - ProjectId/ProjectName: Project the risk belongs to
-            - ComponentId: Component the risk is associated with
-            - ArtifactTypeId: Type of artifact (14 for risks)
-            - ConcurrencyDate: Timestamp for optimistic concurrency control
-            - CustomProperties: List of custom fields for this risk
-            - Tags: Meta-tags associated with the risk
-            - IsAttachments: Whether the risk has attachments
 
-        When to Use:
-            - Getting risk list for a specific product
-            - Retrieving risks with server-side pagination
-            - Sorting risks by specific fields (e.g., RiskExposure)
-            - Analyzing product-level risk management
-            - Reviewing high-priority risks
+            Additional fields available: Description, CreationDate, LastUpdateDate, RiskMitigations, ComponentId, CustomProperties, Tags, IsAttachments
 
         Related Tools:
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
+            - format_artifacts_as_markdown: Format filtered/processed results for display
 
         Error Responses:
-            {
-                "error": "Invalid product_id parameter",
-                "error_code": "INVALID_VALUE",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "product_id must be >= 1"
-            }
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
-            # Get first 100 risks from product 55
             risks_json = get_risks(product_id=55)
-            risks = json.loads(risks_json)
-
-            # Get next page of risks
-            risks_json = get_risks(
-                product_id=55, starting_row=101, number_of_rows=100
-            )
 
             # Get risks sorted by exposure (highest first)
-            risks_json = get_risks(
-                product_id=55,
-                sort_field="RiskExposure",
-                sort_direction="DESC"
-            )
-
-            # Process and filter results
-            risks = json.loads(risks_json)
-            high_exposure_risks = [
-                r for r in risks["data"]
-                if r["RiskExposure"] >= 15
-            ]
+            risks_json = get_risks(product_id=55, sort_field="RiskExposure", sort_direction="DESC")
         """
         try:
             # Validate product_id

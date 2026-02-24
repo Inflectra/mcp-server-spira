@@ -71,195 +71,45 @@ def register_tools(mcp) -> None:
 
         Maps to Spira API: GET /incidents
 
-        This tool returns incidents where the current user is the Owner
-        (assigned to). Use this for personal incident lists, bug tracking,
-        or issue management.
-
-        **Pagination:** This endpoint uses CLIENT-SIDE pagination. The API
-        returns all incidents, and we slice the results in Python. This is
-        acceptable for "my work" queries which typically return < 500 items.
-        For large result sets, consider using project-level queries with
-        server-side pagination (available in Milestone 2+).
-
-        **For Display:** Modern LLMs can format JSON naturally for simple
-        display. For complex workflows where you've filtered or processed
-        the data, use format_artifacts_as_markdown() to ensure consistent
-        formatting.
+        Use this for personal incident lists, bug tracking, or issue management.
+        **Pagination:** Client-side (API returns all, sliced in Python).
 
         Args:
             limit: Maximum number of incidents to return (1-500, default: 25)
-                Controls result set size for pagination.
             offset: Number of incidents to skip (>= 0, default: 0)
-                Used for retrieving subsequent pages of results.
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "IncidentId": 456,
-                        "Name": "Login page crashes on mobile",
-                        "Description": "The login page crashes when accessed
-                            from mobile devices",
-                        "IncidentStatusId": 1,
-                        "IncidentStatusName": "New",
-                        "IncidentStatusOpenStatus": true,
-                        "IncidentTypeId": 1,
-                        "IncidentTypeName": "Bug",
-                        "PriorityId": 1,
-                        "PriorityName": "1 - Critical",
-                        "SeverityId": 1,
-                        "SeverityName": "1 - Critical",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "OwnerGuid": "abc-123",
-                        "OpenerId": 4,
-                        "OpenerName": "Jane Smith",
-                        "OpenerGuid": "def-456",
-                        "EstimatedEffort": 240,
-                        "ActualEffort": 120,
-                        "RemainingEffort": 120,
-                        "ProjectedEffort": 240,
-                        "CompletionPercent": 50,
-                        "StartDate": "2024-01-15T09:00:00Z",
-                        "EndDate": "2024-01-18T17:00:00Z",
-                        "ClosedDate": null,
-                        "CreationDate": "2024-01-14T10:00:00Z",
-                        "LastUpdateDate": "2024-01-16T14:30:00Z",
-                        "DetectedReleaseId": 8,
-                        "DetectedReleaseVersionNumber": "1.4.0",
-                        "DetectedReleaseGuid": "ghi-789",
-                        "ResolvedReleaseId": 10,
-                        "ResolvedReleaseVersionNumber": "1.5.0",
-                        "ResolvedReleaseGuid": "jkl-012",
-                        "VerifiedReleaseId": null,
-                        "VerifiedReleaseVersionNumber": null,
-                        "VerifiedReleaseGuid": null,
-                        "DetectedBuildId": 15,
-                        "DetectedBuildName": "Build 1.4.0.15",
-                        "FixedBuildId": null,
-                        "FixedBuildName": null,
-                        "ComponentIds": [3, 7],
-                        "TestRunStepIds": [101, 102],
-                        "ProjectId": 55,
-                        "ProjectName": "Web Application",
-                        "ProjectGuid": "mno-345",
-                        "ArtifactTypeId": 3,
-                        "ConcurrencyDate": "2024-01-16T14:30:00Z",
-                        "CustomProperties": [],
-                        "Tags": "mobile,critical,login",
-                        "IsAttachments": true,
-                        "Guid": "pqr-678"
-                    }
-                ],
-                "pagination": {
-                    "limit": 25,
-                    "offset": 0,
-                    "returned_count": 25,
-                    "total_count": 87,
-                    "has_more": true,
-                    "pagination_type": "client-side"
-                }
-            }
+            JSON string with structure: {"data": [incident objects], "pagination": {...}}
+            See Key Fields section below for important incident fields.
+            Full response structure documented in API.
 
         Key Fields:
             - IncidentId: Unique identifier for the incident
             - Name: The name/title of the incident
-            - Description: The detailed description of the incident
-            - IncidentStatusId/IncidentStatusName: Current status of the
-                incident
-            - IncidentStatusOpenStatus: Whether the incident is in an open
-                status (true) or closed (false)
-            - IncidentTypeId/IncidentTypeName: Type of incident (Bug,
-                Enhancement, Issue, etc.)
-            - PriorityId/PriorityName: Priority level (1-Critical to
-                5-Low)
-            - SeverityId/SeverityName: Severity level (1-Critical to
-                4-Low)
-            - OwnerId/OwnerName/OwnerGuid: User the incident is assigned to
-            - OpenerId/OpenerName/OpenerGuid: User who detected/reported
-                the incident
-            - EstimatedEffort: Original estimate in minutes to resolve the
-                incident
-            - ActualEffort: Time logged so far in minutes (increases as
-                work progresses)
-            - RemainingEffort: Developer's estimate of time remaining
-                (updated manually)
-            - ProjectedEffort: Calculated as ActualEffort + RemainingEffort
-            - CompletionPercent: Calculated as (ActualEffort /
-                ProjectedEffort) * 100
-            - StartDate: When work started on the incident
-            - EndDate: Scheduled completion date for the incident
-            - ClosedDate: When the incident was closed (null if still open)
-            - CreationDate: When the incident was originally created
-            - LastUpdateDate: When the incident was last modified
-            - DetectedReleaseId/DetectedReleaseVersionNumber/
-                DetectedReleaseGuid: Release where the incident was found
-            - ResolvedReleaseId/ResolvedReleaseVersionNumber/
-                ResolvedReleaseGuid: Release where the incident will be
-                fixed
-            - VerifiedReleaseId/VerifiedReleaseVersionNumber/
-                VerifiedReleaseGuid: Release where the fix was verified
-                (null if not yet verified)
-            - DetectedBuildId/DetectedBuildName: Build where the incident
-                was detected
-            - FixedBuildId/FixedBuildName: Build where the incident was
-                fixed (null if not yet fixed)
-            - ComponentIds: List of component IDs this incident belongs to
-            - TestRunStepIds: List of test run step IDs that relate to
-                this incident
-            - ProjectId/ProjectName/ProjectGuid: Project the incident
-                belongs to
-            - ArtifactTypeId: Type of artifact (3 for incidents)
-            - ConcurrencyDate: Timestamp for optimistic concurrency control
-            - CustomProperties: List of custom fields for this incident
-            - Tags: Meta-tags associated with the incident
-            - IsAttachments: Whether the incident has attachments
-            - Guid: Unique global identifier for the incident
+            - IncidentStatusId/IncidentStatusName: Current status
+            - PriorityId/PriorityName: Priority level (1-Critical to 5-Low)
+            - SeverityId/SeverityName: Severity level (1-Critical to 4-Low)
+            - OwnerId/OwnerName: User the incident is assigned to
+            - DetectedReleaseId/DetectedReleaseVersionNumber: Release where found
+            - ResolvedReleaseId/ResolvedReleaseVersionNumber: Release where fixed
+            - ClosedDate: When closed (null if still open)
+            - ProjectId/ProjectName: Project the incident belongs to
 
-        When to Use:
-            - Getting personal incident list for current user
-            - Tracking bugs and issues assigned to you
-            - Analyzing incident workload
-            - Finding incidents by status, priority, or severity (filter
-                the JSON)
+            Additional fields available: Description, IncidentTypeId/IncidentTypeName, OpenerId/OpenerName, EstimatedEffort, ActualEffort, RemainingEffort, ProjectedEffort, CompletionPercent, StartDate, EndDate, CreationDate, LastUpdateDate, VerifiedReleaseId/VerifiedReleaseVersionNumber, DetectedBuildId/DetectedBuildName, FixedBuildId/FixedBuildName, ComponentIds, TestRunStepIds, CustomProperties, Tags, IsAttachments, Guid
 
         Related Tools:
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-            - get_incident_by_id: Get single incident with full details
-                (future)
-            - search_incidents: Advanced filtering across all incidents
-                (future)
+            - format_artifacts_as_markdown: Format filtered/processed results for display
 
         Error Responses:
-            {
-                "error": "Invalid pagination parameters",
-                "error_code": "INVALID_PARAMETER",
-                "details": {
-                    "parameter": "limit",
-                    "value": 1000,
-                    "expected": "1-500"
-                },
-                "suggestion": "Use limit between 1 and 500"
-            }
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
             # Simple display - LLM formats naturally
             incidents_json = get_my_incidents()
-            # LLM can format this JSON for display without additional tools
 
             # Pagination - Get next page
             incidents_json = get_my_incidents(limit=25, offset=25)
-
-            # Complex workflow - Use formatting tool for filtered results
-            incidents_json = get_my_incidents(limit=100)
-            incidents = json.loads(incidents_json)
-            critical = [i for i in incidents["data"]
-                        if i["PriorityName"] == "1 - Critical"]
-            critical_json = json.dumps({"data": critical})
-            readable = format_artifacts_as_markdown(critical_json,
-                                                     "incident")
         """
         try:
             # Validate pagination parameters

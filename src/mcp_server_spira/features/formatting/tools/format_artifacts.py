@@ -28,66 +28,43 @@ def register_tools(mcp) -> None:
         """
         Converts artifact JSON to human-readable markdown format.
 
-        This tool is designed for complex workflows where you've filtered, sorted,
-        or processed artifact data and need consistent markdown formatting. For simple
-        display of unmodified results, modern LLMs can format JSON naturally.
+        Use for complex workflows where you've filtered or processed artifact data
+        and need consistent markdown formatting. For simple display, LLMs can format
+        JSON naturally without this tool.
 
         Args:
-            artifact_json: JSON string containing artifact data
-                Can be full response with pagination or just data array.
-                Can be filtered/modified JSON from processing.
-            artifact_type: Type of artifact to format
-                One of: "task", "incident", "requirement", "test_case", "test_set"
+            artifact_json: JSON string (full response with pagination or data array)
+            artifact_type: One of: "task", "incident", "requirement", "test_case", "test_set"
 
         Returns:
-            Markdown formatted string with artifact information, suitable for
-            displaying to users.
+            Markdown formatted string with artifact information.
+            Format varies by artifact type but includes key fields like status, priority, owner.
 
         When to Use:
             - After filtering or processing JSON data
-            - When you need consistent formatting across multiple operations
             - When combining multiple artifact types in one display
-            - When LLM's natural formatting isn't sufficient
+            - When consistent formatting is required across operations
 
         When NOT to Use:
-            - Simple "show me my tasks" requests (LLM can format naturally)
+            - Simple display requests (LLM can format naturally)
             - Direct display of unmodified API results
-            - When LLM's natural formatting quality is acceptable
 
-        Example Output (for tasks):
-            ## Task [TK:123] - Fix login bug
-            Users cannot log in with special characters
-            - **Status:** In Progress
-            - **Type:** Development
-            - **Priority:** Critical
-            - **Owner:** John Doe
-            - **Effort:** 60/120 min (50% complete)
-            - **Due Date:** 2024-01-16
-            - **Release:** 1.5.0
+        Related Tools:
+            - get_my_tasks: Get tasks assigned to current user
+            - get_my_incidents: Get incidents assigned to current user
+            - get_my_requirements: Get requirements assigned to current user
+            - get_my_testcases: Get test cases assigned to current user
+            - get_my_testsets: Get test sets assigned to current user
 
-            ## Task [TK:124] - Update documentation
-            ...
+        Error Responses:
+            Returns error string with description.
+            Common errors: Invalid JSON, unknown artifact type, missing required fields
 
         Example Usage:
-            # Filter then format
             tasks_json = get_my_tasks(limit=100)
             tasks = json.loads(tasks_json)
             critical = [t for t in tasks["data"] if t["TaskPriorityName"] == "Critical"]
-            critical_json = json.dumps({"data": critical})
-            display = format_artifacts_as_markdown(critical_json, "task")
-
-            # Combine multiple artifact types
-            tasks = get_my_tasks()
-            incidents = get_my_incidents()
-            combined = format_artifacts_as_markdown(tasks, "task") + "\\n\\n" + \\
-                       format_artifacts_as_markdown(incidents, "incident")
-
-        Error Responses:
-            Returns error message string if:
-            - Invalid JSON input
-            - Unknown artifact type
-            - Missing required fields in artifact data
-            - Empty artifact list
+            display = format_artifacts_as_markdown(json.dumps({"data": critical}), "task")
         """
         try:
             # Parse JSON input

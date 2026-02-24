@@ -63,79 +63,38 @@ def register_tools(mcp) -> None:
 
         Maps to Spira API: GET /programs/{program_id}/capabilities/search
 
-        This tool returns all capabilities in a program. Capabilities are high-level
-        features or epics that span multiple products/projects within a program.
+        Capabilities are high-level features or epics that span multiple products/projects within a program.
 
         Args:
             program_id: The numeric ID of the program. If the ID is PG:45, just use 45.
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "CapabilityId": 123,
-                        "Name": "User Authentication",
-                        "Description": "Implement secure user login system",
-                        "CapabilityStatusId": 2,
-                        "CapabilityStatusName": "In Progress",
-                        "CapabilityTypeId": 1,
-                        "CapabilityTypeName": "Feature",
-                        "CapabilityPriorityId": 1,
-                        "CapabilityPriorityName": "Critical",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "CreationDate": "2024-01-10T08:00:00Z",
-                        "LastUpdateDate": "2024-01-20T14:30:00Z",
-                        "StartDate": "2024-01-15T09:00:00Z",
-                        "EndDate": "2024-03-30T17:00:00Z",
-                        "ProgramId": 10,
-                        "ProgramName": "Engineering Programs"
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [capability objects]}
+            See Key Fields section below for important capability fields.
+            Full response structure documented in API.
 
         Key Fields:
             - CapabilityId: Unique identifier for the capability
             - Name: The name of the capability
-            - Description: Detailed description of the capability
             - CapabilityStatusId/CapabilityStatusName: Current status
-            - CapabilityTypeId/CapabilityTypeName: Type of capability
             - CapabilityPriorityId/CapabilityPriorityName: Priority level
             - OwnerId/OwnerName: User responsible for the capability
             - StartDate/EndDate: Planned timeline
             - ProgramId/ProgramName: Parent program
 
-        When to Use:
-            - Getting list of capabilities in a program
-            - Understanding program-level features and epics
-            - Analyzing program scope and priorities
-            - Finding capabilities by status or priority (filter the JSON)
+            Additional fields available: Description, CapabilityTypeId/CapabilityTypeName, CreationDate, LastUpdateDate, CustomProperties
 
         Related Tools:
             - get_milestones: Get program milestones
             - get_programs: Get list of programs
 
         Error Responses:
-            {
-                "error": "Invalid program_id parameter",
-                "error_code": "INVALID_PARAMETER",
-                "details": {
-                    "parameter": "program_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "program_id must be >= 1"
-            }
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
-            # Get all capabilities in a program
             capabilities_json = get_capabilities(program_id=10)
             capabilities = json.loads(capabilities_json)
-
-            # Filter by status
-            in_progress = [c for c in capabilities["data"]
-                          if c["CapabilityStatusName"] == "In Progress"]
         """
         try:
             spira_client = get_spira_client()

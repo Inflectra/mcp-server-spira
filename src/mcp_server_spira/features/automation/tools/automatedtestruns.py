@@ -185,71 +185,32 @@ def register_tools(mcp) -> None:
         execution_status_id: int,
     ) -> str:
         """
-        Records an automated test result in Spira
+        Records an automated test result in Spira.
 
         Maps to Spira API: POST /projects/{product_id}/test-runs/record
 
-        Use this tool when you need to:
-        - Push the results of an automated software test into Spira
-        - Record test execution results from CI/CD pipelines
-        - Track automated test outcomes for quality metrics
+        Use this to push automated test results from CI/CD pipelines into Spira for quality tracking.
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
+            product_id: The numeric ID of the product (e.g., 55 for PR:55)
             test_name: The name of the test being run
-            short_message: A short description (50 characters or less) of the result of the test execution
-            long_message: The full description of the testing outcome, in plain text format
-            error_count: The number of errors that happened during the test (0 if none)
-            test_case_id: The ID of the test case in Spira being executed, without the TC prefix (e.g. TC:12 would be 12)
-            execution_status_id: The ID of the execution status of the test:
-                - 1 = Failed
-                - 2 = Passed
-                - 3 = Not Run
-                - 4 = N/A
-                - 5 = Blocked
-                - 6 = Caution
+            short_message: Brief result description (50 chars or less)
+            long_message: Full test outcome description in plain text
+            error_count: Number of errors during test (0 if none)
+            test_case_id: Test case ID without TC prefix (e.g., 12 for TC:12)
+            execution_status_id: Status (1=Failed, 2=Passed, 3=Not Run, 4=N/A, 5=Blocked, 6=Caution)
 
         Returns:
-            JSON string with structure:
-            {
-                "test_run_id": "TR:123",
-                "message": "Test run recorded successfully"
-            }
+            JSON: {"test_run_id": "TR:123", "message": "Test run recorded successfully"}
 
         Error Responses:
-            {
-                "error": "product_id must be a positive integer",
-                "error_code": "INVALID_PARAMETER",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "Use product_id >= 1"
-            }
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
-            # Record a passing test
             result = record_automated_test_run(
-                product_id=55,
-                test_name="test_user_login",
-                short_message="Login test passed",
-                long_message="User successfully logged in with valid credentials",
-                error_count=0,
-                test_case_id=123,
-                execution_status_id=2
-            )
-            # Returns: {"test_run_id": "TR:456", "message": "Test run recorded successfully"}
-
-            # Record a failing test
-            result = record_automated_test_run(
-                product_id=55,
-                test_name="test_user_login",
-                short_message="Login test failed",
-                long_message="AssertionError: Expected status 200, got 500",
-                error_count=1,
-                test_case_id=123,
-                execution_status_id=1
+                product_id=55, test_name="test_login", short_message="Passed",
+                long_message="Login successful", error_count=0, test_case_id=123, execution_status_id=2
             )
         """
         try:

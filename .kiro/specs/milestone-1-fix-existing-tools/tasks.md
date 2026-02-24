@@ -552,20 +552,32 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
   - Ensure version is bumped to 1.0.0
   - Ask the user if ready to release
 
-- [ ] 19. Optimize tool docstrings for LLM consumption
+- [x] 19. Optimize tool docstrings for LLM consumption
   - Reduce verbosity in tool documentation based on TOOL_DOCUMENTATION_REVIEW.md findings
   - Target: Reduce average docstring length from ~150 lines to ~80 lines (47% reduction)
   - _Requirements: US-1.10 (Concise Tool Documentation)_
 
-  - [ ] 19.1 Condense Returns sections across all tools
+  - [x] 19.1 Condense Returns sections across all tools
     - Replace full JSON examples with concise structure descriptions
     - Change from 50+ line JSON examples to 3-5 line summaries
     - Format: "JSON: {"data": [artifacts], "pagination": {...}}" with reference to Key Fields
     - Apply to all 32 tools (mywork, product artifacts, workspace, program, template, automation, specification)
     - _Target: Save ~40 lines per tool × 20 tools = 800 lines_
     - _Requirements: AC-1.10.2_
+    - **Status: Partially complete - 14/24 files done (58%)**
+    - **Completed:** All 5 MyWork tools + All 9 Product Artifacts tools
+    - **Remaining:** 3 Workspace, 2 Program, 2 Template, 2 Automation, 4 Specification tools
 
-  - [ ] 19.2 Reduce Key Fields sections to essential fields only
+  - [x] 19.1.1 Complete remaining Returns section condensing
+    - Update 3 Workspace tools: products.py (3 tools), programs.py, product_templates.py (2 tools)
+    - Update 2 Program artifacts tools: capabilities.py, milestones.py
+    - Update 2 Template configuration tools: artifacttypes.py, customproperties.py
+    - Update 2 Automation tools: automatedtestruns.py, builds.py
+    - Update 4 Specification tools in productspecification.py
+    - _Target: Complete remaining 10 files containing 13 tools_
+    - _Requirements: AC-1.10.2_
+
+  - [x] 19.2 Reduce Key Fields sections to essential fields only
     - List only 8-10 most important fields per artifact type
     - Add note: "Additional fields available: [list], see API documentation for complete list"
     - Create shared field reference for common artifact types (tasks, incidents, requirements, test cases, test sets)
@@ -573,50 +585,274 @@ Transform existing MCP tools from markdown-based output to JSON-first architectu
     - _Target: Save ~20 lines per tool × 20 tools = 400 lines_
     - _Requirements: AC-1.10.3, AC-1.10.4_
 
-  - [ ] 19.3 Simplify Error Response documentation
-    - Replace full JSON error examples with concise format description
-    - Change to: "Returns structured JSON with error, error_code, details, and suggestion"
-    - List common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
-    - Apply to all tools with error handling
-    - _Target: Save ~8 lines per tool × 25 tools = 200 lines_
-    - _Requirements: AC-1.10.5_
+  - [x] 19.3 Update design.md with docstring best practices
+    - Add "Docstring Best Practices for MCP Tools" section to design.md
+    - Define hard line limits per section (50 lines total max per tool)
+    - Document all prohibited patterns with before/after examples:
+      - Dead file references (e.g. `See docs/artifact_fields_reference.md`)
+      - References to non-existent / future tools
+      - Pseudo-code with undefined functions (e.g. `is_late()`)
+      - Internal implementation details (client-side slicing, milestone roadmap notes)
+      - Full JSON examples in Returns sections
+    - Define required docstring structure and section order
+    - Provide a canonical reference example (get_my_tasks) showing compliant output
+    - Document the docstring compliance test that enforces the 50-line limit
+    - _This task is the reference all per-file tasks below depend on. Complete it first._
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
+    - **STATUS: COMPLETE** - Section added to design.md on 2026-02-23
 
-  - [ ] 19.4 Standardize and condense pagination notes
-    - Replace 6-line pagination explanations with single-line indicator
-    - Format: "**Pagination:** Client-side (retrieves all, slices in Python)" or "**Pagination:** Server-side (API returns requested page only)"
-    - Apply to all paginated tools (mywork tools, product artifact tools)
-    - _Target: Save ~4 lines per tool × 15 tools = 60 lines_
-    - _Requirements: AC-1.10.6_
+  - [x] 19.4 Write docstring compliance test
+    - Create `tests/test_docstring_compliance.py`
+    - Import all registered MCP tools by loading the server
+    - For each tool, count lines in `tool.__doc__`
+    - Assert each docstring is <= 50 lines; report line count for all tools
+    - This test must pass before any per-file task below is considered done
+    - Run as part of standard `pytest` suite (no special flags needed)
+    - _Requirements: AC-1.10.1, AC-1.8.9_
 
-  - [ ] 19.5 Condense Example Usage sections
-    - Reduce from 10+ lines to 3-5 lines with most common use case only
-    - Remove redundant examples that duplicate information from other sections
-    - Keep only the most illustrative example per tool
-    - Apply to all tools with example sections
-    - _Target: Save ~5 lines per tool × 25 tools = 125 lines_
-    - _Requirements: AC-1.10.7_
+  - [x] 19.5 Rewrite docstrings: mywork tools
+    - Apply the canonical docstring pattern from design.md to all 5 files
+    - **Instructions for each file:**
+      - Remove all `See docs/artifact_fields_reference.md` references
+      - Remove all `(future)` tool references from Related Tools
+      - Remove all pseudo-code examples with undefined functions
+      - Replace multi-line pagination explanation with single line: `**Pagination:** Client-side (API returns all, sliced in Python).`
+      - Replace full JSON Returns block with 3-line structure description
+      - Reduce Example Usage to max 4 lines of real executable code
+      - Reduce Key Fields to 8-10 fields + one `Additional fields available:` line
+      - Reduce Error Responses to 2 lines
+      - Verify final docstring is <= 50 lines
+    - **Files:**
+      - `src/mcp_server_spira/features/mywork/tools/mytasks.py`
+      - `src/mcp_server_spira/features/mywork/tools/myincidents.py`
+      - `src/mcp_server_spira/features/mywork/tools/myrequirements.py`
+      - `src/mcp_server_spira/features/mywork/tools/mytestcases.py`
+      - `src/mcp_server_spira/features/mywork/tools/mytestsets.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
 
-  - [ ] 19.6 Create shared field reference documentation
-    - Create `docs/artifact_fields_reference.md` with detailed field descriptions for each artifact type
-    - Include: Tasks, Incidents, Requirements, Test Cases, Test Sets, Releases, Risks, Test Runs
-    - Document all fields once with comprehensive descriptions
-    - Reference this document from tool docstrings instead of repeating field descriptions
-    - _Benefit: Eliminates redundancy across 20+ tools_
-    - _Requirements: AC-1.10.8_
+  - [x] 19.6 Rewrite docstrings: productartifacts tools
+    - Apply the canonical docstring pattern from design.md to all 9 files
+    - Same instructions as 19.5
+    - **Files:**
+      - `src/mcp_server_spira/features/productartifacts/tools/tasks.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/incidents.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/requirements.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/testcases.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/testsets.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/releases.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/risks.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/testruns.py`
+      - `src/mcp_server_spira/features/productartifacts/tools/automationhosts.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
 
-  - [ ] 19.7 Verify optimized docstrings maintain clarity
-    - Review sample of optimized docstrings (5-10 tools across different categories)
-    - Ensure essential information is preserved
-    - Confirm LLMs can still understand tool purpose and usage
-    - Test with actual LLM queries if possible
-    - _Requirements: AC-1.10.9, AC-1.10.10_
+  - [x] 19.7 Rewrite docstrings: workspace tools
+    - Apply the canonical docstring pattern from design.md to all 3 files
+    - Same instructions as 19.5
+    - **Files:**
+      - `src/mcp_server_spira/features/workspaces/tools/products.py`
+      - `src/mcp_server_spira/features/workspaces/tools/programs.py`
+      - `src/mcp_server_spira/features/workspaces/tools/product_templates.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
 
-- [ ] 20. Final verification of optimized documentation
-  - Confirm average docstring length reduced to ~80 lines
-  - Verify total documentation reduced from ~4,800 to ~2,560 lines
-  - Ensure all tools remain fully functional with condensed documentation
-  - Update TOOL_DOCUMENTATION_REVIEW.md with "After Optimization" metrics
+  - [x] 19.8 Rewrite docstrings: programartifacts tools
+    - Apply the canonical docstring pattern from design.md to both files
+    - Same instructions as 19.5
+    - **Files:**
+      - `src/mcp_server_spira/features/programartifacts/tools/capabilities.py`
+      - `src/mcp_server_spira/features/programartifacts/tools/milestones.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
+
+  - [x] 19.9 Rewrite docstrings: templateconfiguration tools
+    - Apply the canonical docstring pattern from design.md to both files
+    - Same instructions as 19.5
+    - **Files:**
+      - `src/mcp_server_spira/features/templateconfiguration/tools/artifacttypes.py`
+      - `src/mcp_server_spira/features/templateconfiguration/tools/customproperties.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
+
+  - [x] 19.10 Rewrite docstrings: automation tools
+    - Apply the canonical docstring pattern from design.md to both files
+    - Same instructions as 19.5; note these are write tools not list tools - no pagination section needed
+    - **Files:**
+      - `src/mcp_server_spira/features/automation/tools/automatedtestruns.py`
+      - `src/mcp_server_spira/features/automation/tools/builds.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
+
+  - [x] 19.11 Rewrite docstrings: specification tools
+    - Apply the canonical docstring pattern from design.md
+    - Same instructions as 19.5; note these return markdown not JSON - Returns section should reflect that
+    - **Files:**
+      - `src/mcp_server_spira/features/specifications/tools/productspecification.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
+
+  - [x] 19.12 Rewrite docstrings: formatting tool
+    - Apply the canonical docstring pattern from design.md
+    - Same instructions as 19.5; remove any pseudo-code examples with undefined functions
+    - **Files:**
+      - `src/mcp_server_spira/features/formatting/tools/format_artifacts.py`
+    - _Requirements: AC-1.10.1 through AC-1.10.10_
+
+- [x] 20. Thematic verification: dead references
+  - Scan all tool files for any remaining `See docs/` or file path references in docstrings
+  - Run: `grep -r "See docs/" src/mcp_server_spira/features/`
+  - Run: `grep -r "\.md" src/mcp_server_spira/features/` and review each hit
+  - All hits must be removed or replaced with inline text
+  - _Requirements: AC-1.10.4_
+
+- [x] 21. Thematic verification: phantom tool references
+  - Scan all tool files for `(future)` references in docstrings
+  - Run: `grep -r "future" src/mcp_server_spira/features/`
+  - Cross-check every tool name listed in any `Related Tools:` section against the actual registered tools in `server.py`
+  - Remove any reference to a tool that does not currently exist
+  - _Requirements: AC-1.10.9_
+
+- [x] 22. Thematic verification: pseudo-code and undefined functions
+  - Scan all Example Usage sections for function calls that are not MCP tools or standard Python builtins
+  - Run: `grep -rn "is_late\|is_overdue\|filter_by\|parse_date" src/mcp_server_spira/features/`
+  - Replace any such examples with real executable code or remove them
+  - _Requirements: AC-1.10.9_
+
+- [x] 23. Thematic verification: implementation detail leakage
+  - Scan all docstrings for roadmap/milestone references
+  - Run: `grep -rn "Milestone [0-9]" src/mcp_server_spira/features/`
+  - Run: `grep -rn "client-side\|server-side\|slices in Python\|slice the results" src/mcp_server_spira/features/`
+  - All multi-line implementation explanations must be reduced to the single-line format defined in design.md
+  - _Requirements: AC-1.10.6_
+
+- [x] 24. Run docstring compliance test suite and enforce 50-line limit
+  - Run `pytest tests/test_docstring_compliance.py -v`
+  - Every tool must pass the 50-line limit check
+  - Fix any remaining violations found
+  - Run full test suite to confirm no regressions: `pytest --tb=short`
+  - Record final per-tool line counts in a comment at the top of `tests/test_docstring_compliance.py`
   - _Requirements: AC-1.10.1_
+
+- [x] 25. General sanity check - identify any new problems
+  - Read through 3 randomly selected tool docstrings from different feature areas
+  - Check each against the design.md canonical example for any issues not covered by the thematic checks above
+  - Look specifically for: confusing wording, missing Args documentation, incorrect return type descriptions, sections in wrong order
+  - Fix any issues found and document them in a comment in this task
+  - _Requirements: AC-1.10.9, AC-1.10.10_
+  - **Initial findings (6 tools checked):**
+    - Specification tools (4): Unclear Returns section for markdown output - FIXED
+    - get_risks: Missing blank lines between sections - FIXED
+    - Issue rate: ~33% (2 out of 6 tools had issues)
+  - **Action: Comprehensive check of ALL tools needed**
+
+  - [x] 25.1 Sanity check: MyWork tools (5 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools (e.g., `get_task_by_id (future)`)
+      - ❌ Pseudo-code with undefined functions (e.g., `is_late()`, `filter_by()`)
+      - ❌ Multi-line pagination explanations (use single line: `**Pagination:** Client-side`)
+      - ❌ Full JSON examples in Returns sections (use 3-line structure description)
+    - Check all 5 tools in `src/mcp_server_spira/features/mywork/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Key Fields, Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: mytasks.py, myincidents.py, myrequirements.py, mytestcases.py, mytestsets.py_
+
+  - [x] 25.2 Sanity check: ProductArtifacts tools (9 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Multi-line pagination explanations
+      - ❌ Full JSON examples in Returns sections
+    - Check all 9 tools in `src/mcp_server_spira/features/productartifacts/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Key Fields, Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: tasks.py, incidents.py, requirements.py, testcases.py, testsets.py, releases.py, risks.py, testruns.py, automationhosts.py_
+
+  - [x] 25.3 Sanity check: Workspace tools (3 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Multi-line pagination explanations
+      - ❌ Full JSON examples in Returns sections
+    - Check all 3 tools in `src/mcp_server_spira/features/workspaces/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Key Fields, Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: products.py (3 tools), programs.py, product_templates.py (2 tools)_
+
+  - [x] 25.4 Sanity check: ProgramArtifacts tools (2 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Multi-line pagination explanations
+      - ❌ Full JSON examples in Returns sections
+    - Check all 2 tools in `src/mcp_server_spira/features/programartifacts/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Key Fields, Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: capabilities.py, milestones.py_
+
+  - [x] 25.5 Sanity check: TemplateConfiguration tools (2 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Multi-line pagination explanations
+      - ❌ Full JSON examples in Returns sections
+    - Check all 2 tools in `src/mcp_server_spira/features/templateconfiguration/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Key Fields, Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: artifacttypes.py, customproperties.py_
+
+  - [x] 25.6 Sanity check: Automation tools (2 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Full JSON examples in Returns sections (no pagination for write ops)
+    - Check all 2 tools in `src/mcp_server_spira/features/automation/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Examples (no Key Fields for write ops)
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: automatedtestruns.py, builds.py_
+
+  - [x] 25.7 Sanity check: Specification tools (4 tools)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Full markdown examples in Returns sections (these return markdown, not JSON)
+    - Check all 4 tools in `src/mcp_server_spira/features/specifications/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns (markdown not JSON), Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: productspecification.py (4 tools)_
+
+  - [x] 25.8 Sanity check: Formatting tool (1 tool)
+    - **CRITICAL: Follow design.md section "Docstring Best Practices for MCP Tools" (lines 2400-2625)**
+    - **FORBIDDEN PATTERNS (design.md lines 2450-2500):**
+      - ❌ `See docs/artifact_fields_reference.md` references
+      - ❌ References to non-existent/future tools
+      - ❌ Pseudo-code with undefined functions
+      - ❌ Full examples in Returns sections
+    - Check the formatting tool in `src/mcp_server_spira/features/formatting/tools/`
+    - Verify: structure, formatting, blank lines, Args, Returns, Examples
+    - Fix any issues found
+    - Document findings in this subtask
+    - _Files: format_artifacts.py_
+
+  - [x] 25.9 Final verification and summary
+    - Run full docstring compliance test: `pytest tests/test_docstring_compliance.py -v`
+    - Verify all 33 tools pass
+    - Create summary report of all issues found and fixed across all subtasks
+    - Confirm 100% of tools are now compliant with canonical format
 
 ---
 

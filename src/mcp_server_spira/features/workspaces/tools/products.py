@@ -11,7 +11,6 @@ from mcp_server_spira.features.common.responses import (
     format_error_response,
     format_success_response,
 )
-from mcp_server_spira.features.formatting import format_product
 
 
 def _get_product_by_id_impl(spira_client, product_id: int) -> str:
@@ -24,7 +23,7 @@ def _get_product_by_id_impl(spira_client, product_id: int) -> str:
             just use 45.
 
     Returns:
-        Formatted string containing the product definition
+        JSON string containing the product details
     """
     try:
         # Get the product by its ID
@@ -32,14 +31,22 @@ def _get_product_by_id_impl(spira_client, product_id: int) -> str:
         product = spira_client.make_spira_api_get_request(product_url)
 
         if not product:
-            return "There was no product with that ID available"
+            return format_error_response(
+                error="Product not found",
+                error_code=ErrorCodes.NOT_FOUND,
+                details={"product_id": product_id},
+                suggestion=("Verify the product ID is correct and you have access to it"),
+            )
 
-        # Format the product into human readable data
-        product_info = format_product(product)
-
-        return product_info
+        # Return product as JSON
+        return format_success_response(data=[product])
     except Exception as e:
-        return f"There was a problem using this tool: {e}"
+        return format_error_response(
+            error="Failed to retrieve product",
+            error_code=ErrorCodes.API_ERROR,
+            details={"product_id": product_id, "message": str(e)},
+            suggestion="Check API connectivity and authentication",
+        )
 
 
 def _get_products_impl(spira_client) -> str:
@@ -76,7 +83,7 @@ def _get_products_impl(spira_client) -> str:
 def _get_program_products_impl(spira_client, program_id: int) -> str:
     """
     Implementation of retrieving the list of Spira products (projects)
-    the current user has access to
+    that belong to a specific program
 
     Args:
         spira_client: The Inflectra Spira API client instance
@@ -84,7 +91,7 @@ def _get_program_products_impl(spira_client, program_id: int) -> str:
             just use 45.
 
     Returns:
-        Formatted string containing the list of available products
+        JSON string containing the list of products in the program
     """
     try:
         # Get the list of available products for the current user
@@ -92,20 +99,21 @@ def _get_program_products_impl(spira_client, program_id: int) -> str:
         products = spira_client.make_spira_api_get_request(products_url)
 
         if not products:
-            return "The program does not contain any products."
+            return format_success_response(data=[])
 
-        # Loop through and only include the products that are part of
-        # the specified program
-        # Format the products into human readable data
-        formatted_results = []
-        for product in products:
-            if product["ProjectGroupId"] == program_id:
-                product_info = format_product(product)
-                formatted_results.append(product_info)
+        # Filter products that belong to the specified program
+        program_products = [
+            product for product in products if product.get("ProjectGroupId") == program_id
+        ]
 
-        return "\n\n".join(formatted_results)
+        return format_success_response(data=program_products)
     except Exception as e:
-        return f"There was a problem using this tool: {e}"
+        return format_error_response(
+            error="Failed to retrieve program products",
+            error_code=ErrorCodes.API_ERROR,
+            details={"program_id": program_id, "message": str(e)},
+            suggestion="Check API connectivity and authentication",
+        )
 
 
 def register_tools(mcp) -> None:
@@ -122,108 +130,44 @@ def register_tools(mcp) -> None:
         Retrieves a list of the products (projects) that the current
         user has access to
 
-        Use this tool when you need to:
-        - View the list of products that a user has access to
-        - Get information about multiple products at once
-        - Access the full description and selected fields of products
+        Maps to Spira API: GET /projects
+
+        Use this to discover available products before querying
+        product-specific data.
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "ProjectId": 55,
-                        "Name": "Web Application",
-                        "Description": "Main web application project",
-                        "Active": true,
-                        "CreationDate": "2023-01-15T10:00:00Z",
-                        "ProjectGroupId": 10,
-                        "ProjectTemplateId": 1,
-                        "Website": "https://example.com",
-                        "WorkingHours": 8,
-                        "WorkingDays": 5,
-                        "NonWorkingHours": 0,
-                        "StartDate": "2023-01-01T00:00:00Z",
-                        "EndDate": "2024-12-31T00:00:00Z",
-                        "PercentComplete": 45,
-                        "RequirementCount": 150,
-                        "WorkspaceTypeId": 1,
-                        "Guid": "abc-123-def-456",
-                        "LastUpdatedDate": "2024-01-15T10:00:00Z",
-                        "ArtifactTypeId": 1,
-                        "ConcurrencyGuid": "xyz-789",
-                        "CustomProperties": []
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [product objects]}
+            See Key Fields section below for important product fields.
+            Full response structure documented in API.
 
         Key Fields:
-            - ProjectId: Unique identifier for the product (use this in
-                other tool calls)
+            - ProjectId: Unique identifier (use in other tool calls)
             - Name: Display name of the product
-            - Description: Detailed description of the product
-            - Active: Whether the product is currently active (boolean)
+            - Active: Whether the product is currently active
+            - ProjectGroupId: Program/group this product belongs to
             - CreationDate: When the product was created
-                (ISO 8601 datetime)
-            - ProjectGroupId: ID of the program/group this product
-                belongs to (null if none)
-            - ProjectTemplateId: ID of the template used for this
-                product
-            - Website: URL associated with the product
-            - WorkingHours: Number of working hours per day (integer)
-            - WorkingDays: Number of working days per week (integer)
-            - NonWorkingHours: Special non-working hours per month
-                (integer)
-            - StartDate: Planned start date for the product
-                (ISO 8601 datetime, nullable)
-            - EndDate: Planned end date for the product
-                (ISO 8601 datetime, nullable)
-            - PercentComplete: Overall completion percentage (integer)
-            - RequirementCount: Total number of requirements in the
-                product (integer)
-            - WorkspaceTypeId: Type of workspace (integer)
-            - Guid: Unique global identifier (string)
-            - LastUpdatedDate: Last modification timestamp
-                (ISO 8601 datetime, nullable)
-            - ArtifactTypeId: Type of artifact (integer)
-            - ConcurrencyGuid: Used for optimistic concurrency control
-                (string)
-            - CustomProperties: Array of custom fields for this product
+            - PercentComplete: Overall completion percentage
+            - RequirementCount: Total number of requirements
 
-        When to Use:
-            - Discovering available products for the current user
-            - Listing products for user selection
-            - Validating product IDs before other operations
-            - Getting product metadata for reporting
+            Additional fields available: Description, ProjectTemplateId,
+            Website, WorkingHours, WorkingDays, NonWorkingHours,
+            StartDate, EndDate, LastUpdatedDate, CustomProperties, Guid
 
         Related Tools:
-            - get_product_by_id: Get detailed information for a single
-                product
             - get_programs: Get program-level groupings
             - get_product_templates: Get available templates
 
         Error Responses:
-            {
-                "error": "Failed to retrieve products",
-                "error_code": "API_ERROR",
-                "details": {
-                    "message": "Connection timeout"
-                },
-                "suggestion": "Check API connectivity and authentication"
-            }
+            Returns structured JSON with error, error_code, details, and
+            suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
-            # Get all products
             products_json = get_products()
             products = json.loads(products_json)
-
-            # Filter active products
-            active_products = [p for p in products["data"]
-                               if p["Active"]]
-
-            # Find product by name
-            web_app = next((p for p in products["data"]
-                            if "Web" in p["Name"]), None)
+            for product in products["data"]:
+                print(f"Product {product['ProjectId']}: "
+                      f"{product['Name']}")
         """
         try:
             spira_client = get_spira_client()
@@ -239,26 +183,62 @@ def register_tools(mcp) -> None:
     @mcp.tool()
     def get_product_by_id(product_id: int) -> str:
         """
-        Retrieves a single product by its ID value
+        Retrieves the details of a single product in the specified
+        product
+
+        Maps to Spira API: GET /projects/{product_id}
 
         Use this tool when you need to:
-        - View the details of a single product
-        - Access the full description and selected fields of products
+        - View the details of a single product in the specified product
+        - Access the full description and selected fields of the product
 
         Args:
-            product_id: The numeric ID of the product. If the ID is
-                PR:45, just use 45.
+            product_id: The numeric ID of the product.
+                If the ID is PR:45, just use 45.
 
         Returns:
-            Formatted string containing comprehensive information for the
-            requested product, including name, id, description and key
-            fields, formatted as markdown with clear section headings
+            JSON string with structure: {"data": [product object]}
+            See Key Fields section below for important product fields.
+            Full response structure documented in API.
+
+        Key Fields:
+            - ProjectId: Unique identifier (use in other tool calls)
+            - Name: Display name of the product
+            - Active: Whether the product is currently active
+            - ProjectGroupId: Program/group this product belongs to
+            - CreationDate: When the product was created
+            - PercentComplete: Overall completion percentage
+            - RequirementCount: Total number of requirements
+
+            Additional fields available: Description, ProjectTemplateId,
+            Website, WorkingHours, WorkingDays, NonWorkingHours,
+            StartDate, EndDate, LastUpdatedDate, CustomProperties, Guid
+
+        Related Tools:
+            - get_products: Get list of products for a product
+            - get_programs: Get program-level groupings
+
+        Error Responses:
+            Returns structured JSON with error, error_code, details, and
+            suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
+
+        Example Usage:
+            product_json = get_product_by_id(product_id=55)
+            product = json.loads(product_json)
+            product_data = product["data"][0]
+            print(f"Product: {product_data['Name']}")
         """
         try:
             spira_client = get_spira_client()
             return _get_product_by_id_impl(spira_client, product_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error="Failed to retrieve product",
+                error_code=ErrorCodes.API_ERROR,
+                details={"product_id": product_id, "message": str(e)},
+                suggestion="Check API connectivity and authentication",
+            )
 
     @mcp.tool()
     def get_program_products(program_id: int) -> str:
@@ -266,23 +246,57 @@ def register_tools(mcp) -> None:
         Retrieves a list of the products (projects) that belong to the
         specified program
 
+        Maps to Spira API: GET /projects (filtered by program)
+
         Use this tool when you need to:
         - View the list of products that belong to a specific program
         - Get information about multiple products at once
         - Access the full description and selected fields of products
 
         Args:
-            program_id: The numeric ID of the program. If the ID is
-                PG:45, just use 45.
+            program_id: The numeric ID of the program.
+                If the ID is PG:45, just use 45.
 
         Returns:
-            Formatted string containing comprehensive information for the
-            requested list of products, including name, id, description
-            and key fields, formatted as markdown with clear section
-            headings
+            JSON string with structure: {"data": [product objects]}
+            See Key Fields section below for important product fields.
+            Full response structure documented in API.
+
+        Key Fields:
+            - ProjectId: Unique identifier (use in other tool calls)
+            - Name: Display name of the product
+            - Active: Whether the product is currently active
+            - ProjectGroupId: Program/group this product belongs to
+            - CreationDate: When the product was created
+            - PercentComplete: Overall completion percentage
+            - RequirementCount: Total number of requirements
+
+            Additional fields available: Description, ProjectTemplateId,
+            Website, WorkingHours, WorkingDays, NonWorkingHours,
+            StartDate, EndDate, LastUpdatedDate, CustomProperties, Guid
+
+        Related Tools:
+            - get_products: Get all products user has access to
+            - get_programs: Get program-level groupings
+
+        Error Responses:
+            Returns structured JSON with error, error_code, details, and
+            suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
+
+        Example Usage:
+            products_json = get_program_products(program_id=10)
+            products = json.loads(products_json)
+            for product in products["data"]:
+                print(f"Product: {product['Name']}")
         """
         try:
             spira_client = get_spira_client()
             return _get_program_products_impl(spira_client, program_id)
         except Exception as e:
-            return f"Error: {str(e)}"
+            return format_error_response(
+                error="Failed to retrieve program products",
+                error_code=ErrorCodes.API_ERROR,
+                details={"program_id": program_id, "message": str(e)},
+                suggestion="Check API connectivity and authentication",
+            )

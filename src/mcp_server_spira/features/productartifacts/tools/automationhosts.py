@@ -83,15 +83,6 @@ def register_tools(mcp) -> None:
         server-side pagination. Use this for retrieving product-level
         automation host lists.
 
-        **API Endpoint**: POST /projects/{product_id}/automation-hosts/search
-        **Query Parameters**: starting_row, number_of_rows
-        **Request Body**: [] (empty RemoteFilter array - no filtering
-            for now)
-
-        **Note**: This endpoint uses server-side pagination. The API
-        returns only the requested page of results. A dedicated filter
-        tool will be added in a future milestone.
-
         Args:
             product_id: The numeric ID of the product.
                 If the ID is PR:45, just use 45.
@@ -100,84 +91,28 @@ def register_tools(mcp) -> None:
             number_of_rows: The number of rows to return (default: 100)
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "AutomationHostId": 123,
-                        "Name": "Build Server 01",
-                        "Token": "host-token-abc123",
-                        "Description": "Primary build and test automation host",
-                        "LastUpdateDate": "2024-01-15T14:30:00Z",
-                        "Active": true,
-                        "LastContactDate": "2024-01-16T10:00:00Z",
-                        "ProjectId": 55,
-                        "ProjectGuid": "abc-123-def-456",
-                        "ArtifactTypeId": 9,
-                        "ConcurrencyDate": "2024-01-15T14:30:00Z",
-                        "CustomProperties": [],
-                        "IsAttachments": false,
-                        "Tags": "ci,automation",
-                        "Guid": "xyz-789-ghi-012"
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [automation host objects]}
+            See Key Fields section below for important automation host fields.
 
         Key Fields:
             - AutomationHostId: Unique identifier for the automation host
             - Name: The name of the host
             - Token: The authentication token for the host
-            - Description: Detailed description of the host
-            - LastUpdateDate: When the host was last modified
-            - Active: Whether this host is active for the project
-            - LastContactDate: The last time this host was contacted
-                (null if never contacted)
-            - ProjectId/ProjectGuid: Project the host belongs to
-            - ArtifactTypeId: Type of artifact (9 for automation hosts)
-            - ConcurrencyDate: Timestamp for optimistic concurrency control
-            - CustomProperties: List of custom fields for this host
-            - IsAttachments: Whether the host has attachments
-            - Tags: Meta-tags associated with the host
-            - Guid: Unique global identifier for the host
+            - Active: Whether this host is active
+            - LastContactDate: Last time this host was contacted
+            - ProjectId: Project the host belongs to
 
-        When to Use:
-            - Getting automation host list for a specific product
-            - Retrieving hosts with server-side pagination
-            - Analyzing product-level automation infrastructure
-            - Finding available hosts for test execution
-
+            Additional fields available: Description, LastUpdateDate, CustomProperties, Tags, IsAttachments, Guid
         Related Tools:
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-
+            - format_artifacts_as_markdown: Format filtered/processed results for display
         Error Responses:
-            {
-                "error": "Invalid product_id parameter",
-                "error_code": "INVALID_VALUE",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "product_id must be >= 1"
-            }
-
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
         Example Usage:
-            # Get first 100 automation hosts from product 55
             hosts_json = get_automation_hosts(product_id=55)
-            hosts = json.loads(hosts_json)
 
-            # Get next page of hosts
-            hosts_json = get_automation_hosts(
-                product_id=55, starting_row=101, number_of_rows=100
-            )
-
-            # Process and filter results
-            hosts = json.loads(hosts_json)
-            active_hosts = [
-                h for h in hosts["data"]
-                if h["Active"]
-            ]
+            # Get next page
+            hosts_json = get_automation_hosts(product_id=55, starting_row=101, number_of_rows=100)
         """
         try:
             # Validate product_id

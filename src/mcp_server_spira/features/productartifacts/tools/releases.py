@@ -115,15 +115,6 @@ def register_tools(mcp) -> None:
         server-side pagination. Use this for retrieving product-level
         release lists with filtering and sorting capabilities.
 
-        **API Endpoint**: POST /projects/{product_id}/releases/search
-        **Query Parameters**: start_row, number_rows
-        **Request Body**: [] (empty RemoteFilter array - no filtering
-            for now)
-
-        **Note**: This endpoint uses server-side pagination. The API
-        returns only the requested page of results. A dedicated filter
-        tool will be added in a future milestone.
-
         Args:
             product_id: The numeric ID of the product.
                 If the ID is PR:45, just use 45.
@@ -132,140 +123,33 @@ def register_tools(mcp) -> None:
             number_rows: The number of rows to return (default: 100)
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "ReleaseId": 10,
-                        "Name": "Release 1.5.0",
-                        "Description": "Major feature release",
-                        "VersionNumber": "1.5.0",
-                        "ReleaseStatusId": 2,
-                        "ReleaseStatusName": "In Progress",
-                        "ReleaseTypeId": 1,
-                        "ReleaseTypeName": "Major Release",
-                        "Active": true,
-                        "Summary": false,
-                        "CreatorId": 4,
-                        "CreatorName": "Jane Smith",
-                        "CreatorGuid": "def-456",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "OwnerGuid": "abc-123",
-                        "IndentLevel": "1",
-                        "StartDate": "2024-01-01T00:00:00Z",
-                        "EndDate": "2024-03-31T00:00:00Z",
-                        "CreationDate": "2023-12-01T10:00:00Z",
-                        "LastUpdateDate": "2024-01-15T14:30:00Z",
-                        "ResourceCount": 5,
-                        "DaysNonWorking": 10,
-                        "PlannedEffort": 2400,
-                        "AvailableEffort": 1200,
-                        "TaskEstimatedEffort": 1800,
-                        "TaskActualEffort": 900,
-                        "TaskCount": 25,
-                        "FullName": "Release 1.5.0",
-                        "CountBlocked": 2,
-                        "CountCaution": 1,
-                        "CountFailed": 3,
-                        "CountNotApplicable": 0,
-                        "CountNotRun": 5,
-                        "CountPassed": 15,
-                        "PercentComplete": 50,
-                        "RequirementCount": 12,
-                        "RequirementPoints": 34.5,
-                        "ProjectId": 55,
-                        "ProjectGuid": "mno-345",
-                        "ArtifactTypeId": 4,
-                        "ConcurrencyDate": "2024-01-15T14:30:00Z",
-                        "CustomProperties": [],
-                        "Tags": "major,feature",
-                        "IsAttachments": true,
-                        "Guid": "pqr-678"
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [release objects]}
+            See Key Fields section below for important release fields.
 
         Key Fields:
             - ReleaseId: Unique identifier for the release
             - Name: The name of the release
-            - Description: The detailed description of the release
-            - VersionNumber: The version number string (e.g., "1.5.0")
-            - ReleaseStatusId/ReleaseStatusName: Current status of the
-                release
-            - ReleaseTypeId/ReleaseTypeName: Type of release
-                (Major, Minor, etc.)
-            - Active: Whether the release is active for the project
-            - Summary: Whether this is a summary release with child
-                releases
-            - CreatorId/CreatorName/CreatorGuid: User who created the
-                release
-            - OwnerId/OwnerName/OwnerGuid: User the release is assigned to
-            - IndentLevel: Indentation level for hierarchical display
-            - StartDate: Scheduled start date for the release
-            - EndDate: Scheduled end date for the release
-            - CreationDate: When the release was originally created
-            - LastUpdateDate: When the release was last modified
-            - ResourceCount: Number of people working on the release
-            - DaysNonWorking: Non-working days in the release period
-            - PlannedEffort: Estimated planned effort in minutes
-            - AvailableEffort: Remaining effort available for planning
-            - TaskEstimatedEffort: Total estimated effort from all tasks
-            - TaskActualEffort: Total actual effort from all tasks
-            - TaskCount: Number of tasks scheduled for this release
-            - FullName: Full name and version number combined
-            - CountBlocked/CountCaution/CountFailed/CountNotApplicable/
-                CountNotRun/CountPassed: Test case execution counts
-            - PercentComplete: Percentage complete of the release
-            - RequirementCount: Number of requirements in this release
-            - RequirementPoints: Total story points from requirements
-            - ProjectId/ProjectGuid: Project the release belongs to
-            - ArtifactTypeId: Type of artifact (4 for releases)
-            - ConcurrencyDate: Timestamp for optimistic concurrency control
-            - CustomProperties: List of custom fields for this release
-            - Tags: Meta-tags associated with the release
-            - IsAttachments: Whether the release has attachments
-            - Guid: Unique global identifier for the release
+            - VersionNumber: Version number string (e.g., '1.5.0')
+            - ReleaseStatusId/ReleaseStatusName: Current status
+            - StartDate/EndDate: Scheduled timeline
+            - PercentComplete: Percentage complete
+            - TaskCount: Number of tasks in this release
+            - RequirementCount: Number of requirements
+            - CountPassed/CountFailed: Test execution results
+            - ProjectId: Project the release belongs to
 
-        When to Use:
-            - Getting release list for a specific product
-            - Retrieving releases with server-side pagination
-            - Planning sprints and iterations
-            - Analyzing release progress and metrics
-
+            Additional fields available: Description, ReleaseTypeId/ReleaseTypeName, CreatorId/CreatorName, OwnerId/OwnerName, Active, Summary, IndentLevel, FullName, CreationDate, LastUpdateDate, ResourceCount, DaysNonWorking, PlannedEffort, AvailableEffort, TaskEstimatedEffort, TaskActualEffort, CountBlocked/CountCaution/CountNotApplicable/CountNotRun, RequirementPoints, CustomProperties, Tags, IsAttachments, Guid
         Related Tools:
             - get_release_by_id: Get single release with full details
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-
+            - format_artifacts_as_markdown: Format filtered/processed results for display
         Error Responses:
-            {
-                "error": "Invalid product_id parameter",
-                "error_code": "INVALID_VALUE",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "product_id must be >= 1"
-            }
-
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
         Example Usage:
-            # Get first 100 releases from product 55
             releases_json = get_releases(product_id=55)
-            releases = json.loads(releases_json)
 
-            # Get next page of releases
-            releases_json = get_releases(
-                product_id=55, start_row=101, number_rows=100
-            )
-
-            # Process and filter results
-            releases = json.loads(releases_json)
-            active_releases = [
-                r for r in releases["data"]
-                if r["Active"] and not r["Summary"]
-            ]
+            # Get next page
+            releases_json = get_releases(product_id=55, start_row=101, number_rows=100)
         """
         try:
             # Validate product_id
@@ -312,9 +196,8 @@ def register_tools(mcp) -> None:
 
         Maps to Spira API: GET /projects/{product_id}/releases/{release_id}
 
-        Use this tool when you need to:
-        - View the details of a single release in the specified product
-        - Access the full description and selected fields of the release
+        Use this tool when you need to view the details of a single release
+        in the specified product.
 
         Args:
             product_id: The numeric ID of the product.
@@ -323,54 +206,23 @@ def register_tools(mcp) -> None:
                 If the ID is RL:12, just use 12.
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "ReleaseId": 10,
-                        "Name": "Release 1.5.0",
-                        "Description": "Major feature release",
-                        "VersionNumber": "1.5.0",
-                        "ReleaseStatusId": 2,
-                        "ReleaseStatusName": "In Progress",
-                        ... (same fields as get_releases)
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [release object]}
+            See Key Fields section below for important release fields.
+            Full response structure documented in API.
 
         Key Fields:
             Same as get_releases - see that tool for field descriptions
-
-        When to Use:
-            - Getting details of a specific release by ID
-            - Retrieving full release information including metrics
-            - Checking release status and progress
 
         Related Tools:
             - get_releases: Get list of releases for a product
             - format_artifacts_as_markdown: Format for display
 
         Error Responses:
-            {
-                "error": "Failed to retrieve release",
-                "error_code": "API_ERROR",
-                "details": {
-                    "message": "Release not found",
-                    "product_id": 55,
-                    "release_id": 999
-                },
-                "suggestion": "Check API connectivity, authentication, "
-                    "and that the product_id and release_id are valid"
-            }
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
-            # Get specific release
             release_json = get_release_by_id(product_id=55, release_id=10)
-            release = json.loads(release_json)
-            release_data = release["data"][0]
-            print(f"Release: {release_data['Name']}")
-            print(f"Status: {release_data['ReleaseStatusName']}")
-            print(f"Progress: {release_data['PercentComplete']}%")
         """
         try:
             # Validate product_id

@@ -2396,3 +2396,229 @@ def format_artifacts_as_markdown(
 ---
 
 **End of Design Document**
+
+---
+
+## Docstring Best Practices for MCP Tools
+
+**Last Updated:** 2026-02-23
+**Status:** Authoritative - all tool docstrings MUST comply with this section.
+
+This section was added after a post-implementation review identified that LLM-generated docstrings introduced several critical problems. Every rule below exists to prevent a specific class of failure.
+
+---
+
+### Hard Limits
+
+| Constraint | Limit | Rationale |
+|---|---|---|
+| Max docstring length (per tool) | 50 lines | Docstrings are loaded into LLM context on every tool call. 30+ tools × 150 lines = ~60,000 tokens wasted before any work happens. |
+| Max lines in Args section | 8 lines | One line per param plus type hint is sufficient. |
+| Max lines in Returns section | 5 lines | Describe the structure, not a full JSON example. |
+| Max lines in Key Fields section | 12 lines | List only the 8-10 fields an LLM actually needs to reason about. |
+| Max lines in Example Usage | 4 lines | One realistic call. No multi-step pseudo-workflows. |
+| Max lines in Error Responses | 2 lines | Format description + common codes only. |
+| Pagination note | 1 line | Single indicator only. |
+
+A test (`tests/test_docstring_compliance.py`) enforces the 50-line hard limit on all registered MCP tools. Any tool exceeding this limit will cause the test suite to fail.
+
+---
+
+### Prohibited Patterns
+
+These patterns are **banned** from all tool docstrings. Each one was found in production code and caused real problems.
+
+#### 1. Dead file references
+```python
+# ❌ BANNED - file is not accessible at runtime
+See docs/artifact_fields_reference.md for complete field descriptions.
+
+# ✅ CORRECT - inline the essential info or omit
+Additional fields available: Description, CreationDate, LastUpdateDate, Guid
+```
+**Why:** When the MCP server is deployed, the LLM has no access to the filesystem. References to local markdown files are dead links that waste tokens and mislead.
+
+#### 2. References to non-existent tools
+```python
+# ❌ BANNED - tool does not exist yet
+Related Tools:
+    - get_task_by_id: Get single task with full details (future)
+    - search_tasks: Advanced filtering across all tasks (future)
+
+# ✅ CORRECT - only list tools that actually exist
+Related Tools:
+    - format_artifacts_as_markdown: Format filtered results for display
+```
+**Why:** An LLM will attempt to call tools listed in docstrings. Calling a non-existent tool causes a hard failure. Never list `(future)` tools.
+
+#### 3. Pseudo-code with undefined functions
+```python
+# ❌ BANNED - is_late() does not exist
+late_tasks = [t for t in tasks["data"] if is_late(t["EndDate"])]
+
+# ✅ CORRECT - only use standard Python or actual tool calls
+late_tasks = [t for t in tasks["data"] if t["EndDate"] < "2026-01-01"]
+```
+**Why:** LLMs follow examples literally. Undefined functions in examples cause runtime errors.
+
+#### 4. Internal implementation details
+```python
+# ❌ BANNED - LLM does not need to know this
+**Pagination:** This endpoint uses CLIENT-SIDE pagination. The API
+returns all tasks, and we slice the results in Python. This is
+acceptable for "my work" queries which typically return < 500 items.
+For large result sets, consider using project-level queries with
+server-side pagination (available in Milestone 2+).
+
+# ✅ CORRECT
+**Pagination:** Client-side (API returns all, sliced in Python).
+```
+**Why:** Implementation details consume tokens without helping the LLM use the tool correctly. "Milestone 2+" is a development roadmap note with zero operational value.
+
+#### 5. Full JSON examples in Returns
+```python
+# ❌ BANNED - 40+ lines of JSON in the docstring
+Returns:
+    JSON string with structure:
+    {
+        "data": [
+            {
+                "TaskId": 123,
+                "Name": "Fix login bug",
+                "Description": "Users cannot log in with special characters",
+                "TaskStatusId": 2,
+                "TaskStatusName": "In Progress",
+                ... (30 more lines)
+            }
+        ],
+        "pagination": { ... }
+    }
+
+# ✅ CORRECT
+Returns:
+    JSON string with structure: {"data": [task objects], "pagination": {...}}
+    See Key Fields section below for important task fields.
+    Full response structure documented in API.
+```
+**Why:** The LLM does not need a full JSON example to call the tool. It needs to know the top-level shape and which fields matter.
+
+#### 6. Roadmap / milestone references
+```python
+# ❌ BANNED
+server-side pagination (available in Milestone 2+)
+For large result sets, consider using project-level queries (future)
+
+# ✅ CORRECT - omit entirely
+```
+**Why:** These are internal planning notes. They have no operational meaning to a deployed LLM and waste tokens.
+
+---
+
+### Required Structure
+
+Every tool docstring MUST follow this structure in this order. Omit sections that don't apply rather than leaving them empty.
+
+```python
+def tool_name(param1: type, param2: type = default) -> str:
+    """
+    One sentence describing what this tool does. (1 line)
+
+    Maps to Spira API: METHOD /endpoint (1 line, omit for non-API tools)
+
+    Optional: 1-2 sentence context on when to use this tool.
+
+    Args:
+        param1: Description with example value if helpful. (1 line each)
+        param2: Description (default: X). (1 line each)
+
+    Returns:
+        JSON string with structure: {"data": [...], "pagination": {...}}
+        See Key Fields section below for important fields.
+
+    Key Fields:
+        - FieldName: What it means and when it matters.
+        (8-10 fields max. List only fields an LLM needs to reason about.)
+        Additional fields available: Field1, Field2, Field3, ...
+
+    Related Tools:
+        - existing_tool_name: One line description. (only tools that exist NOW)
+
+    Error Responses:
+        Returns structured JSON with error, error_code, details, and suggestion.
+        Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
+
+    Example Usage:
+        result = tool_name(param1=value)  (1-2 lines max, real executable code only)
+    """
+```
+
+---
+
+### Canonical Example
+
+This is the reference implementation. All tools should look like this.
+
+```python
+@mcp.tool()
+def get_my_tasks(limit: int = 25, offset: int = 0) -> str:
+    """
+    Retrieves tasks assigned to the current user.
+
+    Maps to Spira API: GET /tasks
+
+    Use this for personal task lists, daily standup reports, or workload analysis.
+    **Pagination:** Client-side (API returns all, sliced in Python).
+
+    Args:
+        limit: Maximum number of tasks to return (1-500, default: 25)
+        offset: Number of tasks to skip (>= 0, default: 0)
+
+    Returns:
+        JSON string with structure: {"data": [task objects], "pagination": {...}}
+        See Key Fields section below for important task fields.
+        Full response structure documented in API.
+
+    Key Fields:
+        - TaskId: Unique identifier for the task
+        - Name: The name of the task
+        - TaskStatusId/TaskStatusName: Current status of the task
+        - TaskPriorityId/TaskPriorityName: Priority level
+        - OwnerId/OwnerName: User the task is assigned to
+        - EstimatedEffort: Original estimate in minutes
+        - ActualEffort: Time logged so far in minutes
+        - CompletionPercent: Percentage complete
+        - EndDate: Scheduled end date
+        - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
+
+        Additional fields available: Description, TaskTypeId/TaskTypeName, RemainingEffort, ProjectedEffort, StartDate, CreationDate, LastUpdateDate, RequirementId/RequirementName, ComponentId, CreatorId, TaskFolderId, CustomProperties, Tags, IsAttachments, Guid
+
+    Related Tools:
+        - format_artifacts_as_markdown: Format filtered/processed results for display
+
+    Error Responses:
+        Returns structured JSON with error, error_code, details, and suggestion.
+        Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
+
+    Example Usage:
+        # Simple display - LLM formats naturally
+        tasks_json = get_my_tasks()
+
+        # Pagination - Get next page
+        tasks_json = get_my_tasks(limit=25, offset=25)
+    """
+```
+
+This example is 38 lines - well within the 50-line limit.
+
+---
+
+### Docstring Compliance Test
+
+A test file `tests/test_docstring_compliance.py` enforces these rules automatically. It:
+
+1. Imports all registered MCP tools from the server
+2. Counts lines in each tool's docstring
+3. Fails if any docstring exceeds 50 lines
+4. Reports the line count for every tool so regressions are visible
+
+This test runs as part of the standard test suite. A failing docstring compliance test blocks release.

@@ -72,163 +72,45 @@ def register_tools(mcp) -> None:
 
         Maps to Spira API: GET /requirements
 
-        This tool returns requirements where the current user is the
-        Owner (assigned to). Use this for personal requirement lists,
-        sprint planning, or workload analysis.
-
-        **Pagination:** This endpoint uses CLIENT-SIDE pagination. The
-        API returns all requirements, and we slice the results in Python.
-        This is acceptable for "my work" queries which typically return
-        < 500 items. For large result sets, consider using project-level
-        queries with server-side pagination (available in Milestone 2+).
-
-        **For Display:** Modern LLMs can format JSON naturally for simple
-        display. For complex workflows where you've filtered or processed
-        the data, use format_artifacts_as_markdown() to ensure consistent
-        formatting.
+        Use this for personal requirement lists, sprint planning, or workload analysis.
+        **Pagination:** Client-side (API returns all, sliced in Python).
 
         Args:
-            limit: Maximum number of requirements to return (1-500,
-                default: 25)
-                Controls result set size for pagination.
+            limit: Maximum number of requirements to return (1-500, default: 25)
             offset: Number of requirements to skip (>= 0, default: 0)
-                Used for retrieving subsequent pages of results.
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "RequirementId": 123,
-                        "Name": "User Authentication",
-                        "Description": "Implement secure user login system",
-                        "StatusId": 2,
-                        "StatusName": "In Progress",
-                        "RequirementTypeId": 1,
-                        "RequirementTypeName": "Feature",
-                        "ImportanceId": 1,
-                        "ImportanceName": "Critical",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "AuthorId": 4,
-                        "AuthorName": "Jane Smith",
-                        "EstimatePoints": 8.0,
-                        "EstimatedEffort": 480,
-                        "TaskEstimatedEffort": 450,
-                        "TaskActualEffort": 240,
-                        "TaskCount": 5,
-                        "PercentComplete": 50,
-                        "CoverageCountTotal": 10,
-                        "CoverageCountPassed": 6,
-                        "CoverageCountFailed": 2,
-                        "CoverageCountCaution": 1,
-                        "CoverageCountBlocked": 1,
-                        "StartDate": "2024-01-15T09:00:00Z",
-                        "EndDate": "2024-01-30T17:00:00Z",
-                        "CreationDate": "2024-01-10T08:00:00Z",
-                        "LastUpdateDate": "2024-01-20T14:30:00Z",
-                        "ReleaseId": 10,
-                        "ReleaseVersionNumber": "1.5.0",
-                        "ProjectId": 55,
-                        "ProjectName": "Web Application",
-                        "ComponentId": 3,
-                        "Summary": false,
-                        "IsSuspect": false,
-                        "CustomProperties": [],
-                        "Tags": "security,authentication",
-                        "IsAttachments": true
-                    }
-                ],
-                "pagination": {
-                    "limit": 25,
-                    "offset": 0,
-                    "returned_count": 25,
-                    "total_count": 150,
-                    "has_more": true,
-                    "pagination_type": "client-side"
-                }
-            }
+            JSON string with structure: {"data": [requirement objects], "pagination": {...}}
+            See Key Fields section below for important requirement fields.
+            Full response structure documented in API.
 
         Key Fields:
             - RequirementId: Unique identifier for the requirement
             - Name: The name of the requirement
-            - Description: The detailed description of the requirement
-            - StatusId/StatusName: Current status of the requirement
-            - RequirementTypeId/RequirementTypeName: Type of requirement
-                (Feature, Use Case, etc.)
+            - StatusId/StatusName: Current status
             - ImportanceId/ImportanceName: Priority/importance level
             - OwnerId/OwnerName: User the requirement is assigned to
-            - AuthorId/AuthorName: User who created the requirement
-            - EstimatePoints: Story points estimate (decimal)
-            - EstimatedEffort: Top-down effort estimate in minutes
-                (calculated from points)
-            - TaskEstimatedEffort: Bottom-up estimated effort from all
-                associated tasks (minutes)
-            - TaskActualEffort: Bottom-up actual effort from all
-                associated tasks (minutes)
-            - TaskCount: Number of tasks associated with this requirement
-            - PercentComplete: Percentage complete of the requirement
-            - CoverageCountTotal: Total number of test cases covering
-                this requirement
-            - CoverageCountPassed/Failed/Caution/Blocked: Test case
-                coverage breakdown by status
-            - StartDate: Scheduled start date for planning
-            - EndDate: Scheduled end date for planning
-            - CreationDate: When the requirement was originally created
-            - LastUpdateDate: When the requirement was last modified
+            - EstimatePoints: Story points estimate
+            - TaskCount: Number of associated tasks
+            - CoverageCountTotal: Total test cases covering this requirement
+            - PercentComplete: Percentage complete
             - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
-            - ProjectId/ProjectName: Project the requirement belongs to
-            - ComponentId: Component the requirement belongs to (null if none)
-            - Summary: Whether this is a summary requirement (parent)
-            - IsSuspect: Whether requirement is marked as suspect due to
-                dependent item changes
-            - CustomProperties: List of custom fields for this requirement
-            - Tags: Meta-tags associated with the requirement
-            - IsAttachments: Whether the requirement has attachments
 
-        When to Use:
-            - Getting personal requirement list for current user
-            - Sprint planning and backlog grooming
-            - Analyzing personal workload
-            - Finding requirements by status or importance (filter the JSON)
-            - Tracking test coverage for assigned requirements
+            Additional fields available: Description, RequirementTypeId/RequirementTypeName, AuthorId/AuthorName, EstimatedEffort, TaskEstimatedEffort, TaskActualEffort, CoverageCountPassed/Failed/Caution/Blocked, StartDate, EndDate, CreationDate, LastUpdateDate, ComponentId, Summary, IsSuspect, CustomProperties, Tags, IsAttachments
 
         Related Tools:
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-            - get_requirement_by_id: Get single requirement with full
-                details (future)
-            - search_requirements: Advanced filtering across all
-                requirements (future)
+            - format_artifacts_as_markdown: Format filtered/processed results for display
 
         Error Responses:
-            {
-                "error": "Invalid pagination parameters",
-                "error_code": "INVALID_PARAMETER",
-                "details": {
-                    "parameter": "limit",
-                    "value": 1000,
-                    "expected": "1-500"
-                },
-                "suggestion": "Use limit between 1 and 500"
-            }
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
             # Simple display - LLM formats naturally
             requirements_json = get_my_requirements()
-            # LLM can format this JSON for display without additional tools
 
             # Pagination - Get next page
             requirements_json = get_my_requirements(limit=25, offset=25)
-
-            # Complex workflow - Use formatting tool for filtered results
-            requirements_json = get_my_requirements(limit=100)
-            requirements = json.loads(requirements_json)
-            critical = [r for r in requirements["data"]
-                        if r["ImportanceName"] == "Critical"]
-            critical_json = json.dumps({"data": critical})
-            readable = format_artifacts_as_markdown(critical_json,
-                                                     "requirement")
         """
         try:
             # Validate pagination parameters

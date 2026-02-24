@@ -80,10 +80,6 @@ def paginate_server_side(
 
     Returns:
         Dictionary with data and pagination metadata
-
-    Note:
-        This will be used in Milestone 2+ for project-level endpoints.
-        Milestone 1 only uses client-side pagination.
     """
     returned_count = len(items)
     has_more = (offset + returned_count) < total_count

@@ -84,15 +84,6 @@ def register_tools(mcp) -> None:
         server-side pagination. Use this for retrieving product-level
         incident lists with filtering and sorting capabilities.
 
-        **API Endpoint**: POST /projects/{product_id}/incidents/search
-        **Query Parameters**: start_row, number_rows, sort_by
-        **Request Body**: [] (empty RemoteFilter array - no filtering
-            for now)
-
-        **Note**: This endpoint uses server-side pagination. The API
-        returns only the requested page of results. A dedicated filter
-        tool will be added in a future milestone.
-
         Args:
             product_id: The numeric ID of the product.
                 If the ID is PR:45, just use 45.
@@ -103,169 +94,32 @@ def register_tools(mcp) -> None:
                 "Name", "IncidentStatusName")
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "IncidentId": 456,
-                        "Name": "Login page crashes on mobile",
-                        "Description": "The login page crashes when
-                            accessed from mobile devices",
-                        "IncidentStatusId": 1,
-                        "IncidentStatusName": "New",
-                        "IncidentStatusOpenStatus": true,
-                        "IncidentTypeId": 1,
-                        "IncidentTypeName": "Bug",
-                        "PriorityId": 1,
-                        "PriorityName": "1 - Critical",
-                        "SeverityId": 1,
-                        "SeverityName": "1 - Critical",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "OwnerGuid": "abc-123",
-                        "OpenerId": 4,
-                        "OpenerName": "Jane Smith",
-                        "OpenerGuid": "def-456",
-                        "EstimatedEffort": 240,
-                        "ActualEffort": 120,
-                        "RemainingEffort": 120,
-                        "ProjectedEffort": 240,
-                        "CompletionPercent": 50,
-                        "StartDate": "2024-01-15T09:00:00Z",
-                        "EndDate": "2024-01-18T17:00:00Z",
-                        "ClosedDate": null,
-                        "CreationDate": "2024-01-14T10:00:00Z",
-                        "LastUpdateDate": "2024-01-16T14:30:00Z",
-                        "DetectedReleaseId": 8,
-                        "DetectedReleaseVersionNumber": "1.4.0",
-                        "DetectedReleaseGuid": "ghi-789",
-                        "ResolvedReleaseId": 10,
-                        "ResolvedReleaseVersionNumber": "1.5.0",
-                        "ResolvedReleaseGuid": "jkl-012",
-                        "VerifiedReleaseId": null,
-                        "VerifiedReleaseVersionNumber": null,
-                        "VerifiedReleaseGuid": null,
-                        "DetectedBuildId": 15,
-                        "DetectedBuildName": "Build 1.4.0.15",
-                        "FixedBuildId": null,
-                        "FixedBuildName": null,
-                        "ComponentIds": [3, 7],
-                        "TestRunStepIds": [101, 102],
-                        "ProjectId": 55,
-                        "ProjectName": "Web Application",
-                        "ProjectGuid": "mno-345",
-                        "ArtifactTypeId": 3,
-                        "ConcurrencyDate": "2024-01-16T14:30:00Z",
-                        "CustomProperties": [],
-                        "Tags": "mobile,critical,login",
-                        "IsAttachments": true,
-                        "Guid": "pqr-678"
-                    }
-                ]
-            }
-
+            JSON string with structure: {"data": [incident objects]}
+            See Key Fields section below for important incident fields.
         Key Fields:
             - IncidentId: Unique identifier for the incident
             - Name: The name/title of the incident
-            - Description: The detailed description of the incident
-            - IncidentStatusId/IncidentStatusName: Current status of
-                the incident
-            - IncidentStatusOpenStatus: Whether the incident is in an
-                open status (true) or closed (false)
-            - IncidentTypeId/IncidentTypeName: Type of incident (Bug,
-                Enhancement, Issue, etc.)
-            - PriorityId/PriorityName: Priority level (1-Critical to
-                5-Low)
-            - SeverityId/SeverityName: Severity level (1-Critical to
-                4-Low)
-            - OwnerId/OwnerName/OwnerGuid: User the incident is
-                assigned to
-            - OpenerId/OpenerName/OpenerGuid: User who detected/reported
-                the incident
-            - EstimatedEffort: Original estimate in minutes to resolve
-                the incident
-            - ActualEffort: Time logged so far in minutes
-                (increases as work progresses)
-            - RemainingEffort: Developer's estimate of time remaining
-                (updated manually)
-            - ProjectedEffort: Calculated as ActualEffort + RemainingEffort
-            - CompletionPercent: Calculated as
-                (ActualEffort / ProjectedEffort) * 100
-            - StartDate: When work started on the incident
-            - EndDate: Scheduled completion date for the incident
-            - ClosedDate: When the incident was closed (null if still open)
-            - CreationDate: When the incident was originally created
-            - LastUpdateDate: When the incident was last modified
-            - DetectedReleaseId/DetectedReleaseVersionNumber/
-                DetectedReleaseGuid: Release where the incident was found
-            - ResolvedReleaseId/ResolvedReleaseVersionNumber/
-                ResolvedReleaseGuid: Release where the incident will be
-                fixed
-            - VerifiedReleaseId/VerifiedReleaseVersionNumber/
-                VerifiedReleaseGuid: Release where the fix was verified
-                (null if not yet verified)
-            - DetectedBuildId/DetectedBuildName: Build where the incident
-                was detected
-            - FixedBuildId/FixedBuildName: Build where the incident was
-                fixed (null if not yet fixed)
-            - ComponentIds: List of component IDs this incident belongs to
-            - TestRunStepIds: List of test run step IDs that relate to
-                this incident
-            - ProjectId/ProjectName/ProjectGuid: Project the incident
-                belongs to
-            - ArtifactTypeId: Type of artifact (3 for incidents)
-            - ConcurrencyDate: Timestamp for optimistic concurrency control
-            - CustomProperties: List of custom fields for this incident
-            - Tags: Meta-tags associated with the incident
-            - IsAttachments: Whether the incident has attachments
-            - Guid: Unique global identifier for the incident
+            - IncidentStatusId/IncidentStatusName: Current status
+            - PriorityId/PriorityName: Priority level (1-Critical to 5-Low)
+            - SeverityId/SeverityName: Severity level (1-Critical to 4-Low)
+            - OwnerId/OwnerName: User the incident is assigned to
+            - DetectedReleaseId/DetectedReleaseVersionNumber: Release where found
+            - ResolvedReleaseId/ResolvedReleaseVersionNumber: Release where fixed
+            - ClosedDate: When closed (null if still open)
+            - ProjectId/ProjectName: Project the incident belongs to
 
-        When to Use:
-            - Getting incident list for a specific product
-            - Retrieving incidents with server-side pagination
-            - Sorting incidents by specific fields
-            - Analyzing product-level incident data
-            - Tracking bugs and issues in a product
-
+            Additional fields available: Description, IncidentTypeId/IncidentTypeName, OpenerId/OpenerName, EstimatedEffort, ActualEffort, RemainingEffort, ProjectedEffort, CompletionPercent, StartDate, EndDate, CreationDate, LastUpdateDate, VerifiedReleaseId/VerifiedReleaseVersionNumber, DetectedBuildId/DetectedBuildName, FixedBuildId/FixedBuildName, ComponentIds, TestRunStepIds, CustomProperties, Tags, IsAttachments, Guid
         Related Tools:
-            - get_my_incidents: Get incidents assigned to current user
-                (with client-side pagination)
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-
+            - get_my_incidents: Get incidents assigned to current user (with client-side pagination)
+            - format_artifacts_as_markdown: Format filtered/processed results for display
         Error Responses:
-            {
-                "error": "Invalid product_id parameter",
-                "error_code": "INVALID_VALUE",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "product_id must be >= 1"
-            }
-
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
         Example Usage:
-            # Get first 100 incidents from product 55
             incidents_json = get_incidents(product_id=55)
-            incidents = json.loads(incidents_json)
-
-            # Get next page of incidents
-            incidents_json = get_incidents(
-                product_id=55, start_row=101, number_rows=100
-            )
 
             # Get incidents sorted by priority
-            incidents_json = get_incidents(
-                product_id=55, sort_by="PriorityId"
-            )
-
-            # Process and filter results
-            incidents = json.loads(incidents_json)
-            critical_incidents = [
-                i for i in incidents["data"]
-                if i["PriorityName"] == "1 - Critical"
-            ]
+            incidents_json = get_incidents(product_id=55, sort_by="PriorityId")
         """
         try:
             # Validate product_id

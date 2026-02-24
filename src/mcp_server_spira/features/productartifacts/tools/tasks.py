@@ -87,16 +87,6 @@ def register_tools(mcp) -> None:
         server-side pagination. Use this for retrieving product-level
         task lists with filtering and sorting capabilities.
 
-        **API Endpoint**: POST /projects/{product_id}/tasks/search
-        **Query Parameters**: starting_row, number_of_rows, sort_field,
-            sort_direction
-        **Request Body**: [] (empty RemoteFilter array - no filtering
-            for now)
-
-        **Note**: This endpoint uses server-side pagination. The API
-        returns only the requested page of results. A dedicated filter
-        tool will be added in a future milestone.
-
         Args:
             product_id: The numeric ID of the product.
                 If the ID is PR:45, just use 45.
@@ -109,127 +99,32 @@ def register_tools(mcp) -> None:
                 (default: "ASC")
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "TaskId": 123,
-                        "Name": "Fix login bug",
-                        "Description": "Users cannot log in with
-                            special characters",
-                        "TaskStatusId": 2,
-                        "TaskStatusName": "In Progress",
-                        "TaskTypeId": 1,
-                        "TaskTypeName": "Development",
-                        "TaskPriorityId": 1,
-                        "TaskPriorityName": "Critical",
-                        "OwnerId": 5,
-                        "OwnerName": "John Doe",
-                        "CreatorId": 4,
-                        "RequirementId": 45,
-                        "RequirementName": "User Authentication",
-                        "ReleaseId": 10,
-                        "ReleaseVersionNumber": "1.5.0",
-                        "ComponentId": 3,
-                        "EstimatedEffort": 120,
-                        "ActualEffort": 60,
-                        "RemainingEffort": 60,
-                        "ProjectedEffort": 120,
-                        "CompletionPercent": 50,
-                        "StartDate": "2024-01-15T09:00:00Z",
-                        "EndDate": "2024-01-16T17:00:00Z",
-                        "CreationDate": "2024-01-10T08:00:00Z",
-                        "LastUpdateDate": "2024-01-15T14:30:00Z",
-                        "ProjectId": 55,
-                        "ProjectName": "Web Application",
-                        "TaskFolderId": null,
-                        "CustomProperties": [],
-                        "Tags": "bug,security",
-                        "IsAttachments": false,
-                        "Guid": "abc-123-def-456"
-                    }
-                ]
-            }
-
+            JSON string with structure: {"data": [task objects]}
+            See Key Fields section below for important task fields.
         Key Fields:
             - TaskId: Unique identifier for the task
             - Name: The name of the task
-            - Description: The detailed description of the task
             - TaskStatusId/TaskStatusName: Current status of the task
-            - TaskTypeId/TaskTypeName: Type of task (null for default)
-            - TaskPriorityId/TaskPriorityName: Priority level of the task
+            - TaskPriorityId/TaskPriorityName: Priority level
             - OwnerId/OwnerName: User the task is assigned to
-            - CreatorId: User who created the task
-            - RequirementId/RequirementName: Parent requirement link
-            - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
-            - ComponentId: Component the task belongs to (null if none)
             - EstimatedEffort: Original estimate in minutes
-                (set at task creation)
             - ActualEffort: Time logged so far in minutes
-                (increases as work progresses)
-            - RemainingEffort: Developer's estimate of time remaining
-                (updated manually)
-            - ProjectedEffort: Calculated as ActualEffort + RemainingEffort
-            - CompletionPercent: Calculated as
-                (ActualEffort / ProjectedEffort) * 100
-            - StartDate: Scheduled start date for the task
-            - EndDate: Scheduled end date for the task
-            - CreationDate: When the task was originally created
-            - LastUpdateDate: When the task was last modified
-            - ProjectId/ProjectName: Project the task belongs to
-            - TaskFolderId: Folder the task is stored in (null for root)
-            - CustomProperties: List of custom fields for this task
-            - Tags: Meta-tags associated with the task
-            - IsAttachments: Whether the task has attachments
-            - Guid: Unique global identifier for the task
+            - CompletionPercent: Percentage complete
+            - EndDate: Scheduled end date
+            - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
 
-        When to Use:
-            - Getting task list for a specific product
-            - Retrieving tasks with server-side pagination
-            - Sorting tasks by specific fields
-            - Analyzing product-level task data
-
+            Additional fields available: Description, TaskTypeId/TaskTypeName, RemainingEffort, ProjectedEffort, StartDate, CreationDate, LastUpdateDate, RequirementId/RequirementName, ComponentId, CreatorId, TaskFolderId, CustomProperties, Tags, IsAttachments, Guid
         Related Tools:
-            - get_my_tasks: Get tasks assigned to current user
-                (with client-side pagination)
-            - format_artifacts_as_markdown: Format filtered/processed
-                results for display
-
+            - get_my_tasks: Get tasks assigned to current user (with client-side pagination)
+            - format_artifacts_as_markdown: Format filtered/processed results for display
         Error Responses:
-            {
-                "error": "Invalid product_id parameter",
-                "error_code": "INVALID_VALUE",
-                "details": {
-                    "parameter": "product_id",
-                    "value": -1,
-                    "expected": ">= 1"
-                },
-                "suggestion": "product_id must be >= 1"
-            }
-
+            Returns structured JSON with error, error_code, details, and suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
         Example Usage:
-            # Get first 100 tasks from product 55
             tasks_json = get_tasks(product_id=55)
-            tasks = json.loads(tasks_json)
 
-            # Get next page of tasks
-            tasks_json = get_tasks(
-                product_id=55, starting_row=101, number_of_rows=100
-            )
-
-            # Get tasks sorted by priority
-            tasks_json = get_tasks(
-                product_id=55,
-                sort_field="TaskPriorityId",
-                sort_direction="ASC"
-            )
-
-            # Process and filter results
-            tasks = json.loads(tasks_json)
-            critical_tasks = [
-                t for t in tasks["data"]
-                if t["TaskPriorityName"] == "Critical"
-            ]
+            # Get next page
+            tasks_json = get_tasks(product_id=55, starting_row=101, number_of_rows=100)
         """
         try:
             # Validate product_id

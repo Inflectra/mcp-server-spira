@@ -58,96 +58,41 @@ def register_tools(mcp) -> None:
         Retrieves a list of the programs (projects) that the current
         user has access to
 
-        Use this tool when you need to:
-        - View the list of programs that a user has access to
-        - Get information about multiple programs at once
-        - Access the full description and selected fields of programs
+        Maps to Spira API: GET /programs
+
+        Use this to discover available programs and their organizational
+        structure.
 
         Returns:
-            JSON string with structure:
-            {
-                "data": [
-                    {
-                        "ProgramId": 10,
-                        "Name": "Engineering Programs",
-                        "Description": "All engineering-related programs",
-                        "Website": "https://engineering.example.com",
-                        "PortfolioId": 5,
-                        "ProjectTemplateId": 1,
-                        "isActive": true,
-                        "isDefault": false,
-                        "WorkspaceTypeId": 2,
-                        "Guid": "abc-123-def-456",
-                        "LastUpdatedDate": "2024-01-15T10:00:00Z",
-                        "ArtifactTypeId": 7,
-                        "ConcurrencyGuid": "xyz-789",
-                        "CustomProperties": []
-                    }
-                ]
-            }
+            JSON string with structure: {"data": [program objects]}
+            See Key Fields section below for important program fields.
+            Full response structure documented in API.
 
         Key Fields:
-            - ProgramId: Unique identifier for the program (use this in
-                other tool calls)
+            - ProgramId: Unique identifier (use in other tool calls)
             - Name: Display name of the program
-            - Description: Detailed description of the program
-            - Website: URL associated with the program
-            - PortfolioId: ID of the portfolio this program belongs to
-                (null if none)
-            - ProjectTemplateId: ID of the template used for this
-                program (null if none)
             - isActive: Whether the program is currently active
-                (boolean)
-            - isDefault: Whether this is the default program (boolean)
-            - WorkspaceTypeId: Type of workspace (integer)
-            - Guid: Unique global identifier (string)
+            - PortfolioId: Portfolio this program belongs to
             - LastUpdatedDate: Last modification timestamp
-                (ISO 8601 datetime, nullable)
-            - ArtifactTypeId: Type of artifact (integer, typically 7
-                for programs)
-            - ConcurrencyGuid: Used for optimistic concurrency control
-                (string)
-            - CustomProperties: Array of custom fields for this program
 
-        When to Use:
-            - Discovering available programs for the current user
-            - Listing programs for user selection
-            - Validating program IDs before other operations
-            - Getting program metadata for reporting
-            - Finding programs by portfolio
+            Additional fields available: Description, Website, isDefault,
+            ProjectTemplateId, PortfolioId, CustomProperties, Guid
 
         Related Tools:
-            - get_program_products: Get products that belong to a
-                specific program
             - get_products: Get all products user has access to
             - get_milestones: Get milestones for a specific program
 
         Error Responses:
-            {
-                "error": "Failed to retrieve programs",
-                "error_code": "API_ERROR",
-                "details": {
-                    "message": "Connection timeout"
-                },
-                "suggestion": "Check API connectivity and authentication"
-            }
+            Returns structured JSON with error, error_code, details, and
+            suggestion.
+            Common error codes: INVALID_PARAMETER, API_ERROR, NOT_FOUND
 
         Example Usage:
-            # Get all programs
             programs_json = get_programs()
             programs = json.loads(programs_json)
-
-            # Filter active programs
-            active_programs = [p for p in programs["data"]
-                               if p["isActive"]]
-
-            # Find program by name
-            eng_program = next((p for p in programs["data"]
-                                if "Engineering" in p["Name"]), None)
-
-            # Get programs in a specific portfolio
-            portfolio_programs = [p for p in programs["data"]
-                                  if p["PortfolioId"] == 5]
+            active_programs = [
+                p for p in programs["data"] if p["isActive"]
+            ]
         """
         try:
             spira_client = get_spira_client()
