@@ -124,7 +124,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_products",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_products() -> str:
         """
         Retrieves a list of the products (projects) that the current
@@ -180,7 +183,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_product_by_id",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_product_by_id(product_id: int) -> str:
         """
         Retrieves the details of a single product in the specified
@@ -240,7 +246,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_program_products",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_program_products(program_id: int) -> str:
         """
         Retrieves a list of the products (projects) that belong to the

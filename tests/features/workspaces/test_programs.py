@@ -211,7 +211,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -242,7 +242,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func

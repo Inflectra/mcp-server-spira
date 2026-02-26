@@ -399,7 +399,7 @@ class TestCreateBuildMCPWrapper:
         mock_mcp = MagicMock()
         tool_func = None
 
-        def capture_tool():
+        def capture_tool(**kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -443,7 +443,7 @@ class TestCreateBuildMCPWrapper:
         mock_mcp = MagicMock()
         tool_func = None
 
-        def capture_tool():
+        def capture_tool(**kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func

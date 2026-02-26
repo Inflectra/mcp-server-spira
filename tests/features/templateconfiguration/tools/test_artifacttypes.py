@@ -403,7 +403,7 @@ class TestGetArtifactTypesValidation:
         mock_mcp = MagicMock()
         tool_func: Callable[..., Any] | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -439,7 +439,7 @@ class TestGetArtifactTypesValidation:
         mock_mcp = MagicMock()
         tool_func: Callable[..., Any] | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -475,7 +475,7 @@ class TestGetArtifactTypesValidation:
         mock_mcp = MagicMock()
         tool_func: Callable[..., Any] | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -511,7 +511,7 @@ class TestGetArtifactTypesValidation:
         mock_mcp = MagicMock()
         tool_func: Callable[..., Any] | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -557,7 +557,7 @@ class TestGetArtifactTypesMCPWrapper:
         mock_mcp = MagicMock()
         tool_func: Callable[..., Any] | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -598,7 +598,7 @@ class TestGetArtifactTypesMCPWrapper:
         mock_mcp = MagicMock()
         tool_func: Callable[..., Any] | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func

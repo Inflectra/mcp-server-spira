@@ -644,7 +644,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="spec_get_requirements",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_specification_requirements(product_id: int, release_id: int | None) -> str:
         """
         Retrieves the requirements specification file for the requested Spira product.
@@ -703,7 +706,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="spec_get_design",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_specification_design(product_id: int, release_id: int | None) -> str:
         """
         Retrieves the design specification file for the requested Spira product.
@@ -762,7 +768,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="spec_get_tasks",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_specification_tasks(product_id: int, release_id: int | None) -> str:
         """
         Retrieves the tasks specification file for the requested Spira product.
@@ -821,7 +830,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="spec_get_test_cases",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_specification_test_cases(product_id: int, release_id: int | None) -> str:
         """
         Retrieves the test cases specification file for the requested Spira product.

@@ -56,7 +56,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="program_get_capabilities",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_capabilities(program_id: int) -> str:
         """
         Retrieves a list of the capabilities in the specified program

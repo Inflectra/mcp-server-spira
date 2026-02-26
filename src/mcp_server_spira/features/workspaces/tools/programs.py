@@ -52,7 +52,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_programs",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_programs() -> str:
         """
         Retrieves a list of the programs (projects) that the current

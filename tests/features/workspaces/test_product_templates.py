@@ -217,8 +217,10 @@ class TestGetProductTemplateImpl:
 
         result = _get_product_template_impl(mock_client, 999)
 
-        assert "Unable to fetch product template details" in result
-        assert "999" in result
+        parsed = json.loads(result)
+        assert parsed["error"] == "Product template not found"
+        assert parsed["error_code"] == "NOT_FOUND"
+        assert parsed["details"]["template_id"] == 999
 
     def test_api_error_handling(self):
         """Test error handling when API call fails."""
@@ -227,8 +229,10 @@ class TestGetProductTemplateImpl:
 
         result = _get_product_template_impl(mock_client, 1)
 
-        assert "problem using this tool" in result
-        assert "Connection timeout" in result
+        parsed = json.loads(result)
+        assert parsed["error"] == "Failed to retrieve product template"
+        assert parsed["error_code"] == "API_ERROR"
+        assert "Connection timeout" in parsed["details"]["message"]
 
     def test_various_template_ids(self):
         """Test with various template IDs."""
@@ -298,7 +302,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -329,7 +333,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -363,7 +367,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -392,7 +396,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -407,5 +411,6 @@ class TestRegisterTools:
             result = get_product_template_func(1)
 
             # Verify error response
-            assert "Error:" in result
-            assert "Client error" in result
+            parsed = json.loads(result)
+            assert "error" in parsed
+            assert parsed["error_code"] == "API_ERROR"

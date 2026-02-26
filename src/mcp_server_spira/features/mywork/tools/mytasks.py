@@ -63,7 +63,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="my_get_tasks",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_my_tasks(limit: int = 25, offset: int = 0) -> str:
         """
         Retrieves tasks assigned to the current user.

@@ -327,7 +327,7 @@ class TestGetMyRequirementsToolIntegration:
         mock_mcp = Mock()
         tool_func: Callable | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -361,7 +361,7 @@ class TestGetMyRequirementsToolIntegration:
         mock_mcp = Mock()
         tool_func: Callable | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -391,7 +391,7 @@ class TestGetMyRequirementsToolIntegration:
         mock_mcp = Mock()
         tool_func: Callable | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -420,7 +420,7 @@ class TestGetMyRequirementsToolIntegration:
         mock_mcp = Mock()
         tool_func: Callable | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -457,7 +457,7 @@ class TestGetMyRequirementsToolIntegration:
         mock_mcp = Mock()
         tool_func: Callable | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func
@@ -488,7 +488,7 @@ class TestGetMyRequirementsToolIntegration:
         mock_mcp = Mock()
         tool_func: Callable | None = None
 
-        def capture_tool(name=None):
+        def capture_tool(name=None, **kwargs):
             def decorator(func):
                 nonlocal tool_func
                 tool_func = func

@@ -147,7 +147,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="product_create_build",
+        annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
+    )
     def create_build(
         product_id: int,
         release_id: int,

@@ -97,7 +97,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_artifact_types",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_artifact_types(template_id: int) -> str:
         """
         Retrieves artifact types and sub-types for the product template

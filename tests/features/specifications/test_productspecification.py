@@ -14,7 +14,7 @@ def capture_registered_tool(mcp_mock, tool_name):
     """Helper to capture a tool registered via decorator."""
     captured_func = None
 
-    def mock_tool():
+    def mock_tool(*args, **kwargs):
         def decorator(func):
             nonlocal captured_func
             captured_func = func
@@ -277,7 +277,7 @@ class TestAllSpecificationTools:
         mock_mcp = Mock()
         registered_tools = {}
 
-        def mock_tool():
+        def mock_tool(*args, **kwargs):
             def decorator(func):
                 registered_tools[func.__name__] = func
                 return func
@@ -307,7 +307,7 @@ class TestAllSpecificationTools:
         mock_mcp = Mock()
         registered_tools = {}
 
-        def mock_tool():
+        def mock_tool(*args, **kwargs):
             def decorator(func):
                 registered_tools[func.__name__] = func
                 return func
@@ -340,7 +340,7 @@ class TestAllSpecificationTools:
         mock_mcp = Mock()
         registered_tools = {}
 
-        def mock_tool():
+        def mock_tool(*args, **kwargs):
             def decorator(func):
                 registered_tools[func.__name__] = func
                 return func

@@ -197,7 +197,10 @@ class TestGetProductByIdImpl:
 
         result = _get_product_by_id_impl(mock_client, 999)
 
-        assert "no product with that ID" in result
+        parsed = json.loads(result)
+        assert parsed["error"] == "Product not found"
+        assert parsed["error_code"] == "NOT_FOUND"
+        assert parsed["details"]["product_id"] == 999
 
     def test_api_error_handling(self):
         """Test error handling when API call fails."""
@@ -206,8 +209,10 @@ class TestGetProductByIdImpl:
 
         result = _get_product_by_id_impl(mock_client, 55)
 
-        assert "problem using this tool" in result
-        assert "Connection timeout" in result
+        parsed = json.loads(result)
+        assert parsed["error"] == "Failed to retrieve product"
+        assert parsed["error_code"] == "API_ERROR"
+        assert "Connection timeout" in parsed["details"]["message"]
 
     def test_various_product_ids(self):
         """Test with various product IDs."""
@@ -286,8 +291,8 @@ class TestGetProgramProductsImpl:
         result = _get_program_products_impl(mock_client, 999)
 
         # Should return empty result (no products match)
-        # The function returns joined formatted results, so empty list means empty string
-        assert result == ""
+        parsed = json.loads(result)
+        assert parsed["data"] == []
 
     def test_empty_products_list(self):
         """Test when API returns no products."""
@@ -296,7 +301,8 @@ class TestGetProgramProductsImpl:
 
         result = _get_program_products_impl(mock_client, 10)
 
-        assert "does not contain any products" in result
+        parsed = json.loads(result)
+        assert parsed["data"] == []
 
     def test_api_error_handling(self):
         """Test error handling when API call fails."""
@@ -305,8 +311,10 @@ class TestGetProgramProductsImpl:
 
         result = _get_program_products_impl(mock_client, 10)
 
-        assert "problem using this tool" in result
-        assert "Connection timeout" in result
+        parsed = json.loads(result)
+        assert parsed["error"] == "Failed to retrieve program products"
+        assert parsed["error_code"] == "API_ERROR"
+        assert "Connection timeout" in parsed["details"]["message"]
 
     def test_multiple_programs_filtering(self):
         """Test that filtering correctly handles multiple programs."""
@@ -381,7 +389,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -412,7 +420,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -446,7 +454,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -475,7 +483,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -490,8 +498,9 @@ class TestRegisterTools:
             result = get_product_by_id_func(55)
 
             # Verify error response
-            assert "Error:" in result
-            assert "Client error" in result
+            parsed = json.loads(result)
+            assert "error" in parsed
+            assert parsed["error_code"] == "API_ERROR"
 
     def test_get_program_products_mcp_wrapper_calls_implementation(self):
         """Test that get_program_products MCP wrapper properly calls implementation."""
@@ -508,7 +517,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -537,7 +546,7 @@ class TestRegisterTools:
                 def __init__(self):
                     self.tools = []
 
-                def tool(self):
+                def tool(self, *args, **kwargs):
                     def decorator(func):
                         self.tools.append(func)
                         return func
@@ -552,5 +561,6 @@ class TestRegisterTools:
             result = get_program_products_func(10)
 
             # Verify error response
-            assert "Error:" in result
-            assert "Client error" in result
+            parsed = json.loads(result)
+            assert "error" in parsed
+            assert parsed["error_code"] == "API_ERROR"

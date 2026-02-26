@@ -100,7 +100,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="product_get_releases",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_releases(
         product_id: int,
         start_row: int = 1,
@@ -189,7 +192,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="product_get_release_by_id",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_release_by_id(product_id: int, release_id: int) -> str:
         """
         Retrieves the details of a single release in the specified product

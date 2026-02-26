@@ -19,7 +19,21 @@ from mcp_server_spira.features import register_all
 from mcp_server_spira.utils import register_all_prompts
 
 # Create a FastMCP server instance with a name
-mcp = FastMCP("inflectra-spira")
+mcp = FastMCP(
+    "inflectra-spira",
+    description=(
+        "Inflectra Spira MCP Server — project management, testing, and requirements tools. "
+        "Tools are prefixed by scope: "
+        "my_ (current user's work items), "
+        "product_ (product-scoped artifacts), "
+        "program_ (program-scoped artifacts), "
+        "template_ (product template configuration), "
+        "system_ (instance-wide operations), "
+        "spec_ (specification document structures), "
+        "format_ (data display transformations). "
+        "32 tools available."
+    ),
+)
 
 # Register all features
 register_all(mcp)

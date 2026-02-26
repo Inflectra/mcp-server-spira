@@ -174,7 +174,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="product_create_automated_test_run",
+        annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
+    )
     def record_automated_test_run(
         product_id: int,
         test_name: str,

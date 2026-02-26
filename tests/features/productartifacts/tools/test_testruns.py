@@ -17,7 +17,7 @@ def capture_registered_tool(mcp_mock, tool_name):
     """Helper to capture a tool registered via decorator."""
     captured_func = None
 
-    def mock_tool():
+    def mock_tool(**kwargs):
         def decorator(func):
             nonlocal captured_func
             captured_func = func

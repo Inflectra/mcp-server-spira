@@ -88,7 +88,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_product_templates",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_product_templates() -> str:
         """
         Retrieves a list of the product templates that the current user
@@ -138,7 +141,10 @@ def register_tools(mcp) -> None:
                 suggestion="Check API connectivity and authentication",
             )
 
-    @mcp.tool()
+    @mcp.tool(
+        name="system_get_product_template",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_product_template(template_id: int) -> str:
         """
         Retrieves a product template by its unique numeric ID

@@ -20,7 +20,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="format_artifacts_as_markdown",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False},
+    )
     def format_artifacts_as_markdown(
         artifact_json: str,
         artifact_type: Literal["task", "incident", "requirement", "test_case", "test_set"],

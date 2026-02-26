@@ -64,7 +64,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="my_get_test_cases",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_my_testcases(limit: int = 25, offset: int = 0) -> str:
         """
         Retrieves test cases assigned to the current user.

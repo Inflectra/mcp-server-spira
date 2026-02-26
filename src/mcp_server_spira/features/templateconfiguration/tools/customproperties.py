@@ -107,7 +107,10 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
 
-    @mcp.tool()
+    @mcp.tool(
+        name="template_get_custom_properties",
+        annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
+    )
     def get_custom_properties(template_id: int) -> str:
         """
         Retrieves artifact types and custom properties for the template

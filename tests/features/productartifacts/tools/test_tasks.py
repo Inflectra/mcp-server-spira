@@ -19,7 +19,7 @@ def capture_registered_tool(register_func):
     """Helper to capture the tool function registered with MCP."""
     captured_func = None
 
-    def capture_tool():
+    def capture_tool(**kwargs):
         def decorator(func):
             nonlocal captured_func
             captured_func = func

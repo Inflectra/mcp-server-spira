@@ -15,7 +15,7 @@ class MockMCP:
     def __init__(self):
         self.tools = {}
 
-    def tool(self):
+    def tool(self, *args, **kwargs):
         """Decorator to register tools."""
 
         def decorator(func):
