@@ -117,15 +117,6 @@ def register_tools(mcp) -> None:
             JSON string with structure: {"data": [artifact type objects]}
             Each object contains ArtifactTypeName and Types array.
 
-        Key Fields:
-            - ArtifactTypeName: Name (Requirement, Test Case, Task, etc.)
-            - Types: Array of sub-types for this artifact type
-            - RequirementTypeId/TestCaseTypeId/etc: Unique type ID
-            - Name: Display name of the type
-            - WorkflowId: Workflow ID (null if none)
-            - Active: Whether the type is currently active
-            - IsDefault: Whether this is the default type
-
         Related Tools:
             - get_custom_properties: Get custom fields for artifact types
             - get_product_template: Get template details

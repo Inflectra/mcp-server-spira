@@ -84,22 +84,9 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [requirement objects], "pagination": {...}}
-            See Key Fields section below for important requirement fields.
             Full response structure documented in API.
 
-        Key Fields:
-            - RequirementId: Unique identifier for the requirement
-            - Name: The name of the requirement
-            - StatusId/StatusName: Current status
-            - ImportanceId/ImportanceName: Priority/importance level
-            - OwnerId/OwnerName: User the requirement is assigned to
-            - EstimatePoints: Story points estimate
-            - TaskCount: Number of associated tasks
-            - CoverageCountTotal: Total test cases covering this requirement
-            - PercentComplete: Percentage complete
-            - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
-
-            Additional fields available: Description, RequirementTypeId/RequirementTypeName, AuthorId/AuthorName, EstimatedEffort, TaskEstimatedEffort, TaskActualEffort, CoverageCountPassed/Failed/Caution/Blocked, StartDate, EndDate, CreationDate, LastUpdateDate, ComponentId, Summary, IsSuspect, CustomProperties, Tags, IsAttachments
+        Call system_get_artifact_schema(artifact_type='requirement') to see available fields.
 
         Related Tools:
             - format_artifacts_as_markdown: Format filtered/processed results for display

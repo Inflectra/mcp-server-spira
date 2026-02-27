@@ -925,7 +925,7 @@ pytest -m "not slow"
 
 #### Current Test Coverage
 
-The project currently has 23% test coverage. Coverage reports are automatically generated when running tests and can be viewed in the `htmlcov/` directory.
+Coverage reports are automatically generated when running tests and can be viewed in the `htmlcov/` directory.
 
 ### Project Structure
 

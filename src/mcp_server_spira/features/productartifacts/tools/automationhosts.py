@@ -95,17 +95,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [automation host objects]}
-            See Key Fields section below for important automation host fields.
-
-        Key Fields:
-            - AutomationHostId: Unique identifier for the automation host
-            - Name: The name of the host
-            - Token: The authentication token for the host
-            - Active: Whether this host is active
-            - LastContactDate: Last time this host was contacted
-            - ProjectId: Project the host belongs to
-
-            Additional fields available: Description, LastUpdateDate, CustomProperties, Tags, IsAttachments, Guid
+            Call system_get_artifact_schema(artifact_type='automation_host') to see available fields.
         Related Tools:
             - format_artifacts_as_markdown: Format filtered/processed results for display
         Error Responses:

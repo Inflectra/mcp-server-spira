@@ -82,22 +82,9 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [task objects], "pagination": {...}}
-            See Key Fields section below for important task fields.
             Full response structure documented in API.
 
-        Key Fields:
-            - TaskId: Unique identifier for the task
-            - Name: The name of the task
-            - TaskStatusId/TaskStatusName: Current status of the task
-            - TaskPriorityId/TaskPriorityName: Priority level
-            - OwnerId/OwnerName: User the task is assigned to
-            - EstimatedEffort: Original estimate in minutes
-            - ActualEffort: Time logged so far in minutes
-            - CompletionPercent: Percentage complete
-            - EndDate: Scheduled end date
-            - ReleaseId/ReleaseVersionNumber: Sprint/iteration assignment
-
-            Additional fields available: Description, TaskTypeId/TaskTypeName, RemainingEffort, ProjectedEffort, StartDate, CreationDate, LastUpdateDate, RequirementId/RequirementName, ComponentId, CreatorId, TaskFolderId, CustomProperties, Tags, IsAttachments, Guid
+        Call system_get_artifact_schema(artifact_type='task') to see available fields.
 
         Related Tools:
             - format_artifacts_as_markdown: Format filtered/processed results for display

@@ -99,11 +99,11 @@ Rename all 32 MCP tools with scope prefixes using `name=` in `@mcp.tool()`, add 
     - This tool already has the correct prefix; only annotations need adding
     - _Requirements: 2.1, 2.2, 3.1, 3.2, 3.5, 4.1_
 
-- [ ] 5. Checkpoint — Verify all tool renames and annotations
+- [x] 5. Checkpoint — Verify all tool renames and annotations
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Create naming convention test
-  - [ ] 6.1 Create `tests/test_naming_convention.py`
+- [x] 6. Create naming convention test
+  - [x] 6.1 Create `tests/test_naming_convention.py`
     - Define `VALID_PREFIXES` tuple with all 8 prefixes including `automation_`
     - Use `@pytest.mark.parametrize` over all registered tool names from `mcp._tool_manager._tools`
     - Test that every tool name starts with a valid prefix (Property 1)
@@ -115,41 +115,41 @@ Rename all 32 MCP tools with scope prefixes using `name=` in `@mcp.tool()`, add 
     - **Property 2: All tool names follow the prefix-verb convention**
     - **Validates: Requirements 2.1, 2.3, 2.4, 6.1, 6.2, 6.3**
 
-- [ ] 7. Create tool annotations test
-  - [ ] 7.1 Create `tests/test_tool_annotations.py`
+- [x] 7. Create tool annotations test
+  - [x] 7.1 Create `tests/test_tool_annotations.py`
     - Define expected annotations for all 32 tools (read-only tools get `readOnlyHint=True`, write tools get `readOnlyHint=False`, only `format_artifacts_as_markdown` gets `openWorldHint=False`)
     - Use `@pytest.mark.parametrize` over all registered tools
     - Verify each tool has annotations set and values match expected behavior (Property 3)
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
-  - [ ]* 7.2 Write property test for annotation correctness
+  - [x] 7.2 Write property test for annotation correctness
     - **Property 3: All tools have correct annotations matching their behavior**
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5**
 
-- [ ] 8. Create server description test
-  - [ ] 8.1 Create `tests/test_server_description.py`
+- [x] 8. Create server description test
+  - [x] 8.1 Create `tests/test_server_description.py`
     - Test that `mcp` has a description set (not None/empty)
     - Test that description is under 1000 characters
     - Test that description contains each active scope prefix (`my_`, `product_`, `program_`, `template_`, `system_`, `spec_`, `format_`)
     - Test that description includes the tool count
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 9. Create token budget monitoring test
-  - [ ] 9.1 Create `tests/test_token_budget.py`
+- [x] 9. Create token budget monitoring test
+  - [x] 9.1 Create `tests/test_token_budget.py`
     - Build the full tools/list response text from all tool names, docstrings, and parameter schemas
     - Estimate token count using `len(text) / 4` (4 chars per token)
     - Warn at 40,000 tokens, fail at 60,000 tokens
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
-  - [ ]* 9.2 Write property test for token estimation formula
+  - [x] 9.2 Write property test for token estimation formula
     - **Property 5: Token estimation uses the 4-character-per-token ratio**
     - Use Hypothesis to generate random strings and verify `len(s) // 4` holds
     - **Validates: Requirements 7.4**
 
-- [ ] 10. Verify existing docstring compliance test picks up new names
+- [x] 10. Verify existing docstring compliance test picks up new names
   - Update the header comment in `tests/test_docstring_compliance.py` to reflect the new tool names in the line count listing
   - Verify the parametrized test dynamically reads from `mcp._tool_manager._tools` and picks up the renamed tools without code changes
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 11. Final checkpoint — Run full test suite
+- [x] 11. Final checkpoint — Run full test suite
   - Ensure all tests pass, ask the user if questions arise.
   - Verify test coverage remains at 80%+
   - Confirm all 32 tools are registered with new names, annotations, and compliant docstrings

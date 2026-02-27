@@ -103,20 +103,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [test set objects]}
-            See Key Fields section below for important test set fields.
-        Key Fields:
-            - TestSetId: Unique identifier for the test set
-            - Name: The name of the test set
-            - TestSetStatusId/TestSetStatusName: Current status
-            - OwnerId/OwnerName: User the test set is assigned to
-            - CountPassed/CountFailed/CountBlocked: Execution results
-            - PlannedDate: When planned to be executed
-            - ExecutionDate: When last executed
-            - EstimatedDuration: Total estimated duration in minutes
-            - ReleaseId/ReleaseVersionNumber: Release/sprint assignment
-            - ProjectId/ProjectName: Project the test set belongs to
-
-            Additional fields available: Description, TestRunTypeId, CreatorId/CreatorName, CreationDate, LastUpdateDate, CountCaution/CountNotRun/CountNotApplicable, ActualDuration, TestSetFolderId, AutomationHostId, RecurrenceId/RecurrenceName, IsAutoScheduled, IsDynamic, DynamicQuery, TestConfigurationSetId, CustomProperties, Tags, IsAttachments, Guid
+            Call system_get_artifact_schema(artifact_type='test_set') to see available fields.
         Related Tools:
             - get_my_testsets: Get test sets assigned to current user (with client-side pagination)
             - format_artifacts_as_markdown: Format filtered/processed results for display

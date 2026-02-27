@@ -4,41 +4,41 @@ Docstring compliance tests for all registered MCP tools.
 Asserts that every tool docstring is <= 50 lines, per AC-1.10.1.
 Reports line counts for all tools to aid remediation.
 
-Final Per-Tool Line Counts (Task 24 - All tools pass 50-line limit):
-  get_test_runs                                    49  OK
-  get_test_sets                                    47  OK
-  get_test_cases                                   47  OK
-  get_tasks                                        47  OK
-  get_risks                                        46  OK
-  get_incidents                                    45  OK
-  get_my_testsets                                  44  OK
-  get_my_testcases                                 44  OK
-  get_my_requirements                              44  OK
-  get_my_incidents                                 44  OK
-  get_my_tasks                                     44  OK
-  get_releases                                     43  OK
-  get_requirements                                 43  OK
+Final Per-Tool Line Counts (Task 10 - All tools pass 50-line limit, scope-prefixed names):
+  product_get_test_runs                            50  OK
+  product_get_risks                                50  OK
+  product_get_tasks                                47  OK
+  product_get_test_cases                           47  OK
+  product_get_test_sets                            47  OK
+  product_get_incidents                            45  OK
+  product_get_releases                             44  OK
+  my_get_test_sets                                 44  OK
+  my_get_test_cases                                44  OK
+  my_get_requirements                              44  OK
+  my_get_incidents                                 44  OK
+  my_get_tasks                                     44  OK
+  product_get_requirements                         43  OK
+  system_get_product_by_id                         46  OK
+  system_get_product_template                      46  OK
   format_artifacts_as_markdown                     40  OK
-  get_automation_hosts                             39  OK
-  get_custom_properties                            39  OK
-  get_capabilities                                 37  OK
-  get_products                                     36  OK
-  get_milestones                                   36  OK
-  get_artifact_types                               36  OK
-  get_programs                                     33  OK
-  get_product_templates                            32  OK
-  get_release_by_id                                32  OK
-  record_automated_test_run                        28  OK
-  create_build                                     28  OK
-  get_specification_test_cases                     25  OK
-  get_specification_tasks                          24  OK
-  get_specification_requirements                   24  OK
-  get_specification_design                         24  OK
-  get_program_products                             18  OK
-  get_product_template                             15  OK
-  get_product_by_id                                15  OK
+  product_get_automation_hosts                     40  OK
+  template_get_custom_properties                   39  OK
+  system_get_programs                              39  OK
+  program_get_capabilities                         37  OK
+  system_get_products                              42  OK
+  program_get_milestones                           36  OK
+  system_get_artifact_types                        36  OK
+  system_get_product_templates                     36  OK
+  product_get_release_by_id                        32  OK
+  product_create_automated_test_run                28  OK
+  product_create_build                             28  OK
+  spec_get_test_cases                              24  OK
+  spec_get_tasks                                   24  OK
+  spec_get_requirements                            24  OK
+  spec_get_design                                  24  OK
+  system_get_program_products                      47  OK
 
-  Total tools: 33
+  Total tools: 32
   Over 50 lines: 0
 """
 

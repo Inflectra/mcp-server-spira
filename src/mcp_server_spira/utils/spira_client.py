@@ -38,10 +38,45 @@ def get_credentials() -> tuple[str | None, str | None]:
 
 
 class SpiraClient:
-    def __init__(self, base_url, username, api_key):
+    def __init__(self, base_url: str, username: str, api_key: str):
+        # Validate credentials at construction time
+        if base_url is None:
+            raise ValueError(
+                "INFLECTRA_SPIRA_BASE_URL needs to be populated as an environment variable!"
+            )
+        if username is None:
+            raise ValueError(
+                "INFLECTRA_SPIRA_USERNAME needs to be populated as an environment variable!"
+            )
+        if api_key is None:
+            raise ValueError(
+                "INFLECTRA_SPIRA_API_KEY needs to be populated as an environment variable!"
+            )
+
         self.base_url = base_url
         self.username = username
         self.api_key = api_key
+        self._headers = {
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "username": self.username,
+            "api-key": self.api_key,
+        }
+        self._http_client = httpx.Client(timeout=30.0)
+
+    def close(self):
+        """Close the underlying HTTP client and release resources."""
+        self._http_client.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def _full_url(self, url: str) -> str:
+        return self.base_url + API_ENDPOINT_URL + "/" + url
 
     def make_spira_api_get_request(self, url: str) -> Any:
         """
@@ -53,40 +88,14 @@ class SpiraClient:
         Returns:
             List or Dictionary containing the JSON returned from the API
         """
-
-        headers = {
-            "User-Agent": USER_AGENT,
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "username": self.username,
-            "api-key": self.api_key,
-        }
-
-        # Check that we have the appropriate settings populated
-        if self.base_url is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_BASE_URL needs to be populated as an environment variable!"
-            )
-        if self.username is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_USERNAME needs to be populated as an environment variable!"
-            )
-        if self.api_key is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_API_KEY needs to be populated as an environment variable!"
-            )
-
-        full_url = self.base_url + API_ENDPOINT_URL + "/" + url
-
-        with httpx.Client() as client:
-            try:
-                response = client.get(full_url, headers=headers, timeout=30.0)
-                response.raise_for_status()
-                return response.json()
-            except Exception as e:
-                raise Exception(
-                    f"Error returned when calling the Spira REST API. The error message was: {e}"
-                ) from e
+        try:
+            response = self._http_client.get(self._full_url(url), headers=self._headers)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(
+                f"Error returned when calling the Spira REST API. The error message was: {e}"
+            ) from e
 
     def make_spira_api_post_request(self, url: str, json: dict[str, Any] | list[Any]) -> Any:
         """
@@ -99,40 +108,16 @@ class SpiraClient:
         Returns:
             List or Dictionary containing the JSON returned from the API
         """
-
-        headers = {
-            "User-Agent": USER_AGENT,
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "username": self.username,
-            "api-key": self.api_key,
-        }
-
-        # Check that we have the appropriate settings populated
-        if self.base_url is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_BASE_URL needs to be populated as an environment variable!"
+        try:
+            response = self._http_client.post(
+                url=self._full_url(url), json=json, headers=self._headers
             )
-        if self.username is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_USERNAME needs to be populated as an environment variable!"
-            )
-        if self.api_key is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_API_KEY needs to be populated as an environment variable!"
-            )
-
-        full_url = self.base_url + API_ENDPOINT_URL + "/" + url
-
-        with httpx.Client() as client:
-            try:
-                response = client.post(url=full_url, json=json, headers=headers, timeout=30.0)
-                response.raise_for_status()
-                return response.json()
-            except Exception as e:
-                raise Exception(
-                    f"Error returned when calling the Spira REST API. The error message was: {e}"
-                ) from e
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(
+                f"Error returned when calling the Spira REST API. The error message was: {e}"
+            ) from e
 
     def make_spira_api_put_request(self, url: str, json: dict[str, Any] | list[Any]) -> Any:
         """
@@ -145,40 +130,16 @@ class SpiraClient:
         Returns:
             List or Dictionary containing the JSON returned from the API
         """
-
-        headers = {
-            "User-Agent": USER_AGENT,
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "username": self.username,
-            "api-key": self.api_key,
-        }
-
-        # Check that we have the appropriate settings populated
-        if self.base_url is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_BASE_URL needs to be populated as an environment variable!"
+        try:
+            response = self._http_client.put(
+                url=self._full_url(url), json=json, headers=self._headers
             )
-        if self.username is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_USERNAME needs to be populated as an environment variable!"
-            )
-        if self.api_key is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_API_KEY needs to be populated as an environment variable!"
-            )
-
-        full_url = self.base_url + API_ENDPOINT_URL + "/" + url
-
-        with httpx.Client() as client:
-            try:
-                response = client.put(url=full_url, json=json, headers=headers, timeout=30.0)
-                response.raise_for_status()
-                return response.json()
-            except Exception as e:
-                raise Exception(
-                    f"Error returned when calling the Spira REST API. The error message was: {e}"
-                ) from e
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(
+                f"Error returned when calling the Spira REST API. The error message was: {e}"
+            ) from e
 
     def make_spira_api_delete_request(self, url: str) -> Any:
         """
@@ -190,40 +151,14 @@ class SpiraClient:
         Returns:
             List or Dictionary containing the JSON returned from the API
         """
-
-        headers = {
-            "User-Agent": USER_AGENT,
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "username": self.username,
-            "api-key": self.api_key,
-        }
-
-        # Check that we have the appropriate settings populated
-        if self.base_url is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_BASE_URL needs to be populated as an environment variable!"
-            )
-        if self.username is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_USERNAME needs to be populated as an environment variable!"
-            )
-        if self.api_key is None:
-            raise ValueError(
-                "INFLECTRA_SPIRA_API_KEY needs to be populated as an environment variable!"
-            )
-
-        full_url = self.base_url + API_ENDPOINT_URL + "/" + url
-
-        with httpx.Client() as client:
-            try:
-                response = client.delete(url=full_url, headers=headers, timeout=30.0)
-                response.raise_for_status()
-                return response.json()
-            except Exception as e:
-                raise Exception(
-                    f"Error returned when calling the Spira REST API. The error message was: {e}"
-                ) from e
+        try:
+            response = self._http_client.delete(url=self._full_url(url), headers=self._headers)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(
+                f"Error returned when calling the Spira REST API. The error message was: {e}"
+            ) from e
 
 
 def get_client() -> SpiraClient:
@@ -231,6 +166,6 @@ def get_client() -> SpiraClient:
     base_url = get_base_url()
     username, api_key = get_credentials()
 
-    # Create the Spira client
-    spira_client = SpiraClient(base_url, username, api_key)
+    # Create the Spira client (constructor validates None values and raises ValueError)
+    spira_client = SpiraClient(base_url, username, api_key)  # type: ignore[arg-type]
     return spira_client

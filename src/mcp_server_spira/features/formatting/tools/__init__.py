@@ -1,6 +1,6 @@
 """Formatting tools for the MCP server."""
 
-from . import format_artifacts
+from . import artifact_schema, format_artifacts
 
 
 def register_tools(mcp) -> None:
@@ -11,3 +11,4 @@ def register_tools(mcp) -> None:
         mcp: The FastMCP server instance
     """
     format_artifacts.register_tools(mcp)
+    artifact_schema.register_tools(mcp)

@@ -105,20 +105,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [test case objects]}
-            See Key Fields section below for important test case fields.
-        Key Fields:
-            - TestCaseId: Unique identifier for the test case
-            - Name: The name of the test case
-            - TestCaseStatusId/TestCaseStatusName: Current status
-            - TestCasePriorityId/TestCasePriorityName: Priority level
-            - ExecutionStatusId/ExecutionStatusName: Most recent execution result
-            - OwnerId/OwnerName: User the test case is assigned to
-            - EstimatedDuration: Estimated time to execute in minutes
-            - ExecutionDate: When last executed
-            - AutomationEngineId: Automation engine ID (null if manual)
-            - ProjectId/ProjectName: Project the test case belongs to
-
-            Additional fields available: Description, TestCaseTypeId/TestCaseTypeName, AuthorId/AuthorName, ActualDuration, CreationDate, LastUpdateDate, TestCaseFolderId, ComponentIds, AutomationAttachmentId, IsSuspect, IsTestSteps, TestSteps, CustomProperties, Tags, IsAttachments, Guid
+            Call system_get_artifact_schema(artifact_type='test_case') to see available fields.
         Related Tools:
             - get_my_testcases: Get test cases assigned to current user (with client-side pagination)
             - format_artifacts_as_markdown: Format filtered/processed results for display

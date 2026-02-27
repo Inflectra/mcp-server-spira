@@ -73,18 +73,9 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [milestone objects]}
-            See Key Fields section below for important milestone fields.
             Full response structure documented in API.
 
-        Key Fields:
-            - MilestoneId: Unique identifier for the milestone
-            - Name: The name of the milestone
-            - MilestoneStatusId/MilestoneStatusName: Current status
-            - StartDate/EndDate: Planned timeline
-            - PercentComplete: Completion percentage (0-100)
-            - ProgramId/ProgramName: Parent program
-
-            Additional fields available: Description, MilestoneTypeId/MilestoneTypeName, CreationDate, LastUpdateDate, CustomProperties
+        Call system_get_artifact_schema(artifact_type='milestone') to see available fields.
 
         Related Tools:
             - get_capabilities: Get program capabilities

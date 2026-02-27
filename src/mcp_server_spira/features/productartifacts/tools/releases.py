@@ -127,21 +127,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [release objects]}
-            See Key Fields section below for important release fields.
-
-        Key Fields:
-            - ReleaseId: Unique identifier for the release
-            - Name: The name of the release
-            - VersionNumber: Version number string (e.g., '1.5.0')
-            - ReleaseStatusId/ReleaseStatusName: Current status
-            - StartDate/EndDate: Scheduled timeline
-            - PercentComplete: Percentage complete
-            - TaskCount: Number of tasks in this release
-            - RequirementCount: Number of requirements
-            - CountPassed/CountFailed: Test execution results
-            - ProjectId: Project the release belongs to
-
-            Additional fields available: Description, ReleaseTypeId/ReleaseTypeName, CreatorId/CreatorName, OwnerId/OwnerName, Active, Summary, IndentLevel, FullName, CreationDate, LastUpdateDate, ResourceCount, DaysNonWorking, PlannedEffort, AvailableEffort, TaskEstimatedEffort, TaskActualEffort, CountBlocked/CountCaution/CountNotApplicable/CountNotRun, RequirementPoints, CustomProperties, Tags, IsAttachments, Guid
+            Call system_get_artifact_schema(artifact_type='release') to see available fields.
         Related Tools:
             - get_release_by_id: Get single release with full details
             - format_artifacts_as_markdown: Format filtered/processed results for display
@@ -213,11 +199,8 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [release object]}
-            See Key Fields section below for important release fields.
+            Call system_get_artifact_schema(artifact_type='release') to see available fields.
             Full response structure documented in API.
-
-        Key Fields:
-            Same as get_releases - see that tool for field descriptions
 
         Related Tools:
             - get_releases: Get list of releases for a product

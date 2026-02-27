@@ -28,5 +28,5 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
-        additional_dependencies: [types-PyYAML, pytest, setuptools]
+        additional_dependencies: [types-PyYAML, pytest, setuptools, hypothesis]
         args: [--config-file=pyproject.toml]

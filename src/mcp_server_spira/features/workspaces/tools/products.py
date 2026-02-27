@@ -140,21 +140,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [product objects]}
-            See Key Fields section below for important product fields.
             Full response structure documented in API.
-
-        Key Fields:
-            - ProjectId: Unique identifier (use in other tool calls)
-            - Name: Display name of the product
-            - Active: Whether the product is currently active
-            - ProjectGroupId: Program/group this product belongs to
-            - CreationDate: When the product was created
-            - PercentComplete: Overall completion percentage
-            - RequirementCount: Total number of requirements
-
-            Additional fields available: Description, ProjectTemplateId,
-            Website, WorkingHours, WorkingDays, NonWorkingHours,
-            StartDate, EndDate, LastUpdatedDate, CustomProperties, Guid
 
         Related Tools:
             - get_programs: Get program-level groupings
@@ -204,21 +190,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [product object]}
-            See Key Fields section below for important product fields.
             Full response structure documented in API.
-
-        Key Fields:
-            - ProjectId: Unique identifier (use in other tool calls)
-            - Name: Display name of the product
-            - Active: Whether the product is currently active
-            - ProjectGroupId: Program/group this product belongs to
-            - CreationDate: When the product was created
-            - PercentComplete: Overall completion percentage
-            - RequirementCount: Total number of requirements
-
-            Additional fields available: Description, ProjectTemplateId,
-            Website, WorkingHours, WorkingDays, NonWorkingHours,
-            StartDate, EndDate, LastUpdatedDate, CustomProperties, Guid
 
         Related Tools:
             - get_products: Get list of products for a product
@@ -268,21 +240,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [product objects]}
-            See Key Fields section below for important product fields.
             Full response structure documented in API.
-
-        Key Fields:
-            - ProjectId: Unique identifier (use in other tool calls)
-            - Name: Display name of the product
-            - Active: Whether the product is currently active
-            - ProjectGroupId: Program/group this product belongs to
-            - CreationDate: When the product was created
-            - PercentComplete: Overall completion percentage
-            - RequirementCount: Total number of requirements
-
-            Additional fields available: Description, ProjectTemplateId,
-            Website, WorkingHours, WorkingDays, NonWorkingHours,
-            StartDate, EndDate, LastUpdatedDate, CustomProperties, Guid
 
         Related Tools:
             - get_products: Get all products user has access to

@@ -103,21 +103,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [risk objects]}
-            See Key Fields section below for important risk fields.
-
-        Key Fields:
-            - RiskId: Unique identifier for the risk
-            - Name: The name of the risk
-            - RiskStatusId/RiskStatusName: Current status
-            - RiskTypeId/RiskTypeName: Type of risk
-            - RiskProbability: Probability rating (1-5)
-            - RiskImpact: Impact rating (1-5)
-            - RiskExposure: Calculated exposure (Probability × Impact)
-            - OwnerId/OwnerName: User responsible for the risk
-            - ClosedDate: When closed (null if still open)
-            - ProjectId/ProjectName: Project the risk belongs to
-
-            Additional fields available: Description, CreationDate, LastUpdateDate, RiskMitigations, ComponentId, CustomProperties, Tags, IsAttachments
+            Call system_get_artifact_schema(artifact_type='risk') to see available fields.
 
         Related Tools:
             - format_artifacts_as_markdown: Format filtered/processed results for display

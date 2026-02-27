@@ -73,19 +73,9 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [capability objects]}
-            See Key Fields section below for important capability fields.
             Full response structure documented in API.
 
-        Key Fields:
-            - CapabilityId: Unique identifier for the capability
-            - Name: The name of the capability
-            - CapabilityStatusId/CapabilityStatusName: Current status
-            - CapabilityPriorityId/CapabilityPriorityName: Priority level
-            - OwnerId/OwnerName: User responsible for the capability
-            - StartDate/EndDate: Planned timeline
-            - ProgramId/ProgramName: Parent program
-
-            Additional fields available: Description, CapabilityTypeId/CapabilityTypeName, CreationDate, LastUpdateDate, CustomProperties
+        Call system_get_artifact_schema(artifact_type='capability') to see available fields.
 
         Related Tools:
             - get_milestones: Get program milestones

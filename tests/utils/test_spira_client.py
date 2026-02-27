@@ -19,7 +19,10 @@ class TestGetBaseUrl:
 
     def test_returns_base_url_from_env(self):
         """Test that get_base_url returns value from environment variable."""
-        with patch.dict(os.environ, {"INFLECTRA_SPIRA_BASE_URL": "https://test.spira.com"}):
+        with patch.dict(
+            os.environ,
+            {"INFLECTRA_SPIRA_BASE_URL": "https://test.spira.com"},
+        ):
             assert get_base_url() == "https://test.spira.com"
 
     def test_returns_none_when_not_set(self):
@@ -32,7 +35,7 @@ class TestGetCredentials:
     """Tests for get_credentials function."""
 
     def test_returns_credentials_from_env(self):
-        """Test that get_credentials returns values from environment variables."""
+        """Test that get_credentials returns values from env variables."""
         with patch.dict(
             os.environ,
             {
@@ -45,7 +48,7 @@ class TestGetCredentials:
             assert api_key == "testapikey123"
 
     def test_returns_none_when_not_set(self):
-        """Test that get_credentials returns None values when env vars not set."""
+        """Test get_credentials returns None values when env vars not set."""
         with patch.dict(os.environ, {}, clear=True):
             username, api_key = get_credentials()
             assert username is None
@@ -62,6 +65,18 @@ class TestSpiraClientInit:
         assert client.username == "user"
         assert client.api_key == "key"
 
+    def test_client_stores_persistent_http_client(self):
+        """Test that SpiraClient stores a persistent _http_client."""
+        client = SpiraClient("https://test.com", "user", "key")
+        assert hasattr(client, "_http_client")
+
+    def test_client_stores_headers(self):
+        """Test that SpiraClient builds headers once in __init__."""
+        client = SpiraClient("https://test.com", "user", "key")
+        assert hasattr(client, "_headers")
+        assert client._headers["username"] == "user"
+        assert client._headers["api-key"] == "key"
+
 
 class TestSpiraClientGetRequest:
     """Tests for SpiraClient.make_spira_api_get_request method."""
@@ -73,18 +88,15 @@ class TestSpiraClientGetRequest:
         mock_response = MagicMock()
         mock_response.json.return_value = {"TaskId": 1, "Name": "Test Task"}
 
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.get.return_value = mock_response
-            mock_client_class.return_value = mock_client
+        client._http_client = MagicMock()
+        client._http_client.get.return_value = mock_response
 
-            result = client.make_spira_api_get_request("tasks")
+        result = client.make_spira_api_get_request("tasks")
 
-            assert result == {"TaskId": 1, "Name": "Test Task"}
-            mock_client.get.assert_called_once()
-            call_args = mock_client.get.call_args
-            assert "https://test.com/Services/v7_0/RestService.svc/tasks" in call_args[0]
+        assert result == {"TaskId": 1, "Name": "Test Task"}
+        client._http_client.get.assert_called_once()
+        call_args = client._http_client.get.call_args
+        assert "https://test.com/Services/v7_0/RestService.svc/tasks" in call_args[0]
 
     def test_get_request_with_headers(self):
         """Test that GET request includes correct headers."""
@@ -93,56 +105,47 @@ class TestSpiraClientGetRequest:
         mock_response = MagicMock()
         mock_response.json.return_value = []
 
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.get.return_value = mock_response
-            mock_client_class.return_value = mock_client
+        client._http_client = MagicMock()
+        client._http_client.get.return_value = mock_response
 
-            client.make_spira_api_get_request("tasks")
+        client.make_spira_api_get_request("tasks")
 
-            call_kwargs = mock_client.get.call_args[1]
-            headers = call_kwargs["headers"]
-            assert headers["username"] == "user"
-            assert headers["api-key"] == "key"
-            assert headers["Accept"] == "application/json"
-            assert headers["Content-Type"] == "application/json"
+        call_kwargs = client._http_client.get.call_args[1]
+        headers = call_kwargs["headers"]
+        assert headers["username"] == "user"
+        assert headers["api-key"] == "key"
+        assert headers["Accept"] == "application/json"
+        assert headers["Content-Type"] == "application/json"
 
     def test_get_request_raises_on_missing_base_url(self):
-        """Test that GET request raises ValueError when base_url is None."""
-        client = SpiraClient(None, "user", "key")
-
+        """Test that constructing with None base_url raises ValueError."""
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_BASE_URL"):
-            client.make_spira_api_get_request("tasks")
+            SpiraClient(None, "user", "key")  # type: ignore[arg-type]
 
     def test_get_request_raises_on_missing_username(self):
-        """Test that GET request raises ValueError when username is None."""
-        client = SpiraClient("https://test.com", None, "key")
-
+        """Test that constructing with None username raises ValueError."""
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_USERNAME"):
-            client.make_spira_api_get_request("tasks")
+            SpiraClient("https://test.com", None, "key")  # type: ignore[arg-type]
 
     def test_get_request_raises_on_missing_api_key(self):
-        """Test that GET request raises ValueError when api_key is None."""
-        client = SpiraClient("https://test.com", "user", None)
-
+        """Test that constructing with None api_key raises ValueError."""
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_API_KEY"):
-            client.make_spira_api_get_request("tasks")
+            SpiraClient("https://test.com", "user", None)  # type: ignore[arg-type]
 
     def test_get_request_handles_http_error(self):
         """Test that GET request handles HTTP errors properly."""
         client = SpiraClient("https://test.com", "user", "key")
-
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.get.side_effect = httpx.HTTPStatusError(
-                "404 Not Found", request=MagicMock(), response=MagicMock()
-            )
-            mock_client_class.return_value = mock_client
-
-            with pytest.raises(Exception, match="Error returned when calling the Spira REST API"):
-                client.make_spira_api_get_request("tasks")
+        client._http_client = MagicMock()
+        client._http_client.get.side_effect = httpx.HTTPStatusError(
+            "404 Not Found",
+            request=MagicMock(),
+            response=MagicMock(),
+        )
+        with pytest.raises(
+            Exception,
+            match="Error returned when calling the Spira REST API",
+        ):
+            client.make_spira_api_get_request("tasks")
 
 
 class TestSpiraClientPostRequest:
@@ -155,16 +158,13 @@ class TestSpiraClientPostRequest:
         mock_response = MagicMock()
         mock_response.json.return_value = {"TaskId": 2, "Name": "New Task"}
 
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.post.return_value = mock_response
-            mock_client_class.return_value = mock_client
+        client._http_client = MagicMock()
+        client._http_client.post.return_value = mock_response
 
-            result = client.make_spira_api_post_request("projects/1/tasks", {"Name": "New Task"})
+        result = client.make_spira_api_post_request("projects/1/tasks", {"Name": "New Task"})
 
-            assert result == {"TaskId": 2, "Name": "New Task"}
-            mock_client.post.assert_called_once()
+        assert result == {"TaskId": 2, "Name": "New Task"}
+        client._http_client.post.assert_called_once()
 
     def test_post_request_with_list_json(self):
         """Test POST request with list JSON body."""
@@ -173,22 +173,17 @@ class TestSpiraClientPostRequest:
         mock_response = MagicMock()
         mock_response.json.return_value = [{"TaskId": 1}, {"TaskId": 2}]
 
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.post.return_value = mock_response
-            mock_client_class.return_value = mock_client
+        client._http_client = MagicMock()
+        client._http_client.post.return_value = mock_response
 
-            result = client.make_spira_api_post_request("tasks/search", [{"filter": "status"}])
+        result = client.make_spira_api_post_request("tasks/search", [{"filter": "status"}])
 
-            assert result == [{"TaskId": 1}, {"TaskId": 2}]
+        assert result == [{"TaskId": 1}, {"TaskId": 2}]
 
     def test_post_request_raises_on_missing_credentials(self):
-        """Test that POST request raises ValueError when credentials missing."""
-        client = SpiraClient(None, "user", "key")
-
+        """Test that constructing with None base_url raises ValueError."""
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_BASE_URL"):
-            client.make_spira_api_post_request("tasks", {})
+            SpiraClient(None, "user", "key")  # type: ignore[arg-type]
 
 
 class TestSpiraClientPutRequest:
@@ -199,27 +194,25 @@ class TestSpiraClientPutRequest:
         client = SpiraClient("https://test.com", "user", "key")
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {"TaskId": 1, "Name": "Updated Task"}
+        mock_response.json.return_value = {
+            "TaskId": 1,
+            "Name": "Updated Task",
+        }
 
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.put.return_value = mock_response
-            mock_client_class.return_value = mock_client
+        client._http_client = MagicMock()
+        client._http_client.put.return_value = mock_response
 
-            result = client.make_spira_api_put_request(
-                "projects/1/tasks", {"TaskId": 1, "Name": "Updated Task"}
-            )
+        result = client.make_spira_api_put_request(
+            "projects/1/tasks", {"TaskId": 1, "Name": "Updated Task"}
+        )
 
-            assert result == {"TaskId": 1, "Name": "Updated Task"}
-            mock_client.put.assert_called_once()
+        assert result == {"TaskId": 1, "Name": "Updated Task"}
+        client._http_client.put.assert_called_once()
 
     def test_put_request_raises_on_missing_credentials(self):
-        """Test that PUT request raises ValueError when credentials missing."""
-        client = SpiraClient("https://test.com", None, "key")
-
+        """Test that constructing with None username raises ValueError."""
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_USERNAME"):
-            client.make_spira_api_put_request("tasks", {})
+            SpiraClient("https://test.com", None, "key")  # type: ignore[arg-type]
 
 
 class TestSpiraClientDeleteRequest:
@@ -232,38 +225,33 @@ class TestSpiraClientDeleteRequest:
         mock_response = MagicMock()
         mock_response.json.return_value = {"success": True}
 
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.delete.return_value = mock_response
-            mock_client_class.return_value = mock_client
+        client._http_client = MagicMock()
+        client._http_client.delete.return_value = mock_response
 
-            result = client.make_spira_api_delete_request("projects/1/tasks/40")
+        result = client.make_spira_api_delete_request("projects/1/tasks/40")
 
-            assert result == {"success": True}
-            mock_client.delete.assert_called_once()
+        assert result == {"success": True}
+        client._http_client.delete.assert_called_once()
 
     def test_delete_request_raises_on_missing_credentials(self):
-        """Test that DELETE request raises ValueError when credentials missing."""
-        client = SpiraClient("https://test.com", "user", None)
-
+        """Test that constructing with None api_key raises ValueError."""
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_API_KEY"):
-            client.make_spira_api_delete_request("tasks/40")
+            SpiraClient("https://test.com", "user", None)  # type: ignore[arg-type]
 
     def test_delete_request_handles_http_error(self):
         """Test that DELETE request handles HTTP errors properly."""
         client = SpiraClient("https://test.com", "user", "key")
-
-        with patch("httpx.Client") as mock_client_class:
-            mock_client = MagicMock()
-            mock_client.__enter__.return_value = mock_client
-            mock_client.delete.side_effect = httpx.HTTPStatusError(
-                "403 Forbidden", request=MagicMock(), response=MagicMock()
-            )
-            mock_client_class.return_value = mock_client
-
-            with pytest.raises(Exception, match="Error returned when calling the Spira REST API"):
-                client.make_spira_api_delete_request("tasks/40")
+        client._http_client = MagicMock()
+        client._http_client.delete.side_effect = httpx.HTTPStatusError(
+            "403 Forbidden",
+            request=MagicMock(),
+            response=MagicMock(),
+        )
+        with pytest.raises(
+            Exception,
+            match="Error returned when calling the Spira REST API",
+        ):
+            client.make_spira_api_delete_request("tasks/40")
 
 
 class TestGetClient:
@@ -286,10 +274,9 @@ class TestGetClient:
             assert client.api_key == "key"
 
     def test_get_client_with_none_values(self):
-        """Test that get_client works even with None values (validation happens on request)."""
-        with patch.dict(os.environ, {}, clear=True):
-            client = get_client()
-            assert isinstance(client, SpiraClient)
-            assert client.base_url is None
-            assert client.username is None
-            assert client.api_key is None
+        """Test get_client raises ValueError when credentials are missing."""
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(ValueError, match="INFLECTRA_SPIRA_BASE_URL"),
+        ):
+            get_client()

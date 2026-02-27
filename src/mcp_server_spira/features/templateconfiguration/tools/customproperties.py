@@ -127,18 +127,6 @@ def register_tools(mcp) -> None:
             JSON string with structure: {"data": [custom property objects]}
             Each object contains ArtifactTypeName and CustomProperties array.
 
-        Key Fields:
-            - ArtifactTypeName: Name (Requirement, Release, TestCase, etc.)
-            - CustomProperties: Array of custom properties
-            - CustomPropertyId: Unique identifier for the custom property
-            - PropertyNumber: Display order number for the property
-            - Name: Display name of the custom property
-            - CustomPropertyTypeId/CustomPropertyTypeName: Property type
-            - IsRequired: Whether required when creating artifacts
-            - Options: Valid values for list-type properties (null for other)
-
-            Additional fields available: IsDeleted, IsRichText
-
         Related Tools:
             - get_artifact_types: Get artifact types and sub-types
             - get_product_template: Get template details

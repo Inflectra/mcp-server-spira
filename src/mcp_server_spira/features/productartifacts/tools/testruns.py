@@ -104,21 +104,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [test run objects]}
-            See Key Fields section below for important test run fields.
-
-        Key Fields:
-            - TestRunId: Unique identifier for the test run
-            - Name: The name of the test run
-            - TestCaseId: The test case this run is an instance of
-            - ExecutionStatusId: Execution status (1=Failed, 2=Passed, etc.)
-            - TestRunTypeId: Type (1=Manual, 2=Automated)
-            - TesterId: User who executed the test
-            - StartDate/EndDate: Execution timeline
-            - ActualDuration: Actual duration in minutes
-            - ReleaseId/ReleaseVersionNumber: Release reported against
-            - ProjectId: Project the test run belongs to
-
-            Additional fields available: TestCaseGuid, TestSetId/TestSetGuid, TestSetTestCaseId, TesterGuid, EstimatedDuration, BuildId, TestConfigurationId, CustomProperties, Tags, IsAttachments, Guid
+            Call system_get_artifact_schema(artifact_type='test_run') to see available fields.
         Related Tools:
             - format_artifacts_as_markdown: Format filtered/processed results for display
             - get_test_cases: Get test cases in a product

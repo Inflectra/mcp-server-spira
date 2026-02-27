@@ -98,20 +98,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [incident objects]}
-            See Key Fields section below for important incident fields.
-        Key Fields:
-            - IncidentId: Unique identifier for the incident
-            - Name: The name/title of the incident
-            - IncidentStatusId/IncidentStatusName: Current status
-            - PriorityId/PriorityName: Priority level (1-Critical to 5-Low)
-            - SeverityId/SeverityName: Severity level (1-Critical to 4-Low)
-            - OwnerId/OwnerName: User the incident is assigned to
-            - DetectedReleaseId/DetectedReleaseVersionNumber: Release where found
-            - ResolvedReleaseId/ResolvedReleaseVersionNumber: Release where fixed
-            - ClosedDate: When closed (null if still open)
-            - ProjectId/ProjectName: Project the incident belongs to
-
-            Additional fields available: Description, IncidentTypeId/IncidentTypeName, OpenerId/OpenerName, EstimatedEffort, ActualEffort, RemainingEffort, ProjectedEffort, CompletionPercent, StartDate, EndDate, CreationDate, LastUpdateDate, VerifiedReleaseId/VerifiedReleaseVersionNumber, DetectedBuildId/DetectedBuildName, FixedBuildId/FixedBuildName, ComponentIds, TestRunStepIds, CustomProperties, Tags, IsAttachments, Guid
+            Call system_get_artifact_schema(artifact_type='incident') to see available fields.
         Related Tools:
             - get_my_incidents: Get incidents assigned to current user (with client-side pagination)
             - format_artifacts_as_markdown: Format filtered/processed results for display

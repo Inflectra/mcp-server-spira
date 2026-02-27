@@ -104,17 +104,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [product template objects]}
-            See Key Fields section below for important product template fields.
             Full response structure documented in API.
-
-        Key Fields:
-            - ProjectTemplateId: Unique identifier (use when creating products)
-            - Name: Display name of the product template
-            - IsActive: Whether the template is currently active
-            - LastUpdatedDate: Last modification timestamp
-
-            Additional fields available: Description, CustomProperties,
-            Guid
 
         Related Tools:
             - get_products: Get list of products
@@ -165,18 +155,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [product template object]}
-            See Key Fields section below for important product template
-            fields. Full response structure documented in API.
-
-        Key Fields:
-            - ProjectTemplateId: Unique identifier (use when creating
-              products)
-            - Name: Display name of the product template
-            - IsActive: Whether the template is currently active
-            - LastUpdatedDate: Last modification timestamp
-
-            Additional fields available: Description, CustomProperties,
-            Guid
+            Full response structure documented in API.
 
         Related Tools:
             - get_product_templates: Get list of product templates

@@ -21,17 +21,22 @@ from mcp_server_spira.utils import register_all_prompts
 # Create a FastMCP server instance with a name
 mcp = FastMCP(
     "inflectra-spira",
-    description=(
-        "Inflectra Spira MCP Server — project management, testing, and requirements tools. "
-        "Tools are prefixed by scope: "
-        "my_ (current user's work items), "
-        "product_ (product-scoped artifacts), "
-        "program_ (program-scoped artifacts), "
-        "template_ (product template configuration), "
-        "system_ (instance-wide operations), "
-        "spec_ (specification document structures), "
-        "format_ (data display transformations). "
-        "32 tools available."
+    instructions=(
+        "Inflectra Spira MCP Server — project management, testing, and requirements tools.\n"
+        "Hierarchy: Programs contain Products (projects). Products contain artifacts.\n"
+        "\n"
+        "TOOL SCOPES (prefix_action):\n"
+        "  my_       — current user's items, no ID: incidents, tasks, requirements, test cases, test sets\n"
+        "  product_  — requires product_id: incidents, tasks, requirements, test cases, test sets, releases, risks, test runs, automation hosts\n"
+        "  program_  — requires program_id: capabilities, milestones\n"
+        "  system_   — no ID needed: products, programs, product templates\n"
+        "  template_ — requires template_id: artifact types, custom properties\n"
+        "  spec_     — requires product_id: specification documents\n"
+        "  format_   — convert JSON to markdown\n"
+        "\n"
+        "33 tools total. "
+        "If user asks for artifacts without context: use my_ for their own items, "
+        "or call system_get_products first to find a product_id."
     ),
 )
 

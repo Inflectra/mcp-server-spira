@@ -68,18 +68,7 @@ def register_tools(mcp) -> None:
 
         Returns:
             JSON string with structure: {"data": [program objects]}
-            See Key Fields section below for important program fields.
             Full response structure documented in API.
-
-        Key Fields:
-            - ProgramId: Unique identifier (use in other tool calls)
-            - Name: Display name of the program
-            - isActive: Whether the program is currently active
-            - PortfolioId: Portfolio this program belongs to
-            - LastUpdatedDate: Last modification timestamp
-
-            Additional fields available: Description, Website, isDefault,
-            ProjectTemplateId, PortfolioId, CustomProperties, Guid
 
         Related Tools:
             - get_products: Get all products user has access to
