@@ -7,6 +7,7 @@ test against a matching test case in Spira
 
 import datetime
 
+from mcp_server_spira.config import resolve_product_id
 from mcp_server_spira.features.common import get_spira_client
 from mcp_server_spira.features.common.responses import (
     ErrorCodes,
@@ -179,13 +180,13 @@ def register_tools(mcp) -> None:
         annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
     )
     def record_automated_test_run(
-        product_id: int,
         test_name: str,
         short_message: str,
         long_message: str,
         error_count: int,
         test_case_id: int,
         execution_status_id: int,
+        product_id: int | None = None,
     ) -> str:
         """
         Records an automated test result in Spira.
@@ -195,7 +196,7 @@ def register_tools(mcp) -> None:
         Use this to push automated test results from CI/CD pipelines into Spira for quality tracking.
 
         Args:
-            product_id: The numeric ID of the product (e.g., 55 for PR:55)
+            product_id: The numeric ID of the product (e.g., 55 for PR:55). If omitted, uses SPIRA_PROJECT_ID from environment.
             test_name: The name of the test being run
             short_message: Brief result description (50 chars or less)
             long_message: Full test outcome description in plain text
@@ -217,6 +218,16 @@ def register_tools(mcp) -> None:
             )
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion="Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment",
+                )
+            product_id = resolved_id
             spira_client = get_spira_client()
             return _record_automated_test_run_impl(
                 spira_client,

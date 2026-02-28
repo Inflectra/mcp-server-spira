@@ -12,15 +12,32 @@ Prerequisites: You need to have the following environment variables defined:
 """
 
 import argparse
+import json
+from contextlib import asynccontextmanager
 
 from mcp.server.fastmcp import FastMCP
 
+from mcp_server_spira.config import load_config
 from mcp_server_spira.features import register_all
+from mcp_server_spira.features.context import (
+    get_active_product_context,
+    load_active_product_context,
+)
 from mcp_server_spira.utils import register_all_prompts
+
+
+@asynccontextmanager
+async def lifespan(server):
+    load_config()
+    await load_active_product_context()
+    yield
+    # shutdown: nothing needed
+
 
 # Create a FastMCP server instance with a name
 mcp = FastMCP(
     "inflectra-spira",
+    lifespan=lifespan,
     instructions=(
         "Inflectra Spira MCP Server — project management, testing, and requirements tools.\n"
         "Hierarchy: Programs contain Products (projects). Products contain artifacts.\n"
@@ -43,6 +60,14 @@ mcp = FastMCP(
 # Register all features
 register_all(mcp)
 register_all_prompts(mcp)
+
+
+@mcp.resource("spira://active-product")
+def active_product_resource() -> str:
+    ctx = get_active_product_context()
+    if ctx is None:
+        return json.dumps({"error": "No active product context available"})
+    return json.dumps(ctx, indent=2)
 
 
 def main():

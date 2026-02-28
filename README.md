@@ -107,7 +107,15 @@ Create a `.env` file in the project root with the following variables:
 INFLECTRA_SPIRA_BASE_URL=The base URL for your instance of Spira (typically https://mycompany.spiraservice.net or https://demo-xx.spiraservice.net/mycompany)
 INFLECTRA_SPIRA_USERNAME=The login name you use to access Spira
 INFLECTRA_SPIRA_API_KEY=The API Key (RSS Token) you use to access the Spira REST API
+SPIRA_PROJECT_ID=The numeric ID of your default Spira project (optional)
 ```
+
+| Variable | Required | Description |
+|---|---|---|
+| `INFLECTRA_SPIRA_BASE_URL` | Yes | Base URL for your Spira instance |
+| `INFLECTRA_SPIRA_USERNAME` | Yes | Your Spira login name |
+| `INFLECTRA_SPIRA_API_KEY` | Yes | Your API Key (RSS Token) from your Spira user profile |
+| `SPIRA_PROJECT_ID` | No | Numeric ID of your default project. When set, product-specific tools use this project automatically without needing to pass `product_id` on every call. If set to a non-integer value, the server logs a warning and treats it as unset. |
 
 Note: Make sure your API Key is active and saved in your Spira user profile.
 
@@ -799,7 +807,7 @@ For comprehensive information about the project:
 
 - **[Development Setup Guide](docs/development_setup.md)** - Complete guide for setting up your development environment
 - **[Architecture Documentation](docs/architecture.md)** - Detailed explanation of the project structure and design patterns
-- **[Master Plan](SPIRA_MCP_ENHANCEMENT_MASTER_PLAN.md)** - Roadmap and enhancement plan for the project
+- **[Testing Guide](TESTING_GUIDE.md)** - How to run tests, write new tests, and understand the test structure
 
 ## Development
 
@@ -936,7 +944,7 @@ The project is structured into feature modules, each implementing specific Infle
 - `features/programs`: Program management features
 - `utils`: Common utilities and client initialization
 
-For more information on development, see the [CLAUDE.md](CLAUDE.md) file.
+For more information on development, see the [Testing Guide](TESTING_GUIDE.md) for instructions on running tests, writing new tests, and understanding the test structure.
 
 ### Tool Documentation Generator
 

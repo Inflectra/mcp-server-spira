@@ -5,6 +5,7 @@ This module provides MCP tools for recording the results of continuous integrati
 pipeline builds against a matching release in Spira
 """
 
+from mcp_server_spira.config import resolve_product_id
 from mcp_server_spira.features.common import get_spira_client
 from mcp_server_spira.features.common.responses import (
     ErrorCodes,
@@ -152,12 +153,12 @@ def register_tools(mcp) -> None:
         annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
     )
     def create_build(
-        product_id: int,
         release_id: int,
         build_status_id: int,
         name: str,
         description: str,
         commits: list[str],
+        product_id: int | None = None,
     ) -> str:
         """
         Creates a new CI/CD pipeline build entry in Spira.
@@ -167,7 +168,7 @@ def register_tools(mcp) -> None:
         Use this to record CI/CD build results and associate commits with releases.
 
         Args:
-            product_id: The numeric ID of the product (e.g., 55 for PR:55)
+            product_id: The numeric ID of the product (e.g., 55 for PR:55). If omitted, uses SPIRA_PROJECT_ID from environment.
             release_id: Release/sprint ID without RL prefix (e.g., 12 for RL:12)
             build_status_id: Build status (1=Failed, 2=Passed)
             name: Build name (typically project name + date/time)
@@ -189,6 +190,16 @@ def register_tools(mcp) -> None:
             )
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion="Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment",
+                )
+            product_id = resolved_id
             spira_client = get_spira_client()
             return _create_build_url_impl(
                 spira_client, product_id, release_id, build_status_id, name, description, commits

@@ -4,6 +4,7 @@ Provides operations for working with the Spira product requirements
 This module provides MCP tools for retrieving and updating product requirements
 """
 
+from mcp_server_spira.config import resolve_product_id
 from mcp_server_spira.features.common import get_spira_client
 from mcp_server_spira.features.common.responses import (
     ErrorCodes,
@@ -70,7 +71,7 @@ def register_tools(mcp) -> None:
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
     def get_requirements(
-        product_id: int,
+        product_id: int | None = None,
         starting_row: int = 1,
         number_of_rows: int = 100,
     ) -> str:
@@ -84,8 +85,9 @@ def register_tools(mcp) -> None:
         requirement lists with filtering and sorting capabilities.
 
         Args:
-            product_id: The numeric ID of the product.
-                If the ID is PR:45, just use 45.
+            product_id: The numeric ID of the product. If the ID is PR:45,
+                just use 45. If omitted, uses SPIRA_PROJECT_ID from
+                environment.
             starting_row: The starting row number for pagination
                 (default: 1, 1-based index)
             number_of_rows: The number of rows to return (default: 100)
@@ -106,6 +108,19 @@ def register_tools(mcp) -> None:
             requirements_json = get_requirements(product_id=55, starting_row=101, number_of_rows=100)
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion=(
+                        "Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment"
+                    ),
+                )
+            product_id = resolved_id
+
             # Validate product_id
             validation_error = ParameterValidator.validate_positive_integer(
                 product_id, "product_id", min_value=1

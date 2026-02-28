@@ -22,8 +22,9 @@ from typing import Any
 
 from mcp.server.fastmcp.utilities.logging import get_logger
 
+from mcp_server_spira.config import resolve_product_id
 from mcp_server_spira.features.common import get_spira_client
-from mcp_server_spira.features.common.responses import format_error_response
+from mcp_server_spira.features.common.responses import ErrorCodes, format_error_response
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 # Get a logger instance, typically named after the current module
@@ -648,7 +649,9 @@ def register_tools(mcp) -> None:
         name="spec_get_requirements",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_requirements(product_id: int, release_id: int | None) -> str:
+    def get_specification_requirements(
+        release_id: int | None, product_id: int | None = None
+    ) -> str:
         """
         Retrieves the requirements specification file for the requested Spira product.
 
@@ -656,8 +659,8 @@ def register_tools(mcp) -> None:
         for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product (e.g., 45 for PR:45)
             release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
+            product_id: The numeric ID of the product (e.g., 45 for PR:45). If omitted, uses SPIRA_PROJECT_ID from environment.
 
         Returns:
             Formatted markdown string containing the specification.
@@ -675,6 +678,17 @@ def register_tools(mcp) -> None:
             spec = get_specification_requirements(product_id=55, release_id=12)
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion="Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment",
+                )
+            product_id = resolved_id
+
             # Validate product_id
             validator = ParameterValidator()
             error = validator.validate_positive_integer(product_id, "product_id")
@@ -710,7 +724,7 @@ def register_tools(mcp) -> None:
         name="spec_get_design",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_design(product_id: int, release_id: int | None) -> str:
+    def get_specification_design(release_id: int | None, product_id: int | None = None) -> str:
         """
         Retrieves the design specification file for the requested Spira product.
 
@@ -718,8 +732,8 @@ def register_tools(mcp) -> None:
         for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product (e.g., 45 for PR:45)
             release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
+            product_id: The numeric ID of the product (e.g., 45 for PR:45). If omitted, uses SPIRA_PROJECT_ID from environment.
 
         Returns:
             Formatted markdown string containing the specification.
@@ -737,6 +751,17 @@ def register_tools(mcp) -> None:
             spec = get_specification_design(product_id=55, release_id=12)
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion="Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment",
+                )
+            product_id = resolved_id
+
             # Validate product_id
             validator = ParameterValidator()
             error = validator.validate_positive_integer(product_id, "product_id")
@@ -772,7 +797,7 @@ def register_tools(mcp) -> None:
         name="spec_get_tasks",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_tasks(product_id: int, release_id: int | None) -> str:
+    def get_specification_tasks(release_id: int | None, product_id: int | None = None) -> str:
         """
         Retrieves the tasks specification file for the requested Spira product.
 
@@ -780,8 +805,8 @@ def register_tools(mcp) -> None:
         for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product (e.g., 45 for PR:45)
             release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
+            product_id: The numeric ID of the product (e.g., 45 for PR:45). If omitted, uses SPIRA_PROJECT_ID from environment.
 
         Returns:
             Formatted markdown string containing the specification.
@@ -799,6 +824,17 @@ def register_tools(mcp) -> None:
             spec = get_specification_tasks(product_id=55, release_id=12)
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion="Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment",
+                )
+            product_id = resolved_id
+
             # Validate product_id
             validator = ParameterValidator()
             error = validator.validate_positive_integer(product_id, "product_id")
@@ -834,7 +870,7 @@ def register_tools(mcp) -> None:
         name="spec_get_test_cases",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_test_cases(product_id: int, release_id: int | None) -> str:
+    def get_specification_test_cases(release_id: int | None, product_id: int | None = None) -> str:
         """
         Retrieves the test cases specification file for the requested Spira product.
 
@@ -842,8 +878,8 @@ def register_tools(mcp) -> None:
         for agentic development environments such as Amazon Kiro.
 
         Args:
-            product_id: The numeric ID of the product (e.g., 45 for PR:45)
             release_id: The numeric ID of the release (e.g., 12 for RL:12) or None for entire project
+            product_id: The numeric ID of the product (e.g., 45 for PR:45). If omitted, uses SPIRA_PROJECT_ID from environment.
 
         Returns:
             Formatted markdown string containing the specification.
@@ -861,6 +897,17 @@ def register_tools(mcp) -> None:
             spec = get_specification_test_cases(product_id=55, release_id=12)
         """
         try:
+            # Resolve product_id from explicit arg or SPIRA_PROJECT_ID env var
+            resolved_id = resolve_product_id(product_id)
+            if resolved_id is None:
+                return format_error_response(
+                    error="product_id is required",
+                    error_code=ErrorCodes.INVALID_PARAMETER,
+                    details={"parameter": "product_id"},
+                    suggestion="Pass product_id explicitly or set SPIRA_PROJECT_ID in your environment",
+                )
+            product_id = resolved_id
+
             # Validate product_id
             validator = ParameterValidator()
             error = validator.validate_positive_integer(product_id, "product_id")

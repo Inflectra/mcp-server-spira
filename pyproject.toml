@@ -10,6 +10,7 @@ dependencies = [
     "httpx>=0.28.1",
     "mcp[cli]>=1.9.2",
 ]
+authors = [{name = "Inflectra Corporation", email = "support@inflectra.com"}]
 classifiers = [
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
     'Programming Language :: Python :: 3',
@@ -157,6 +158,9 @@ directory = "htmlcov"
 [build-system]
 requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
+
+[project.scripts]
+mcp-server-spira = "mcp_server_spira.server:main"
 
 [project.urls]
 Homepage = "https://github.com/Inflectra/mcp-server-spira"

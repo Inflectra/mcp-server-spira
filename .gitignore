@@ -202,3 +202,7 @@ cython_debug/
 # MCP publishing authentication tokens
 .mcpregistry_github_token
 .mcpregistry_registry_token
+
+# Generated artefacts
+coverage.json
+workspace.code-workspace
