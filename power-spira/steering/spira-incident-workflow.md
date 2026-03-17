@@ -10,7 +10,7 @@ Incidents are identified by an `IN:` token (e.g. IN:42). The type of an incident
 
 - **Bug** — a defect found during testing or production use
 - **Issue** — a general problem or concern (not necessarily a code defect)
-- **Risk** — a potential future problem that may affect the product
+- **Enhancement** — a potential future improvement of the product
 
 Admins can define additional custom types. A special category called **Issues** is a subset of incidents: admins mark certain incident types as "also an issue", and filtering by "Issues" shows all incidents of those types together.
 

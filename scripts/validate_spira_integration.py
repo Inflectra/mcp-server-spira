@@ -169,12 +169,24 @@ def discover_markers(test_dir: Path) -> set[str]:
         return set()
 
 
-def load_spira_config(config_path: Path) -> dict[str, str]:
+MODE_TO_SECTION = {
+    "class": "test_cases",
+    "module": "modules",
+    "marker": "markers",
+}
+
+
+def load_spira_config(config_path: Path, mode: str = "class") -> dict[str, str]:
     """
-    Load Spira configuration and extract test case mappings.
+    Load Spira configuration and extract mappings for the given mode.
+
+    The section read depends on the mode:
+      - class  → [test_cases]
+      - module → [modules]
+      - marker → [markers]
 
     Returns:
-        Dict mapping test class names to test case IDs
+        Dict mapping names to test case IDs
     """
     if not config_path.exists():
         return {}
@@ -184,7 +196,7 @@ def load_spira_config(config_path: Path) -> dict[str, str]:
     if env_spira_path.exists():
         import os
 
-        with open(env_spira_path) as f:
+        with open(env_spira_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
@@ -193,22 +205,22 @@ def load_spira_config(config_path: Path) -> dict[str, str]:
 
     # Use RawConfigParser with case-sensitive keys
     config = configparser.RawConfigParser()
-    # Preserve case in option names
     config.optionxform = str  # type: ignore
     config.read(config_path)
 
-    if "test_cases" not in config:
+    section = MODE_TO_SECTION.get(mode, "test_cases")
+    if section not in config:
         return {}
 
     # Filter out empty values and comments
     return {
         key: value
-        for key, value in config.items("test_cases")
+        for key, value in config.items(section)
         if value.strip() and not key.startswith("#")
     }
 
 
-def validate_config_format(config_path: Path) -> list[str]:
+def validate_config_format(config_path: Path, mode: str = "class") -> list[str]:
     """
     Validate spira.cfg format and return list of issues.
 
@@ -239,8 +251,9 @@ def validate_config_format(config_path: Path) -> list[str]:
     if "spira" not in config:
         issues.append("Missing [spira] section (optional but recommended)")
 
-    if "test_cases" not in config:
-        issues.append("Missing [test_cases] section")
+    section = MODE_TO_SECTION.get(mode, "test_cases")
+    if section not in config:
+        issues.append(f"Missing [{section}] section")
 
     return issues
 
@@ -411,12 +424,13 @@ def print_coverage_report(
 
         print(f"\n💡 To map these {mode.lower()}s:")
         print("   1. Create test cases in Spira for each item")
-        print("   2. Add mappings to spira.cfg [test_cases] section")
-        print(f"   3. Format: {mode}Name = TC_ID (without TC: prefix)")
+        section = MODE_TO_SECTION.get(mode.lower(), "test_cases")
+        print(f"   2. Add mappings to spira.cfg [{section}] section")
+        print("   3. Format: name = TC_ID (without TC: prefix)")
         if mode == "CLASS":
             print("   4. Example: TestGetMyTasksImpl = 4865")
         elif mode == "MODULE":
-            print("   4. Example: test_mytasks = 5010")
+            print("   4. Example: tests.features.mywork.test_mytasks = 4871")
         elif mode == "MARKER":
             print("   4. Example: unit = 5000")
 
@@ -478,7 +492,8 @@ def main():
 
     # Validate config format
     print("\n📋 Validating spira.cfg format...")
-    config_issues = validate_config_format(config_path)
+    effective_mode = "module" if args.mode == "all" else args.mode
+    config_issues = validate_config_format(config_path, effective_mode)
     if config_issues:
         print("❌ Configuration issues found:")
         for issue in config_issues:
@@ -488,16 +503,16 @@ def main():
     else:
         print("✅ Configuration format is valid")
 
-    # Load Spira mappings
-    print(f"\n📖 Loading Spira test case mappings from {config_path}...")
-    spira_mappings = load_spira_config(config_path)
-
     if args.mode == "all":
-        # Run all three modes
+        # Run all three modes, each loading its own section
         for mode in ["class", "module", "marker"]:
             print("\n" + "=" * 60)
-            validate_mode(mode, test_dir, spira_mappings, args.strict)
+            mappings = load_spira_config(config_path, mode)
+            validate_mode(mode, test_dir, mappings, args.strict)
     else:
+        # Load Spira mappings
+        print(f"\n📖 Loading Spira test case mappings from {config_path}...")
+        spira_mappings = load_spira_config(config_path, args.mode)
         validate_mode(args.mode, test_dir, spira_mappings, args.strict)
 
 

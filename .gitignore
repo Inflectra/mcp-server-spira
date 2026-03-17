@@ -139,9 +139,6 @@ venv.bak/
 # Spira pytest integration credentials (contains sensitive data)
 .env.spira
 
-# Spira pytest config (generated from .env.spira - contains credentials)
-spira.cfg
-
 # Spyder project settings
 .spyderproject
 .spyproject

@@ -48,7 +48,7 @@ class OnboardingValidator:
             return -1, "", str(e)
 
     def validate_python_version(self) -> bool:
-        """Validate Python version is 3.13+."""
+        """Validate Python version is 3.12+."""
         print("\n1. Validating Python version...")
         code, stdout, stderr = self.run_command("python --version")
 
@@ -57,11 +57,15 @@ class OnboardingValidator:
             return False
 
         version_str = stdout.strip() or stderr.strip()
-        if "Python 3.13" in version_str or "Python 3.14" in version_str:
+        if (
+            "Python 3.12" in version_str
+            or "Python 3.13" in version_str
+            or "Python 3.14" in version_str
+        ):
             self.log_success(f"Python version correct: {version_str}")
             return True
         else:
-            self.log_issue(f"Python version incorrect: {version_str} (need 3.13+)")
+            self.log_issue(f"Python version incorrect: {version_str} (need 3.12+)")
             return False
 
     def validate_python_version_file(self) -> bool:
@@ -74,7 +78,7 @@ class OnboardingValidator:
             return False
 
         content = version_file.read_text().strip()
-        if content.startswith("3.13") or content.startswith("3.14"):
+        if content.startswith("3.12") or content.startswith("3.13") or content.startswith("3.14"):
             self.log_success(f".python-version file correct: {content}")
             return True
         else:

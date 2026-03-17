@@ -25,7 +25,7 @@
 The Spira MCP Server is a Model Context Protocol (MCP) server that provides AI assistants with access to the Inflectra Spira API. It enables AI-driven workflows for project management, test management, and requirements management.
 
 **Key Technologies:**
-- **Language:** Python 3.13+
+- **Language:** Python 3.12+
 - **Framework:** FastMCP (MCP Python SDK)
 - **API:** Spira REST API v7.0
 - **HTTP Client:** httpx

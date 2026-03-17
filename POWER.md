@@ -4,6 +4,7 @@ displayName: "Inflectra SpiraPlan / SpiraTeam"
 description: "Connect Kiro to Inflectra Spira for AI-assisted project management, test management, requirements management, and incident tracking."
 keywords:
   - spira
+  - spiratest
   - spirateam
   - spiraplan
   - requirements

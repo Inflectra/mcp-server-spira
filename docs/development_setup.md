@@ -8,7 +8,7 @@ This guide will help you set up your development environment for the Spira MCP S
 
 ## Quick Start
 
-**Estimated Time:** 10-15 minutes (excluding Python 3.13 installation)
+**Estimated Time:** 10-15 minutes (excluding Python 3.12 installation)
 
 ```bash
 # 1. Clone the repository (if not already done)
@@ -42,7 +42,7 @@ pytest
 
 ### Required Software
 
-- **Python 3.13+** (specified in `.python-version`)
+- **Python 3.12+** (specified in `.python-version`)
 - **Git** (for version control and pre-commit hooks)
 - **pip** (Python package installer, comes with Python)
 
@@ -58,16 +58,16 @@ pytest
 
 **Estimated Time:** 1 minute (if already installed) or 10-15 minutes (first-time installation)
 
-This project requires **Python 3.13 or higher**.
+This project requires **Python 3.12 or higher**.
 
 ### Check Your Python Version
 
 ```bash
 python --version
-# Should output: Python 3.13.x
+# Should output: Python 3.12.x
 ```
 
-### Installing Python 3.13
+### Installing Python 3.12
 
 #### Using pyenv (Recommended)
 
@@ -79,11 +79,11 @@ brew install pyenv
 # Linux
 curl https://pyenv.run | bash
 
-# Install Python 3.13
-pyenv install 3.13
+# Install Python 3.12
+pyenv install 3.12
 
 # Set as local version for this project
-pyenv local 3.13
+pyenv local 3.12
 ```
 
 #### Direct Installation
@@ -250,7 +250,7 @@ After completing the setup, run these commands to verify everything is working:
 ```bash
 # 1. Check Python version
 python --version
-# Expected: Python 3.13.x
+# Expected: Python 3.12.x
 
 # 2. Verify virtual environment is activated
 which python
@@ -478,9 +478,9 @@ which python3
 # Use python3 explicitly if needed
 python3 -m venv .venv
 
-# Or install Python 3.13 using pyenv
-pyenv install 3.13
-pyenv local 3.13
+# Or install Python 3.12 using pyenv
+pyenv install 3.12
+pyenv local 3.12
 ```
 
 ### Issue: Virtual environment activation fails
@@ -632,11 +632,11 @@ ls -la | grep pyproject.toml
 # Check Python version
 python --version
 
-# If wrong version, use python3.13 explicitly
-python3.13 -m venv .venv
+# If wrong version, use python3.12 explicitly
+python3.12 -m venv .venv
 
 # Or use pyenv
-pyenv local 3.13
+pyenv local 3.12
 ```
 
 ### Mistake 4: Not Installing Package in Editable Mode

@@ -106,7 +106,7 @@ python -m pytest tests/scripts/test_generate_tool_docs.py -v
 ## Requirements
 
 Scripts in this directory require:
-- Python 3.13+
+- Python 3.12+
 - Dependencies from `requirements-dev.txt`
 - Access to project root directory
 
