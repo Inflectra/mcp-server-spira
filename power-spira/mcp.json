@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "spira": {
+      "command": "uvx",
+      "args": ["mcp-server-spira"],
+      "env": {
+        "INFLECTRA_SPIRA_BASE_URL": "${INFLECTRA_SPIRA_BASE_URL}",
+        "INFLECTRA_SPIRA_USERNAME": "${INFLECTRA_SPIRA_USERNAME}",
+        "INFLECTRA_SPIRA_API_KEY": "${INFLECTRA_SPIRA_API_KEY}",
+        "SPIRA_PROJECT_ID": "${SPIRA_PROJECT_ID}"
+      }
+    }
+  }
+}
