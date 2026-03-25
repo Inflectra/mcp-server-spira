@@ -580,7 +580,9 @@ def _get_specification_test_cases_impl(
         sort_field = "TestCaseId"
         sort_direction = "ASC"
         while more_results:
-            test_cases_url = f"projects/{product_id}/test-cases?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field={sort_field}&sort_direction={sort_direction}&release_id={release_id}"
+            test_cases_url = f"projects/{product_id}/test-cases?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field={sort_field}&sort_direction={sort_direction}"
+            if release_id is not None:
+                test_cases_url += f"&release_id={release_id}"
             results = spira_client.make_spira_api_get_request(test_cases_url)
             if not results:
                 more_results = False
