@@ -8,6 +8,9 @@ import pytest
 # Resolve the repo root relative to this test file (tests/ → repo root)
 REPO_ROOT = Path(__file__).parent.parent
 
+# POWER.md lives in the power-spira subdirectory
+POWER_MD_PATH = REPO_ROOT / "power-spira" / "POWER.md"
+
 pytestmark = pytest.mark.unit
 
 
@@ -84,7 +87,7 @@ class TestPowerMdExists:
 
     def test_power_md_file_exists(self):
         """POWER.md must exist at the repository root."""
-        power_md = REPO_ROOT / "POWER.md"
+        power_md = POWER_MD_PATH
         assert power_md.exists(), f"POWER.md not found at {power_md}"
         assert power_md.is_file(), "POWER.md exists but is not a regular file"
 
@@ -95,7 +98,7 @@ class TestPowerMdFrontmatter:
     @pytest.fixture(scope="class")
     def frontmatter(self):
         """Parse and return the POWER.md frontmatter once per class."""
-        text = (REPO_ROOT / "POWER.md").read_text(encoding="utf-8")
+        text = (POWER_MD_PATH).read_text(encoding="utf-8")
         return _parse_frontmatter(text)
 
     def test_frontmatter_has_name(self, frontmatter):
@@ -129,7 +132,7 @@ class TestPowerMdEnvVars:
     @pytest.fixture(scope="class")
     def power_md_content(self):
         """Read POWER.md content once per class."""
-        return (REPO_ROOT / "POWER.md").read_text(encoding="utf-8")
+        return (POWER_MD_PATH).read_text(encoding="utf-8")
 
     @pytest.mark.parametrize("env_var", REQUIRED_ENV_VARS)
     def test_env_var_mentioned(self, power_md_content, env_var):

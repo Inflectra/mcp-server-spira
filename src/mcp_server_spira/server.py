@@ -44,6 +44,7 @@ mcp = FastMCP(
         "\n"
         "TOOL SCOPES (prefix_action):\n"
         "  my_       — current user's items, no ID: incidents, tasks, requirements, test cases, test sets\n"
+        "              Note: risks are product-scoped only; use product_get_risks with a product_id\n"
         "  product_  — requires product_id: incidents, tasks, requirements, test cases, test sets, releases, risks, test runs, automation hosts\n"
         "  program_  — requires program_id: capabilities, milestones\n"
         "  system_   — no ID needed: products, programs, product templates\n"

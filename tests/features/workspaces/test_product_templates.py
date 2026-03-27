@@ -3,7 +3,7 @@ Tests for the Product Templates workspace features of the Inflectra Spira MCP Se
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -18,10 +18,11 @@ from mcp_server_spira.features.workspaces.tools.product_templates import (
 class TestGetProductTemplatesImpl:
     """Tests for _get_product_templates_impl function."""
 
-    def test_successful_retrieval_with_templates(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_templates(self):
         """Test successful product template retrieval with data."""
         # Mock Spira client
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_templates = [
             {
                 "ProjectTemplateId": 1,
@@ -51,7 +52,7 @@ class TestGetProductTemplatesImpl:
         mock_client.make_spira_api_get_request.return_value = mock_templates
 
         # Call implementation
-        result = _get_product_templates_impl(mock_client)
+        result = await _get_product_templates_impl(mock_client)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("project-templates")
@@ -67,24 +68,26 @@ class TestGetProductTemplatesImpl:
         assert parsed["data"][1]["Name"] == "Kanban Template"
         assert parsed["data"][1]["IsActive"] is False
 
-    def test_successful_retrieval_empty_templates(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_empty_templates(self):
         """Test successful retrieval with no product templates."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
-        result = _get_product_templates_impl(mock_client)
+        result = await _get_product_templates_impl(mock_client)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert len(parsed["data"]) == 0
         assert parsed["data"] == []
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
-        result = _get_product_templates_impl(mock_client)
+        result = await _get_product_templates_impl(mock_client)
 
         # Verify error response structure
         parsed = json.loads(result)
@@ -96,9 +99,10 @@ class TestGetProductTemplatesImpl:
         assert "message" in parsed["details"]
         assert "suggestion" in parsed
 
-    def test_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_preserves_all_fields(self):
         """Test that all product template fields are preserved in JSON output."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_templates = [
             {
                 "ProjectTemplateId": 1,
@@ -115,7 +119,7 @@ class TestGetProductTemplatesImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_templates
 
-        result = _get_product_templates_impl(mock_client)
+        result = await _get_product_templates_impl(mock_client)
 
         parsed = json.loads(result)
         template = parsed["data"][0]
@@ -132,9 +136,10 @@ class TestGetProductTemplatesImpl:
         assert template["ConcurrencyGuid"] == "xyz-789"
         assert template["CustomProperties"] == []
 
-    def test_json_formatting(self):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self):
         """Test that JSON is properly formatted with indentation."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_templates = [
             {
                 "ProjectTemplateId": 1,
@@ -144,7 +149,7 @@ class TestGetProductTemplatesImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_templates
 
-        result = _get_product_templates_impl(mock_client)
+        result = await _get_product_templates_impl(mock_client)
 
         # Verify it's valid JSON
         parsed = json.loads(result)
@@ -154,9 +159,10 @@ class TestGetProductTemplatesImpl:
         assert "\n" in result
         assert "  " in result  # 2-space indentation
 
-    def test_no_truncation(self):
+    @pytest.mark.asyncio
+    async def test_no_truncation(self):
         """Test that all templates are returned without truncation."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         # Create 150 templates to test no truncation
         mock_templates = [
             {
@@ -175,7 +181,7 @@ class TestGetProductTemplatesImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_templates
 
-        result = _get_product_templates_impl(mock_client)
+        result = await _get_product_templates_impl(mock_client)
 
         parsed = json.loads(result)
         # Verify all 150 templates are returned (no truncation at 100)
@@ -188,9 +194,10 @@ class TestGetProductTemplatesImpl:
 class TestGetProductTemplateImpl:
     """Tests for _get_product_template_impl function."""
 
-    def test_successful_retrieval_valid_id(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_valid_id(self):
         """Test successful product template retrieval with valid ID."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_template = {
             "ProjectTemplateId": 1,
             "Name": "Scrum Template",
@@ -201,7 +208,7 @@ class TestGetProductTemplateImpl:
         }
         mock_client.make_spira_api_get_request.return_value = mock_template
 
-        result = _get_product_template_impl(mock_client, 1)
+        result = await _get_product_template_impl(mock_client, 1)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("project-templates/1")
@@ -210,33 +217,36 @@ class TestGetProductTemplateImpl:
         assert "Scrum Template" in result
         assert "Agile Scrum project template" in result
 
-    def test_template_not_found(self):
+    @pytest.mark.asyncio
+    async def test_template_not_found(self):
         """Test handling when template ID doesn't exist."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = None
 
-        result = _get_product_template_impl(mock_client, 999)
+        result = await _get_product_template_impl(mock_client, 999)
 
         parsed = json.loads(result)
         assert parsed["error"] == "Product template not found"
         assert parsed["error_code"] == "NOT_FOUND"
         assert parsed["details"]["template_id"] == 999
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
-        result = _get_product_template_impl(mock_client, 1)
+        result = await _get_product_template_impl(mock_client, 1)
 
         parsed = json.loads(result)
         assert parsed["error"] == "Failed to retrieve product template"
         assert parsed["error_code"] == "API_ERROR"
         assert "Connection timeout" in parsed["details"]["message"]
 
-    def test_various_template_ids(self):
+    @pytest.mark.asyncio
+    async def test_various_template_ids(self):
         """Test with various template IDs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_template = {
             "ProjectTemplateId": 1,
             "Name": "Test Template",
@@ -247,15 +257,16 @@ class TestGetProductTemplateImpl:
 
         # Test with different IDs
         for template_id in [1, 5, 10, 99]:
-            result = _get_product_template_impl(mock_client, template_id)
+            result = await _get_product_template_impl(mock_client, template_id)
             mock_client.make_spira_api_get_request.assert_called_with(
                 f"project-templates/{template_id}"
             )
             assert "Test Template" in result
 
-    def test_inactive_template(self):
+    @pytest.mark.asyncio
+    async def test_inactive_template(self):
         """Test retrieval of inactive template."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_template = {
             "ProjectTemplateId": 2,
             "Name": "Inactive Template",
@@ -265,7 +276,7 @@ class TestGetProductTemplateImpl:
         }
         mock_client.make_spira_api_get_request.return_value = mock_template
 
-        result = _get_product_template_impl(mock_client, 2)
+        result = await _get_product_template_impl(mock_client, 2)
 
         # Should still return the template even if inactive
         assert "Inactive Template" in result
@@ -287,12 +298,13 @@ class TestRegisterTools:
         # Should register 2 tools: get_product_templates and get_product_template
         assert mock_mcp.tool.call_count == 2
 
-    def test_get_product_templates_mcp_wrapper_calls_implementation(self):
+    @pytest.mark.asyncio
+    async def test_get_product_templates_mcp_wrapper_calls_implementation(self):
         """Test that get_product_templates MCP wrapper properly calls implementation."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
         ) as mock_get_client:
-            mock_client = Mock()
+            mock_client = AsyncMock()
             mock_templates = [{"ProjectTemplateId": 1, "Name": "Scrum Template", "IsActive": True}]
             mock_client.make_spira_api_get_request.return_value = mock_templates
             mock_get_client.return_value = mock_client
@@ -314,14 +326,15 @@ class TestRegisterTools:
 
             # Call the first registered tool (get_product_templates)
             get_product_templates_func = mock_mcp.tools[0]
-            result = get_product_templates_func()
+            result = await get_product_templates_func()
 
             # Verify successful response
             parsed = json.loads(result)
             assert "data" in parsed
             assert len(parsed["data"]) == 1
 
-    def test_get_product_templates_mcp_wrapper_handles_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_product_templates_mcp_wrapper_handles_exception(self):
         """Test that get_product_templates MCP wrapper handles exceptions."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
@@ -345,19 +358,20 @@ class TestRegisterTools:
 
             # Call the first registered tool (get_product_templates)
             get_product_templates_func = mock_mcp.tools[0]
-            result = get_product_templates_func()
+            result = await get_product_templates_func()
 
             # Verify error response
             parsed = json.loads(result)
             assert "error" in parsed
             assert parsed["error_code"] == "API_ERROR"
 
-    def test_get_product_template_mcp_wrapper_calls_implementation(self):
+    @pytest.mark.asyncio
+    async def test_get_product_template_mcp_wrapper_calls_implementation(self):
         """Test that get_product_template MCP wrapper properly calls implementation."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
         ) as mock_get_client:
-            mock_client = Mock()
+            mock_client = AsyncMock()
             mock_template = {"ProjectTemplateId": 1, "Name": "Test Template", "IsActive": True}
             mock_client.make_spira_api_get_request.return_value = mock_template
             mock_get_client.return_value = mock_client
@@ -379,12 +393,13 @@ class TestRegisterTools:
 
             # Call the second registered tool (get_product_template)
             get_product_template_func = mock_mcp.tools[1]
-            result = get_product_template_func(1)
+            result = await get_product_template_func(1)
 
             # Verify result contains template info
             assert "Test Template" in result
 
-    def test_get_product_template_mcp_wrapper_handles_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_product_template_mcp_wrapper_handles_exception(self):
         """Test that get_product_template MCP wrapper handles exceptions."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.product_templates.get_spira_client"
@@ -408,7 +423,7 @@ class TestRegisterTools:
 
             # Call the second registered tool (get_product_template)
             get_product_template_func = mock_mcp.tools[1]
-            result = get_product_template_func(1)
+            result = await get_product_template_func(1)
 
             # Verify error response
             parsed = json.loads(result)

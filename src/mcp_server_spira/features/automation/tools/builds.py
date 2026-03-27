@@ -15,7 +15,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _create_build_url_impl(
+async def _create_build_url_impl(
     spira_client,
     product_id: int,
     release_id: int,
@@ -103,7 +103,7 @@ def _create_build_url_impl(
 
         # Record the build using the API method
         create_build_url = f"projects/{product_id}/releases/{release_id}/builds"
-        build = spira_client.make_spira_api_post_request(create_build_url, body)
+        build = await spira_client.make_spira_api_post_request(create_build_url, body)
 
         if not build:
             return format_error_response(
@@ -152,7 +152,7 @@ def register_tools(mcp) -> None:
         name="product_create_build",
         annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
     )
-    def create_build(
+    async def create_build(
         release_id: int,
         build_status_id: int,
         name: str,
@@ -201,7 +201,7 @@ def register_tools(mcp) -> None:
                 )
             product_id = resolved_id
             spira_client = get_spira_client()
-            return _create_build_url_impl(
+            return await _create_build_url_impl(
                 spira_client, product_id, release_id, build_status_id, name, description, commits
             )
         except Exception as e:

@@ -15,7 +15,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_artifact_types_impl(spira_client, template_id: int) -> str:
+async def _get_artifact_types_impl(spira_client, template_id: int) -> str:
     """
     Implementation of retrieving the list of artifact types and sub-types
     in the product template
@@ -33,7 +33,7 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
 
         # --- Requirements ---
         types_url = f"project-templates/{template_id}/requirements/types"
-        requirement_types = spira_client.make_spira_api_get_request(types_url)
+        requirement_types = await spira_client.make_spira_api_get_request(types_url)
 
         if requirement_types:
             artifact_types.append(
@@ -45,35 +45,35 @@ def _get_artifact_types_impl(spira_client, template_id: int) -> str:
 
         # --- Test Cases ---
         types_url = f"project-templates/{template_id}/test-cases/types"
-        test_case_types = spira_client.make_spira_api_get_request(types_url)
+        test_case_types = await spira_client.make_spira_api_get_request(types_url)
 
         if test_case_types:
             artifact_types.append({"ArtifactTypeName": "Test Case", "Types": test_case_types})
 
         # --- Tasks ---
         types_url = f"project-templates/{template_id}/tasks/types"
-        task_types = spira_client.make_spira_api_get_request(types_url)
+        task_types = await spira_client.make_spira_api_get_request(types_url)
 
         if task_types:
             artifact_types.append({"ArtifactTypeName": "Task", "Types": task_types})
 
         # --- Risks ---
         types_url = f"project-templates/{template_id}/risks/types"
-        risk_types = spira_client.make_spira_api_get_request(types_url)
+        risk_types = await spira_client.make_spira_api_get_request(types_url)
 
         if risk_types:
             artifact_types.append({"ArtifactTypeName": "Risk", "Types": risk_types})
 
         # --- Incidents ---
         types_url = f"project-templates/{template_id}/incidents/types"
-        incident_types = spira_client.make_spira_api_get_request(types_url)
+        incident_types = await spira_client.make_spira_api_get_request(types_url)
 
         if incident_types:
             artifact_types.append({"ArtifactTypeName": "Incident", "Types": incident_types})
 
         # --- Documents ---
         types_url = f"project-templates/{template_id}/document-types?active_only=true"
-        document_types = spira_client.make_spira_api_get_request(types_url)
+        document_types = await spira_client.make_spira_api_get_request(types_url)
 
         if document_types:
             artifact_types.append({"ArtifactTypeName": "Document", "Types": document_types})
@@ -101,7 +101,7 @@ def register_tools(mcp) -> None:
         name="system_get_artifact_types",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_artifact_types(template_id: int) -> str:
+    async def get_artifact_types(template_id: int) -> str:
         """
         Retrieves artifact types and sub-types for the product template
 
@@ -139,7 +139,7 @@ def register_tools(mcp) -> None:
                 return format_error_response(**validation_error)
 
             spira_client = get_spira_client()
-            return _get_artifact_types_impl(spira_client, template_id)
+            return await _get_artifact_types_impl(spira_client, template_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve artifact types",

@@ -14,7 +14,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_requirements_impl(
+async def _get_requirements_impl(
     spira_client,
     product_id: int,
     starting_row: int = 1,
@@ -44,7 +44,7 @@ def _get_requirements_impl(
         )
 
         # Make POST request with empty filter array (no filtering for now)
-        requirements = spira_client.make_spira_api_post_request(requirements_url, [])
+        requirements = await spira_client.make_spira_api_post_request(requirements_url, [])
 
         # Return JSON response with data structure
         return format_success_response(data=requirements)
@@ -70,7 +70,7 @@ def register_tools(mcp) -> None:
         name="product_get_requirements",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_requirements(
+    async def get_requirements(
         product_id: int | None = None,
         starting_row: int = 1,
         number_of_rows: int = 100,
@@ -144,7 +144,7 @@ def register_tools(mcp) -> None:
 
             # Get Spira client and retrieve requirements
             spira_client = get_spira_client()
-            return _get_requirements_impl(
+            return await _get_requirements_impl(
                 spira_client,
                 product_id,
                 starting_row,

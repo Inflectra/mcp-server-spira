@@ -14,7 +14,7 @@ This module tests all 9 product artifact tools:
 """
 
 import json
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -49,10 +49,11 @@ from mcp_server_spira.features.productartifacts.tools.testsets import (
 class TestGetTasksImpl:
     """Tests for _get_tasks_impl function."""
 
-    def test_successful_retrieval_with_tasks(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_tasks(self):
         """Test successful task retrieval with POST request and empty filter."""
         # Mock Spira client
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_tasks = [
             {
                 "TaskId": 123,
@@ -69,7 +70,7 @@ class TestGetTasksImpl:
         mock_client.make_spira_api_post_request.return_value = mock_tasks
 
         # Call implementation
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -84,33 +85,36 @@ class TestGetTasksImpl:
         assert parsed["data"][0]["TaskId"] == 123
         assert parsed["data"][0]["Name"] == "Fix login bug"
 
-    def test_pagination_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters(self):
         """Test that pagination parameters are included in URL."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_tasks_impl(mock_client, 55, starting_row=10, number_of_rows=50)
+        await _get_tasks_impl(mock_client, 55, starting_row=10, number_of_rows=50)
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "starting_row=10" in url
         assert "number_of_rows=50" in url
 
-    def test_sort_parameters(self):
+    @pytest.mark.asyncio
+    async def test_sort_parameters(self):
         """Test that sort parameters are included when provided."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_tasks_impl(mock_client, 55, sort_field="TaskPriorityId", sort_direction="DESC")
+        await _get_tasks_impl(mock_client, 55, sort_field="TaskPriorityId", sort_direction="DESC")
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "sort_field=TaskPriorityId" in url
         assert "sort_direction=DESC" in url
 
-    def test_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_preserves_all_fields(self):
         """Test that all task fields are preserved in JSON output."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_tasks = [
             {
                 "TaskId": 123,
@@ -150,7 +154,7 @@ class TestGetTasksImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_tasks
 
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
         parsed = json.loads(result)
         task = parsed["data"][0]
 
@@ -164,12 +168,13 @@ class TestGetTasksImpl:
         assert task["ProjectedEffort"] == 120
         assert task["CompletionPercent"] == 50
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("Connection timeout")
 
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
 
         # Verify error response structure
         parsed = json.loads(result)
@@ -180,12 +185,13 @@ class TestGetTasksImpl:
         assert "details" in parsed
         assert "suggestion" in parsed
 
-    def test_empty_results(self):
+    @pytest.mark.asyncio
+    async def test_empty_results(self):
         """Test successful retrieval with no tasks."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
@@ -196,9 +202,10 @@ class TestGetTasksImpl:
 class TestGetIncidentsImpl:
     """Tests for _get_incidents_impl function."""
 
-    def test_successful_retrieval_with_incidents(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_incidents(self):
         """Test successful incident retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [
             {
                 "IncidentId": 456,
@@ -210,7 +217,7 @@ class TestGetIncidentsImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_incidents
 
-        result = _get_incidents_impl(mock_client, 55)
+        result = await _get_incidents_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -222,24 +229,26 @@ class TestGetIncidentsImpl:
         assert "data" in parsed
         assert parsed["data"][0]["IncidentId"] == 456
 
-    def test_pagination_parameters_start_row(self):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters_start_row(self):
         """Test that incidents use start_row parameter."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_incidents_impl(mock_client, 55, start_row=10, number_rows=50)
+        await _get_incidents_impl(mock_client, 55, start_row=10, number_rows=50)
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "start_row=10" in url
         assert "number_rows=50" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_incidents_impl(mock_client, 55)
+        result = await _get_incidents_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -250,9 +259,10 @@ class TestGetIncidentsImpl:
 class TestGetRequirementsImpl:
     """Tests for _get_requirements_impl function."""
 
-    def test_successful_retrieval_with_requirements(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_requirements(self):
         """Test successful requirement retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_requirements = [
             {
                 "RequirementId": 123,
@@ -264,7 +274,7 @@ class TestGetRequirementsImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_requirements
 
-        result = _get_requirements_impl(mock_client, 55)
+        result = await _get_requirements_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -276,24 +286,26 @@ class TestGetRequirementsImpl:
         assert "data" in parsed
         assert parsed["data"][0]["RequirementId"] == 123
 
-    def test_pagination_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters(self):
         """Test that pagination parameters are included in URL."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_requirements_impl(mock_client, 55, starting_row=20, number_of_rows=75)
+        await _get_requirements_impl(mock_client, 55, starting_row=20, number_of_rows=75)
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "starting_row=20" in url
         assert "number_of_rows=75" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_requirements_impl(mock_client, 55)
+        result = await _get_requirements_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -304,9 +316,10 @@ class TestGetRequirementsImpl:
 class TestGetTestCasesImpl:
     """Tests for _get_test_cases_impl function."""
 
-    def test_successful_retrieval_with_test_cases(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_test_cases(self):
         """Test successful test case retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_test_cases = [
             {
                 "TestCaseId": 123,
@@ -318,7 +331,7 @@ class TestGetTestCasesImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_test_cases
 
-        result = _get_test_cases_impl(mock_client, 55)
+        result = await _get_test_cases_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -330,12 +343,13 @@ class TestGetTestCasesImpl:
         assert "data" in parsed
         assert parsed["data"][0]["TestCaseId"] == 123
 
-    def test_pagination_and_sort_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pagination_and_sort_parameters(self):
         """Test that pagination and sort parameters are included."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_test_cases_impl(
+        await _get_test_cases_impl(
             mock_client,
             55,
             starting_row=5,
@@ -351,12 +365,13 @@ class TestGetTestCasesImpl:
         assert "sort_field=TestCaseId" in url
         assert "sort_direction=DESC" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_test_cases_impl(mock_client, 55)
+        result = await _get_test_cases_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -367,9 +382,10 @@ class TestGetTestCasesImpl:
 class TestGetTestSetsImpl:
     """Tests for _get_test_sets_impl function."""
 
-    def test_successful_retrieval_with_test_sets(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_test_sets(self):
         """Test successful test set retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_test_sets = [
             {
                 "TestSetId": 123,
@@ -382,7 +398,7 @@ class TestGetTestSetsImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_test_sets
 
-        result = _get_test_sets_impl(mock_client, 55)
+        result = await _get_test_sets_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -394,12 +410,13 @@ class TestGetTestSetsImpl:
         assert "data" in parsed
         assert parsed["data"][0]["TestSetId"] == 123
 
-    def test_pagination_and_sort_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pagination_and_sort_parameters(self):
         """Test that pagination and sort parameters are included."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_test_sets_impl(
+        await _get_test_sets_impl(
             mock_client,
             55,
             starting_row=15,
@@ -415,12 +432,13 @@ class TestGetTestSetsImpl:
         assert "sort_field=TestSetStatusName" in url
         assert "sort_direction=ASC" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_test_sets_impl(mock_client, 55)
+        result = await _get_test_sets_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -431,9 +449,10 @@ class TestGetTestSetsImpl:
 class TestGetReleasesImpl:
     """Tests for _get_releases_impl function."""
 
-    def test_successful_retrieval_with_releases(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_releases(self):
         """Test successful release retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_releases = [
             {
                 "ReleaseId": 10,
@@ -446,7 +465,7 @@ class TestGetReleasesImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_releases
 
-        result = _get_releases_impl(mock_client, 55)
+        result = await _get_releases_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -458,24 +477,26 @@ class TestGetReleasesImpl:
         assert "data" in parsed
         assert parsed["data"][0]["ReleaseId"] == 10
 
-    def test_pagination_parameters_start_row(self):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters_start_row(self):
         """Test that releases use start_row parameter."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_releases_impl(mock_client, 55, start_row=5, number_rows=20)
+        await _get_releases_impl(mock_client, 55, start_row=5, number_rows=20)
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "start_row=5" in url
         assert "number_rows=20" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_releases_impl(mock_client, 55)
+        result = await _get_releases_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -486,9 +507,10 @@ class TestGetReleasesImpl:
 class TestGetReleaseByIdImpl:
     """Tests for _get_release_by_id_impl function."""
 
-    def test_successful_retrieval_by_id(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_by_id(self):
         """Test successful single release retrieval with GET request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_release = {
             "ReleaseId": 10,
             "Name": "Release 1.5.0",
@@ -499,7 +521,7 @@ class TestGetReleaseByIdImpl:
         }
         mock_client.make_spira_api_get_request.return_value = mock_release
 
-        result = _get_release_by_id_impl(mock_client, 55, 10)
+        result = await _get_release_by_id_impl(mock_client, 55, 10)
 
         # Verify API was called with GET (not POST)
         mock_client.make_spira_api_get_request.assert_called_once_with("projects/55/releases/10")
@@ -509,12 +531,13 @@ class TestGetReleaseByIdImpl:
         assert len(parsed["data"]) == 1
         assert parsed["data"][0]["ReleaseId"] == 10
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
 
-        result = _get_release_by_id_impl(mock_client, 55, 10)
+        result = await _get_release_by_id_impl(mock_client, 55, 10)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -527,9 +550,10 @@ class TestGetReleaseByIdImpl:
 class TestGetTestRunsImpl:
     """Tests for _get_test_runs_impl function."""
 
-    def test_successful_retrieval_with_test_runs(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_test_runs(self):
         """Test successful test run retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_test_runs = [
             {
                 "TestRunId": 123,
@@ -542,7 +566,7 @@ class TestGetTestRunsImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_test_runs
 
-        result = _get_test_runs_impl(mock_client, 55)
+        result = await _get_test_runs_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -554,12 +578,13 @@ class TestGetTestRunsImpl:
         assert "data" in parsed
         assert parsed["data"][0]["TestRunId"] == 123
 
-    def test_pagination_and_sort_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pagination_and_sort_parameters(self):
         """Test that pagination and sort parameters are included."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_test_runs_impl(
+        await _get_test_runs_impl(
             mock_client,
             55,
             starting_row=10,
@@ -575,12 +600,13 @@ class TestGetTestRunsImpl:
         assert "sort_field=EndDate" in url
         assert "sort_direction=DESC" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_test_runs_impl(mock_client, 55)
+        result = await _get_test_runs_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -591,9 +617,10 @@ class TestGetTestRunsImpl:
 class TestGetAutomationHostsImpl:
     """Tests for _get_automation_hosts_impl function."""
 
-    def test_successful_retrieval_with_automation_hosts(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_automation_hosts(self):
         """Test successful automation host retrieval with POST request."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_hosts = [
             {
                 "AutomationHostId": 123,
@@ -605,7 +632,7 @@ class TestGetAutomationHostsImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_hosts
 
-        result = _get_automation_hosts_impl(mock_client, 55)
+        result = await _get_automation_hosts_impl(mock_client, 55)
 
         # Verify API was called with POST and empty filter array
         mock_client.make_spira_api_post_request.assert_called_once()
@@ -617,32 +644,35 @@ class TestGetAutomationHostsImpl:
         assert "data" in parsed
         assert parsed["data"][0]["AutomationHostId"] == 123
 
-    def test_pagination_parameters(self):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters(self):
         """Test that pagination parameters are included in URL."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_automation_hosts_impl(mock_client, 55, starting_row=5, number_of_rows=25)
+        await _get_automation_hosts_impl(mock_client, 55, starting_row=5, number_of_rows=25)
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "starting_row=5" in url
         assert "number_of_rows=25" in url
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.side_effect = Exception("API Error")
 
-        result = _get_automation_hosts_impl(mock_client, 55)
+        result = await _get_automation_hosts_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "error" in parsed
         assert parsed["error_code"] == "API_ERROR"
 
-    def test_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_preserves_all_fields(self):
         """Test that all automation host fields are preserved."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_hosts = [
             {
                 "AutomationHostId": 123,
@@ -664,7 +694,7 @@ class TestGetAutomationHostsImpl:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_hosts
 
-        result = _get_automation_hosts_impl(mock_client, 55)
+        result = await _get_automation_hosts_impl(mock_client, 55)
         parsed = json.loads(result)
         host = parsed["data"][0]
 
@@ -774,105 +804,114 @@ class TestInputValidation:
 class TestJSONStructureValidation:
     """Tests for JSON structure validation across all tools."""
 
-    def test_tasks_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_tasks_json_structure(self):
         """Test that get_tasks returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"TaskId": 1, "Name": "Test"}]
 
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
 
         # Verify it's valid JSON
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_incidents_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_incidents_json_structure(self):
         """Test that get_incidents returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"IncidentId": 1, "Name": "Test"}]
 
-        result = _get_incidents_impl(mock_client, 55)
+        result = await _get_incidents_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_requirements_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_requirements_json_structure(self):
         """Test that get_requirements returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [
             {"RequirementId": 1, "Name": "Test"}
         ]
 
-        result = _get_requirements_impl(mock_client, 55)
+        result = await _get_requirements_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_test_cases_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_test_cases_json_structure(self):
         """Test that get_test_cases returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"TestCaseId": 1, "Name": "Test"}]
 
-        result = _get_test_cases_impl(mock_client, 55)
+        result = await _get_test_cases_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_test_sets_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_test_sets_json_structure(self):
         """Test that get_test_sets returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"TestSetId": 1, "Name": "Test"}]
 
-        result = _get_test_sets_impl(mock_client, 55)
+        result = await _get_test_sets_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_releases_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_releases_json_structure(self):
         """Test that get_releases returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"ReleaseId": 1, "Name": "Test"}]
 
-        result = _get_releases_impl(mock_client, 55)
+        result = await _get_releases_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_test_runs_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_test_runs_json_structure(self):
         """Test that get_test_runs returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"TestRunId": 1, "Name": "Test"}]
 
-        result = _get_test_runs_impl(mock_client, 55)
+        result = await _get_test_runs_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_automation_hosts_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_automation_hosts_json_structure(self):
         """Test that get_automation_hosts returns valid JSON with data key."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [
             {"AutomationHostId": 1, "Name": "Test"}
         ]
 
-        result = _get_automation_hosts_impl(mock_client, 55)
+        result = await _get_automation_hosts_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert isinstance(parsed["data"], list)
 
-    def test_json_formatting_with_indentation(self):
+    @pytest.mark.asyncio
+    async def test_json_formatting_with_indentation(self):
         """Test that JSON is properly formatted with indentation."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = [{"TaskId": 1, "Name": "Test Task"}]
 
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
 
         # Verify formatting (should have newlines and indentation)
         assert "\n" in result
@@ -883,80 +922,87 @@ class TestJSONStructureValidation:
 class TestEdgeCases:
     """Tests for edge cases across all product artifact tools."""
 
-    def test_tasks_with_various_product_ids(self):
+    @pytest.mark.asyncio
+    async def test_tasks_with_various_product_ids(self):
         """Test get_tasks with various product IDs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
         for product_id in [1, 10, 100, 999]:
-            _get_tasks_impl(mock_client, product_id)
+            await _get_tasks_impl(mock_client, product_id)
             call_args = mock_client.make_spira_api_post_request.call_args
             assert f"projects/{product_id}/tasks/search" in call_args[0][0]
 
-    def test_incidents_with_various_product_ids(self):
+    @pytest.mark.asyncio
+    async def test_incidents_with_various_product_ids(self):
         """Test get_incidents with various product IDs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
         for product_id in [1, 10, 100, 999]:
-            _get_incidents_impl(mock_client, product_id)
+            await _get_incidents_impl(mock_client, product_id)
             call_args = mock_client.make_spira_api_post_request.call_args
             assert f"projects/{product_id}/incidents/search" in call_args[0][0]
 
-    def test_empty_filter_array_is_always_sent(self):
+    @pytest.mark.asyncio
+    async def test_empty_filter_array_is_always_sent(self):
         """Test that empty filter array [] is always sent in POST body."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
         # Test multiple tools
-        _get_tasks_impl(mock_client, 55)
+        await _get_tasks_impl(mock_client, 55)
         assert mock_client.make_spira_api_post_request.call_args[0][1] == []
 
-        _get_incidents_impl(mock_client, 55)
+        await _get_incidents_impl(mock_client, 55)
         assert mock_client.make_spira_api_post_request.call_args[0][1] == []
 
-        _get_requirements_impl(mock_client, 55)
+        await _get_requirements_impl(mock_client, 55)
         assert mock_client.make_spira_api_post_request.call_args[0][1] == []
 
-    def test_default_pagination_values(self):
+    @pytest.mark.asyncio
+    async def test_default_pagination_values(self):
         """Test that default pagination values are used correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
         # Test with defaults
-        _get_tasks_impl(mock_client, 55)
+        await _get_tasks_impl(mock_client, 55)
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "starting_row=1" in url
         assert "number_of_rows=100" in url
 
-    def test_sort_parameters_optional(self):
+    @pytest.mark.asyncio
+    async def test_sort_parameters_optional(self):
         """Test that sort parameters are optional."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
         # Test without sort parameters
-        _get_tasks_impl(mock_client, 55, sort_field="", sort_direction="ASC")
+        await _get_tasks_impl(mock_client, 55, sort_field="", sort_direction="ASC")
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         # Should not include sort parameters when sort_field is empty
         assert "sort_field=" not in url or "sort_field=&" in url
 
-    def test_large_pagination_values(self):
+    @pytest.mark.asyncio
+    async def test_large_pagination_values(self):
         """Test with large pagination values."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
 
-        _get_tasks_impl(mock_client, 55, starting_row=1000, number_of_rows=500)
+        await _get_tasks_impl(mock_client, 55, starting_row=1000, number_of_rows=500)
 
         call_args = mock_client.make_spira_api_post_request.call_args
         url = call_args[0][0]
         assert "starting_row=1000" in url
         assert "number_of_rows=500" in url
 
-    def test_null_and_empty_values_preserved(self):
+    @pytest.mark.asyncio
+    async def test_null_and_empty_values_preserved(self):
         """Test that null and empty values are preserved in JSON."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_tasks = [
             {
                 "TaskId": 123,
@@ -969,7 +1015,7 @@ class TestEdgeCases:
         ]
         mock_client.make_spira_api_post_request.return_value = mock_tasks
 
-        result = _get_tasks_impl(mock_client, 55)
+        result = await _get_tasks_impl(mock_client, 55)
         parsed = json.loads(result)
         task = parsed["data"][0]
 

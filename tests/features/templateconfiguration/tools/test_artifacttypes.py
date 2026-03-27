@@ -3,7 +3,9 @@ Unit tests for get_artifact_types tool
 """
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
     _get_artifact_types_impl,
@@ -13,10 +15,11 @@ from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import 
 class TestGetArtifactTypes:
     """Test suite for get_artifact_types tool"""
 
-    def test_get_artifact_types_success_all_types(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_success_all_types(self):
         """Test successful retrieval of all artifact types"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
 
         # Mock responses for each artifact type
         mock_client.make_spira_api_get_request.side_effect = [
@@ -76,7 +79,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -95,10 +98,11 @@ class TestGetArtifactTypes:
         # Verify API was called 6 times
         assert mock_client.make_spira_api_get_request.call_count == 6
 
-    def test_get_artifact_types_success_requirement_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_success_requirement_structure(self):
         """Test that requirement types are structured correctly"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = [
             [
                 {
@@ -124,7 +128,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -137,10 +141,11 @@ class TestGetArtifactTypes:
         assert requirement_artifact["Types"][1]["RequirementTypeId"] == 2
         assert requirement_artifact["Types"][1]["Name"] == "Epic"
 
-    def test_get_artifact_types_empty_types(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_empty_types(self):
         """Test when some artifact types return empty arrays"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = [
             [{"RequirementTypeId": 1, "Name": "User Story"}],
             [],  # No test case types
@@ -151,7 +156,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -164,10 +169,11 @@ class TestGetArtifactTypes:
         assert "Risk" not in artifact_names
         assert "Document" not in artifact_names
 
-    def test_get_artifact_types_none_response(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_none_response(self):
         """Test when API returns None for some types"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = [
             [{"RequirementTypeId": 1, "Name": "User Story"}],
             None,  # Test Cases returns None
@@ -178,7 +184,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -188,14 +194,15 @@ class TestGetArtifactTypes:
         assert "Task" in artifact_names
         assert "Incident" in artifact_names
 
-    def test_get_artifact_types_correct_urls(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_correct_urls(self):
         """Test that correct API URLs are called"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        _get_artifact_types_impl(mock_client, template_id=42)
+        await _get_artifact_types_impl(mock_client, template_id=42)
 
         # Assert
         calls = mock_client.make_spira_api_get_request.call_args_list
@@ -213,14 +220,15 @@ class TestGetArtifactTypes:
         for i, expected_url in enumerate(expected_urls):
             assert calls[i][0][0] == expected_url
 
-    def test_get_artifact_types_api_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_api_exception(self):
         """Test error handling when API raises exception"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -229,10 +237,11 @@ class TestGetArtifactTypes:
         assert "Connection timeout" in result_data["details"]["message"]
         assert result_data["details"]["template_id"] == 1
 
-    def test_get_artifact_types_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_preserves_all_fields(self):
         """Test that all fields from API response are preserved"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = [
             [
                 {
@@ -252,7 +261,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -264,10 +273,11 @@ class TestGetArtifactTypes:
         assert requirement_type["IsDefault"] is False
         assert requirement_type["CustomField"] == "CustomValue"
 
-    def test_get_artifact_types_multiple_types_per_artifact(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_multiple_types_per_artifact(self):
         """Test handling multiple types for each artifact"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = [
             [
                 {"RequirementTypeId": 1, "Name": "User Story"},
@@ -288,7 +298,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -312,28 +322,30 @@ class TestGetArtifactTypes:
         )
         assert len(incident_artifact["Types"]) == 2
 
-    def test_get_artifact_types_document_active_only_parameter(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_document_active_only_parameter(self):
         """Test that document types URL includes active_only parameter"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        _get_artifact_types_impl(mock_client, template_id=1)
+        await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         calls = mock_client.make_spira_api_get_request.call_args_list
         document_call = calls[5][0][0]
         assert "document-types?active_only=true" in document_call
 
-    def test_get_artifact_types_different_template_ids(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_different_template_ids(self):
         """Test with different template IDs"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        _get_artifact_types_impl(mock_client, template_id=999)
+        await _get_artifact_types_impl(mock_client, template_id=999)
 
         # Assert
         calls = mock_client.make_spira_api_get_request.call_args_list
@@ -341,10 +353,11 @@ class TestGetArtifactTypes:
             url = call[0][0]
             assert "project-templates/999/" in url or "project-templates/999/" in url
 
-    def test_get_artifact_types_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_json_structure(self):
         """Test that response has correct JSON structure"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = [
             [{"RequirementTypeId": 1, "Name": "User Story"}],
             [],
@@ -355,7 +368,7 @@ class TestGetArtifactTypes:
         ]
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -366,14 +379,15 @@ class TestGetArtifactTypes:
         assert "Types" in result_data["data"][0]
         assert isinstance(result_data["data"][0]["Types"], list)
 
-    def test_get_artifact_types_error_response_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_error_response_structure(self):
         """Test that error responses have correct structure"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
 
         # Act
-        result = _get_artifact_types_impl(mock_client, template_id=1)
+        result = await _get_artifact_types_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -389,12 +403,12 @@ class TestGetArtifactTypes:
 class TestGetArtifactTypesValidation:
     """Test suite for get_artifact_types input validation"""
 
-    def test_get_artifact_types_invalid_template_id_negative(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_invalid_template_id_negative(self):
         """Test validation error when template_id is negative"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock
 
         from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
             register_tools,
@@ -416,7 +430,7 @@ class TestGetArtifactTypesValidation:
 
         # Act
         assert tool_func is not None
-        result = tool_func(template_id=-1)
+        result = await tool_func(template_id=-1)
 
         # Assert
         result_data = json.loads(result)
@@ -425,12 +439,12 @@ class TestGetArtifactTypesValidation:
         assert result_data["details"]["parameter"] == "template_id"
         assert result_data["details"]["value"] == -1
 
-    def test_get_artifact_types_invalid_template_id_zero(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_invalid_template_id_zero(self):
         """Test validation error when template_id is zero"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock
 
         from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
             register_tools,
@@ -452,7 +466,7 @@ class TestGetArtifactTypesValidation:
 
         # Act
         assert tool_func is not None
-        result = tool_func(template_id=0)
+        result = await tool_func(template_id=0)
 
         # Assert
         result_data = json.loads(result)
@@ -461,12 +475,12 @@ class TestGetArtifactTypesValidation:
         assert result_data["details"]["parameter"] == "template_id"
         assert result_data["details"]["value"] == 0
 
-    def test_get_artifact_types_invalid_template_id_string(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_invalid_template_id_string(self):
         """Test validation error when template_id is a string"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock
 
         from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
             register_tools,
@@ -488,7 +502,7 @@ class TestGetArtifactTypesValidation:
 
         # Act
         assert tool_func is not None
-        result = tool_func(template_id="invalid")
+        result = await tool_func(template_id="invalid")
 
         # Assert
         result_data = json.loads(result)
@@ -497,12 +511,13 @@ class TestGetArtifactTypesValidation:
         assert result_data["details"]["parameter"] == "template_id"
         assert result_data["details"]["value"] == "invalid"
 
-    def test_get_artifact_types_valid_template_id_positive(self):
+    @pytest.mark.asyncio
+    async def test_get_artifact_types_valid_template_id_positive(self):
         """Test that positive template_id passes validation"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import AsyncMock, patch
 
         from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
             register_tools,
@@ -526,13 +541,13 @@ class TestGetArtifactTypesValidation:
         with patch(
             "mcp_server_spira.features.templateconfiguration.tools.artifacttypes.get_spira_client"
         ) as mock_get_client:
-            mock_client = MagicMock()
+            mock_client = AsyncMock()
             mock_client.make_spira_api_get_request.return_value = []
             mock_get_client.return_value = mock_client
 
             # Act
             assert tool_func is not None
-            result = tool_func(template_id=1)
+            result = await tool_func(template_id=1)
 
             # Assert
             result_data = json.loads(result)
@@ -543,11 +558,12 @@ class TestGetArtifactTypesValidation:
 class TestGetArtifactTypesMCPWrapper:
     """Test suite for MCP wrapper of get_artifact_types"""
 
-    def test_mcp_wrapper_success(self):
+    @pytest.mark.asyncio
+    async def test_mcp_wrapper_success(self):
         """Test MCP wrapper with successful execution"""
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import AsyncMock, patch
 
         from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
             register_tools,
@@ -572,23 +588,24 @@ class TestGetArtifactTypesMCPWrapper:
         with patch(
             "mcp_server_spira.features.templateconfiguration.tools.artifacttypes.get_spira_client"
         ) as mock_get_client:
-            mock_client = MagicMock()
+            mock_client = AsyncMock()
             mock_client.make_spira_api_get_request.return_value = []
             mock_get_client.return_value = mock_client
 
             # Call the tool
             assert tool_func is not None
-            result = tool_func(template_id=1)
+            result = await tool_func(template_id=1)
 
             # Verify result
             result_data = json.loads(result)
             assert "data" in result_data
 
-    def test_mcp_wrapper_exception_handling(self):
+    @pytest.mark.asyncio
+    async def test_mcp_wrapper_exception_handling(self):
         """Test MCP wrapper handles exceptions from implementation"""
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from mcp_server_spira.features.templateconfiguration.tools.artifacttypes import (
             register_tools,
@@ -617,7 +634,7 @@ class TestGetArtifactTypesMCPWrapper:
 
             # Call the tool
             assert tool_func is not None
-            result = tool_func(template_id=1)
+            result = await tool_func(template_id=1)
 
             # Verify error response
             result_data = json.loads(result)

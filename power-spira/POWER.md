@@ -23,7 +23,7 @@ keywords:
   - bugs
 ---
 
-This power connects Kiro to your Inflectra Spira instance, giving it read and write access across your entire project portfolio. Tool categories include personal work items (my tasks, my requirements, my incidents, my test cases, my test sets), product artifacts (requirements, incidents, tasks, releases, risks, test cases, test sets, test runs, automation hosts), program-level artifacts (capabilities, milestones), specifications, and workspace/template configuration. Use it to query, create, and update Spira data directly from your IDE without leaving your flow.
+This Power connects Kiro to your Inflectra Spira instance, giving it read and write access across your entire project portfolio. Tool categories include personal work items (my tasks, my requirements, my incidents, my test cases, my test sets), product artifacts (requirements, incidents, tasks, releases, risks, test cases, test sets, test runs, automation hosts), program-level artifacts (capabilities, milestones), specifications, and workspace/template configuration. Use it to query, create, and update Spira data directly from your IDE without leaving your flow.
 
 # Onboarding
 

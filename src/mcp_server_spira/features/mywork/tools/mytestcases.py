@@ -15,7 +15,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_my_testcases_impl(spira_client, limit: int, offset: int) -> str:
+async def _get_my_testcases_impl(spira_client, limit: int, offset: int) -> str:
     """
     Implementation of retrieving my assigned Spira test cases.
 
@@ -35,7 +35,7 @@ def _get_my_testcases_impl(spira_client, limit: int, offset: int) -> str:
 
         # Get the list of open testcases for the current user
         testcases_url = "test-cases"
-        all_testcases = spira_client.make_spira_api_get_request(testcases_url)
+        all_testcases = await spira_client.make_spira_api_get_request(testcases_url)
 
         # Handle empty results
         if not all_testcases:
@@ -68,7 +68,7 @@ def register_tools(mcp) -> None:
         name="my_get_test_cases",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_my_testcases(limit: int = 25, offset: int = 0) -> str:
+    async def get_my_testcases(limit: int = 25, offset: int = 0) -> str:
         """
         Retrieves test cases assigned to the current user.
 
@@ -110,8 +110,8 @@ def register_tools(mcp) -> None:
             # Get Spira client
             spira_client = get_spira_client()
 
-            # Retrieve and paginate test cases
-            return _get_my_testcases_impl(spira_client, limit, offset)
+            # Run blocking HTTP call in a thread to avoid blocking the event loop
+            return await _get_my_testcases_impl(spira_client, limit, offset)
 
         except Exception as e:
             return format_error_response(

@@ -3,7 +3,7 @@ Unit tests for product risks tools
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -38,7 +38,8 @@ class TestGetRisksImpl:
         """Create mock SpiraClient."""
         return Mock()
 
-    def test_successful_retrieval(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval(self, mock_spira_client):
         """Test successful risk retrieval."""
         mock_risks = [
             {
@@ -51,18 +52,19 @@ class TestGetRisksImpl:
         ]
         mock_spira_client.make_spira_api_post_request.return_value = mock_risks
 
-        result = _get_risks_impl(mock_spira_client, product_id=55)
+        result = await _get_risks_impl(mock_spira_client, product_id=55)
         response = json.loads(result)
 
         assert "data" in response
         assert len(response["data"]) == 1
         assert response["data"][0]["RiskId"] == 1
 
-    def test_pagination_parameters(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters(self, mock_spira_client):
         """Test pagination parameters are passed correctly."""
         mock_spira_client.make_spira_api_post_request.return_value = []
 
-        _get_risks_impl(
+        await _get_risks_impl(
             mock_spira_client,
             product_id=55,
             starting_row=10,
@@ -73,11 +75,12 @@ class TestGetRisksImpl:
         assert "starting_row=10" in call_args[0][0]
         assert "number_of_rows=50" in call_args[0][0]
 
-    def test_sort_parameters(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_sort_parameters(self, mock_spira_client):
         """Test sort parameters are passed correctly."""
         mock_spira_client.make_spira_api_post_request.return_value = []
 
-        _get_risks_impl(
+        await _get_risks_impl(
             mock_spira_client,
             product_id=55,
             sort_field="RiskExposure",
@@ -88,11 +91,12 @@ class TestGetRisksImpl:
         assert "sort_field=RiskExposure" in call_args[0][0]
         assert "sort_direction=DESC" in call_args[0][0]
 
-    def test_api_error_handling(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self, mock_spira_client):
         """Test API error handling."""
         mock_spira_client.make_spira_api_post_request.side_effect = Exception("API error")
 
-        result = _get_risks_impl(mock_spira_client, product_id=55)
+        result = await _get_risks_impl(mock_spira_client, product_id=55)
         response = json.loads(result)
 
         assert "error" in response
@@ -111,7 +115,7 @@ class TestGetRisksMCPWrapper:
     @patch("mcp_server_spira.features.productartifacts.tools.risks.get_spira_client")
     def test_successful_call_through_wrapper(self, mock_get_client):
         """Test successful call through MCP wrapper."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
         mock_get_client.return_value = mock_client
 
@@ -176,7 +180,7 @@ class TestGetRisksMCPWrapper:
     @patch("mcp_server_spira.features.productartifacts.tools.risks.get_spira_client")
     def test_all_parameters_passed_through(self, mock_get_client):
         """Test all parameters are passed through correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
         mock_get_client.return_value = mock_client
 

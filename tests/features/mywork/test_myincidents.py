@@ -5,7 +5,7 @@ Tests for the My Incidents features of the Inflectra Spira MCP Server.
 import json
 import os
 from collections.abc import Callable
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -19,10 +19,11 @@ from mcp_server_spira.features.mywork.tools.myincidents import (
 class TestGetMyIncidentsImpl:
     """Tests for _get_my_incidents_impl function."""
 
-    def test_successful_retrieval_with_default_pagination(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_default_pagination(self):
         """Test successful incident retrieval with default pagination."""
         # Mock Spira client
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [
             {
                 "IncidentId": i,
@@ -35,7 +36,7 @@ class TestGetMyIncidentsImpl:
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
         # Call implementation with defaults
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("incidents")
@@ -54,26 +55,28 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["has_more"] is True
         assert parsed["pagination"]["pagination_type"] == "client-side"
 
-    def test_successful_retrieval_first_page(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_first_page(self):
         """Test retrieving first page of results."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 101)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 25
         assert parsed["data"][0]["IncidentId"] == 1
         assert parsed["pagination"]["has_more"] is True
 
-    def test_successful_retrieval_middle_page(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_middle_page(self):
         """Test retrieving middle page of results."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 101)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=25)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=25)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 25
@@ -82,13 +85,14 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["offset"] == 25
         assert parsed["pagination"]["has_more"] is True
 
-    def test_successful_retrieval_last_page_full(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_last_page_full(self):
         """Test retrieving last page with full results."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 101)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=75)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=75)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 25
@@ -98,13 +102,14 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["returned_count"] == 25
         assert parsed["pagination"]["has_more"] is False
 
-    def test_successful_retrieval_last_page_partial(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_last_page_partial(self):
         """Test retrieving last page with partial results."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 48)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=25)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=25)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 22
@@ -114,12 +119,13 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["total_count"] == 47
         assert parsed["pagination"]["has_more"] is False
 
-    def test_empty_results(self):
+    @pytest.mark.asyncio
+    async def test_empty_results(self):
         """Test handling of empty incident list."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         parsed = json.loads(result)
         assert parsed["data"] == []
@@ -127,13 +133,14 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["total_count"] == 0
         assert parsed["pagination"]["has_more"] is False
 
-    def test_empty_results_with_offset(self):
+    @pytest.mark.asyncio
+    async def test_empty_results_with_offset(self):
         """Test handling of empty results when offset is beyond data."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 26)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=50)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=50)
 
         parsed = json.loads(result)
         assert parsed["data"] == []
@@ -141,26 +148,28 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["total_count"] == 25
         assert parsed["pagination"]["has_more"] is False
 
-    def test_custom_limit(self):
+    @pytest.mark.asyncio
+    async def test_custom_limit(self):
         """Test with custom limit parameter."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 101)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=50, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=50, offset=0)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 50
         assert parsed["pagination"]["limit"] == 50
         assert parsed["pagination"]["returned_count"] == 50
 
-    def test_limit_larger_than_total(self):
+    @pytest.mark.asyncio
+    async def test_limit_larger_than_total(self):
         """Test when limit is larger than total available items."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i, "Name": f"Incident {i}"} for i in range(1, 11)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=100, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=100, offset=0)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 10
@@ -168,13 +177,14 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["total_count"] == 10
         assert parsed["pagination"]["has_more"] is False
 
-    def test_single_incident(self):
+    @pytest.mark.asyncio
+    async def test_single_incident(self):
         """Test with single incident result."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": 1, "Name": "Single Incident"}]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         parsed = json.loads(result)
         assert len(parsed["data"]) == 1
@@ -182,9 +192,10 @@ class TestGetMyIncidentsImpl:
         assert parsed["pagination"]["total_count"] == 1
         assert parsed["pagination"]["has_more"] is False
 
-    def test_preserves_incident_data_structure(self):
+    @pytest.mark.asyncio
+    async def test_preserves_incident_data_structure(self):
         """Test that all incident fields are preserved in response."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [
             {
                 "IncidentId": 456,
@@ -211,7 +222,7 @@ class TestGetMyIncidentsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         parsed = json.loads(result)
         incident = parsed["data"][0]
@@ -224,12 +235,13 @@ class TestGetMyIncidentsImpl:
         assert incident["CustomProperties"] == [{"id": 1, "value": "test"}]
         assert incident["Tags"] == "mobile,critical,login"
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test handling of API errors."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("API connection failed")
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -238,24 +250,26 @@ class TestGetMyIncidentsImpl:
         assert "API connection failed" in parsed["details"]["message"]
         assert "suggestion" in parsed
 
-    def test_api_returns_none(self):
+    @pytest.mark.asyncio
+    async def test_api_returns_none(self):
         """Test handling when API returns None."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = None
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         parsed = json.loads(result)
         assert parsed["data"] == []
         assert parsed["pagination"]["total_count"] == 0
 
-    def test_json_structure_validity(self):
+    @pytest.mark.asyncio
+    async def test_json_structure_validity(self):
         """Test that response is valid JSON with correct structure."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": 1, "Name": "Incident 1"}]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
-        result = _get_my_incidents_impl(mock_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(mock_client, limit=25, offset=0)
 
         # Should be valid JSON
         parsed = json.loads(result)
@@ -273,9 +287,10 @@ class TestGetMyIncidentsImpl:
         assert "has_more" in pagination
         assert "pagination_type" in pagination
 
-    def test_pagination_metadata_accuracy(self):
+    @pytest.mark.asyncio
+    async def test_pagination_metadata_accuracy(self):
         """Test that pagination metadata is calculated correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_incidents = [{"IncidentId": i} for i in range(1, 76)]
         mock_client.make_spira_api_get_request.return_value = mock_incidents
 
@@ -289,7 +304,7 @@ class TestGetMyIncidentsImpl:
         ]
 
         for limit, offset, expected_returned, expected_total, expected_has_more in test_cases:
-            result = _get_my_incidents_impl(mock_client, limit=limit, offset=offset)
+            result = await _get_my_incidents_impl(mock_client, limit=limit, offset=offset)
             parsed = json.loads(result)
 
             assert parsed["pagination"]["limit"] == limit
@@ -304,9 +319,9 @@ class TestGetMyIncidentsToolIntegration:
     """Integration tests for get_my_incidents tool with validation."""
 
     @patch("mcp_server_spira.features.mywork.tools.myincidents.get_spira_client")
-    def test_validation_limit_too_high(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_validation_limit_too_high(self, mock_get_client):
         """Test that limit validation rejects values > 500."""
-        from unittest.mock import Mock
 
         from mcp_server_spira.features.mywork.tools.myincidents import register_tools
 
@@ -329,7 +344,7 @@ class TestGetMyIncidentsToolIntegration:
 
         # Call with invalid limit
         assert tool_func is not None  # type guard for mypy
-        result = tool_func(limit=1000, offset=0)
+        result = await tool_func(limit=1000, offset=0)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -339,9 +354,9 @@ class TestGetMyIncidentsToolIntegration:
         assert "1-500" in parsed["details"]["expected"]
 
     @patch("mcp_server_spira.features.mywork.tools.myincidents.get_spira_client")
-    def test_validation_limit_zero(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_validation_limit_zero(self, mock_get_client):
         """Test that limit validation rejects zero."""
-        from unittest.mock import Mock
 
         from mcp_server_spira.features.mywork.tools.myincidents import register_tools
 
@@ -361,7 +376,7 @@ class TestGetMyIncidentsToolIntegration:
         register_tools(mock_mcp)
 
         assert tool_func is not None  # type guard for mypy
-        result = tool_func(limit=0, offset=0)
+        result = await tool_func(limit=0, offset=0)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -369,9 +384,9 @@ class TestGetMyIncidentsToolIntegration:
         assert parsed["details"]["parameter"] == "limit"
 
     @patch("mcp_server_spira.features.mywork.tools.myincidents.get_spira_client")
-    def test_validation_limit_negative(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_validation_limit_negative(self, mock_get_client):
         """Test that limit validation rejects negative values."""
-        from unittest.mock import Mock
 
         from mcp_server_spira.features.mywork.tools.myincidents import register_tools
 
@@ -391,16 +406,16 @@ class TestGetMyIncidentsToolIntegration:
         register_tools(mock_mcp)
 
         assert tool_func is not None  # type guard for mypy
-        result = tool_func(limit=-10, offset=0)
+        result = await tool_func(limit=-10, offset=0)
 
         parsed = json.loads(result)
         assert "error" in parsed
         assert parsed["error_code"] == "INVALID_PARAMETER"
 
     @patch("mcp_server_spira.features.mywork.tools.myincidents.get_spira_client")
-    def test_validation_offset_negative(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_validation_offset_negative(self, mock_get_client):
         """Test that offset validation rejects negative values."""
-        from unittest.mock import Mock
 
         from mcp_server_spira.features.mywork.tools.myincidents import register_tools
 
@@ -420,7 +435,7 @@ class TestGetMyIncidentsToolIntegration:
         register_tools(mock_mcp)
 
         assert tool_func is not None  # type guard for mypy
-        result = tool_func(limit=25, offset=-1)
+        result = await tool_func(limit=25, offset=-1)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -429,13 +444,14 @@ class TestGetMyIncidentsToolIntegration:
         assert parsed["details"]["value"] == -1
 
     @patch("mcp_server_spira.features.mywork.tools.myincidents.get_spira_client")
-    def test_validation_passes_with_valid_params(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_validation_passes_with_valid_params(self, mock_get_client):
         """Test that validation passes with valid parameters."""
-        from unittest.mock import Mock
+        from unittest.mock import AsyncMock
 
         from mcp_server_spira.features.mywork.tools.myincidents import register_tools
 
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = [
             {"IncidentId": 1, "Name": "Incident 1"}
         ]
@@ -457,18 +473,17 @@ class TestGetMyIncidentsToolIntegration:
         register_tools(mock_mcp)
 
         assert tool_func is not None  # type guard for mypy
-        result = tool_func(limit=25, offset=0)
+        result = await tool_func(limit=25, offset=0)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert "error" not in parsed
 
     @patch("mcp_server_spira.features.mywork.tools.myincidents.get_spira_client")
-    def test_tool_handles_client_exception(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_tool_handles_client_exception(self, mock_get_client):
         """Test that tool handles exceptions from get_spira_client."""
         mock_get_client.side_effect = Exception("Client initialization failed")
-
-        from unittest.mock import Mock
 
         from mcp_server_spira.features.mywork.tools.myincidents import register_tools
 
@@ -488,7 +503,7 @@ class TestGetMyIncidentsToolIntegration:
         register_tools(mock_mcp)
 
         assert tool_func is not None  # type guard for mypy
-        result = tool_func(limit=25, offset=0)
+        result = await tool_func(limit=25, offset=0)
 
         parsed = json.loads(result)
         assert "error" in parsed
@@ -509,9 +524,10 @@ class TestGetMyIncidentsRealAPIIntegration:
         """Get a real Spira client."""
         return get_spira_client()
 
-    def test_returns_valid_json_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_returns_valid_json_structure(self, spira_client):
         """Test that implementation returns valid JSON with correct structure."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
 
         # Verify it returns valid JSON
         parsed = json.loads(result)
@@ -535,14 +551,15 @@ class TestGetMyIncidentsRealAPIIntegration:
         print(f"  Returned: {pagination['returned_count']}")
         print(f"  Has more: {pagination['has_more']}")
 
-    def test_pagination_works_with_real_data(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_pagination_works_with_real_data(self, spira_client):
         """Test that pagination works correctly with real data."""
         # Get first page
-        result1 = _get_my_incidents_impl(spira_client, limit=5, offset=0)
+        result1 = await _get_my_incidents_impl(spira_client, limit=5, offset=0)
         parsed1 = json.loads(result1)
 
         # Get second page
-        result2 = _get_my_incidents_impl(spira_client, limit=5, offset=5)
+        result2 = await _get_my_incidents_impl(spira_client, limit=5, offset=5)
         parsed2 = json.loads(result2)
 
         # If there are enough incidents, verify pages are different
@@ -556,10 +573,11 @@ class TestGetMyIncidentsRealAPIIntegration:
             print(f"  Page 1 first incident: {parsed1['data'][0]['IncidentId']}")
             print(f"  Page 2 first incident: {parsed2['data'][0]['IncidentId']}")
 
-    def test_handles_empty_results(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_handles_empty_results(self, spira_client):
         """Test handling of empty results or offset beyond data."""
         # Try with very large offset
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=10000)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=10000)
         parsed = json.loads(result)
 
         # Should return empty data with correct metadata
@@ -570,9 +588,10 @@ class TestGetMyIncidentsRealAPIIntegration:
         print("\n✓ Empty results test passed:")
         print(f"  Returned count: {parsed['pagination']['returned_count']}")
 
-    def test_preserves_incident_fields(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_preserves_incident_fields(self, spira_client):
         """Test that all incident fields are preserved."""
-        result = _get_my_incidents_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=1, offset=0)
         parsed = json.loads(result)
 
         if len(parsed["data"]) > 0:
@@ -587,10 +606,11 @@ class TestGetMyIncidentsRealAPIIntegration:
             print(f"  Incident has {len(incident.keys())} fields")
             print(f"  Sample fields: {list(incident.keys())[:10]}")
 
-    def test_error_handling_with_real_client(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_with_real_client(self, spira_client):
         """Test that errors are handled gracefully."""
         # This should not raise exceptions even with edge cases
-        result = _get_my_incidents_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=1, offset=0)
 
         # Should always return valid JSON
         parsed = json.loads(result)

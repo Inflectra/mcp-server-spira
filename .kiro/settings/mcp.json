@@ -13,7 +13,7 @@
         "INFLECTRA_SPIRA_USERNAME": "administrator",
         "INFLECTRA_SPIRA_API_KEY": "{865C2327-021F-4C56-8829-F81F9376D681}"
       },
-      "disabled": false,
+      "disabled": true,
       "autoApprove": [
         "get_my_tasks",
         "get_my_incidents",

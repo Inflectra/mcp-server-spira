@@ -13,7 +13,7 @@ from mcp_server_spira.features.common.responses import (
 )
 
 
-def _get_programs_impl(spira_client) -> str:
+async def _get_programs_impl(spira_client) -> str:
     """
     Implementation of retrieving the list of Spira programs
     the current user has access to
@@ -27,7 +27,7 @@ def _get_programs_impl(spira_client) -> str:
     try:
         # Get the list of available programs for the current user
         programs_url = "programs"
-        programs = spira_client.make_spira_api_get_request(programs_url)
+        programs = await spira_client.make_spira_api_get_request(programs_url)
 
         if not programs:
             # Return empty data array if no programs
@@ -56,7 +56,7 @@ def register_tools(mcp) -> None:
         name="system_get_programs",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_programs() -> str:
+    async def get_programs() -> str:
         """
         Retrieves a list of the programs (projects) that the current
         user has access to
@@ -88,7 +88,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_programs_impl(spira_client)
+            return await _get_programs_impl(spira_client)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve programs",

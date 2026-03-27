@@ -14,8 +14,10 @@ async def load_active_product_context() -> None:
         return
     try:
         client = get_client()
-        product = client.make_spira_api_get_request(f"projects/{product_id}")
-        releases = client.make_spira_api_post_request(f"projects/{product_id}/releases/search", {})
+        product = await client.make_spira_api_get_request(f"projects/{product_id}")
+        releases = await client.make_spira_api_post_request(
+            f"projects/{product_id}/releases/search", {}
+        )
         active_releases = [
             {
                 "ReleaseId": r["ReleaseId"],

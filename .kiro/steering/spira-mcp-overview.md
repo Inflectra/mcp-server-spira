@@ -41,14 +41,14 @@ You are working on the **Spira MCP Server** - a Model Context Protocol server th
 ```python
 # ✅ GOOD - Returns structured JSON
 @mcp.tool()
-def get_my_tasks() -> str:
-    tasks = spira_client.make_spira_api_get_request("tasks")
+async def get_my_tasks() -> str:
+    tasks = await spira_client.make_spira_api_get_request("tasks")
     return json.dumps(tasks, indent=2)
 
 # ❌ BAD - Returns markdown
 @mcp.tool()
-def get_my_tasks() -> str:
-    tasks = spira_client.make_spira_api_get_request("tasks")
+async def get_my_tasks() -> str:
+    tasks = await spira_client.make_spira_api_get_request("tasks")
     return format_as_markdown(tasks)
 ```
 
@@ -57,11 +57,11 @@ def get_my_tasks() -> str:
 
 ```python
 # ✅ GOOD
-def get_my_tasks(limit: int = 25, offset: int = 0) -> str:
+async def get_my_tasks(limit: int = 25, offset: int = 0) -> str:
     """Returns up to 'limit' tasks starting at 'offset'."""
 
 # ❌ BAD
-def get_my_tasks() -> str:
+async def get_my_tasks() -> str:
     return tasks[:25]  # Silent truncation!
 ```
 
@@ -139,44 +139,61 @@ The project is organized into 6 phases:
 ## Common Patterns
 
 ### Tool Registration Pattern
+
+**All tools and impl functions MUST be `async def`.** `SpiraClient` uses `httpx.AsyncClient`
+internally — calling it from a sync function blocks the FastMCP event loop and causes hangs
+when multiple tools are chained together.
+
 ```python
 # In features/tasks/tools/read.py
 def register_tools(mcp) -> None:
     @mcp.tool()
-    def get_task_by_id(product_id: int, task_id: int) -> str:
+    async def get_task_by_id(product_id: int, task_id: int) -> str:
         """Tool implementation"""
         try:
             spira_client = get_spira_client()
-            return _get_task_by_id_impl(spira_client, product_id, task_id)
+            return await _get_task_by_id_impl(spira_client, product_id, task_id)
         except Exception as e:
             return json.dumps({"error": str(e)})
 
-def _get_task_by_id_impl(spira_client, product_id: int, task_id: int) -> str:
+async def _get_task_by_id_impl(spira_client, product_id: int, task_id: int) -> str:
     """Separated implementation for testing"""
-    task = spira_client.make_spira_api_get_request(
+    task = await spira_client.make_spira_api_get_request(
         f"projects/{product_id}/tasks/{task_id}"
     )
     return json.dumps(task, indent=2)
 ```
 
 ### API Client Usage
+
+`SpiraClient` is a singleton (`get_spira_client()` always returns the same instance).
+All request methods are async — always `await` them.
+
 ```python
 from mcp_server_spira.features.common import get_spira_client
 
 spira_client = get_spira_client()
 
 # GET request
-data = spira_client.make_spira_api_get_request("tasks")
+data = await spira_client.make_spira_api_get_request("tasks")
 
 # POST request (create or search)
-data = spira_client.make_spira_api_post_request("projects/55/tasks", task_data)
+data = await spira_client.make_spira_api_post_request("projects/55/tasks", task_data)
 
 # PUT request (update)
-data = spira_client.make_spira_api_put_request("projects/55/tasks", task_data)
+data = await spira_client.make_spira_api_put_request("projects/55/tasks", task_data)
 
 # DELETE request
-data = spira_client.make_spira_api_delete_request("projects/55/tasks/40")
+data = await spira_client.make_spira_api_delete_request("projects/55/tasks/40")
 ```
+
+### Adding New Tools Checklist
+
+- [ ] `_impl` function is `async def`
+- [ ] Registered tool function is `async def`
+- [ ] Every `spira_client.make_spira_api_*` call has `await`
+- [ ] Every call to another `_impl` or private helper has `await`
+- [ ] Run `scripts/make_tools_async.py` if unsure — it's idempotent
 
 ## Testing Requirements
 

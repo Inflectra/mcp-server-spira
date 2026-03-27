@@ -17,7 +17,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _record_automated_test_run_impl(
+async def _record_automated_test_run_impl(
     spira_client,
     product_id: int,
     test_name: str,
@@ -130,7 +130,7 @@ def _record_automated_test_run_impl(
 
         # Record the test run using the API method
         record_automated_url = f"projects/{product_id}/test-runs/record"
-        testrun = spira_client.make_spira_api_post_request(record_automated_url, body)
+        testrun = await spira_client.make_spira_api_post_request(record_automated_url, body)
 
         if not testrun:
             return format_error_response(
@@ -179,7 +179,7 @@ def register_tools(mcp) -> None:
         name="product_create_automated_test_run",
         annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
     )
-    def record_automated_test_run(
+    async def record_automated_test_run(
         test_name: str,
         short_message: str,
         long_message: str,
@@ -229,7 +229,7 @@ def register_tools(mcp) -> None:
                 )
             product_id = resolved_id
             spira_client = get_spira_client()
-            return _record_automated_test_run_impl(
+            return await _record_automated_test_run_impl(
                 spira_client,
                 product_id,
                 test_name,

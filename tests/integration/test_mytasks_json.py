@@ -46,9 +46,10 @@ class TestGetMyTasksJSONIntegration:
         """Get raw tasks from API for comparison."""
         return spira_client.make_spira_api_get_request("tasks")
 
-    def test_returns_valid_json(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_returns_valid_json(self, spira_client):
         """Test that implementation returns valid JSON."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
 
         print("\n📋 JSON validation test:")
         print(f"   Result type: {type(result)}")
@@ -69,9 +70,10 @@ class TestGetMyTasksJSONIntegration:
         assert "pagination" in parsed
         print("   ✓ Has required structure (data, pagination)")
 
-    def test_json_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_structure(self, spira_client):
         """Test the structure of JSON response."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n🔍 JSON structure test:")
@@ -104,9 +106,10 @@ class TestGetMyTasksJSONIntegration:
         assert pagination["pagination_type"] == "client-side"
         print("   ✓ pagination_type is 'client-side'")
 
-    def test_pagination_default_parameters(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_pagination_default_parameters(self, spira_client, raw_tasks):
         """Test pagination with default parameters (limit=25, offset=0)."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Default pagination test:")
@@ -136,12 +139,13 @@ class TestGetMyTasksJSONIntegration:
 
         print("   ✓ Pagination metadata is accurate")
 
-    def test_pagination_first_page(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_pagination_first_page(self, spira_client, raw_tasks):
         """Test retrieving first page of results."""
         if len(raw_tasks) == 0:
             pytest.skip("No tasks available for pagination test")
 
-        result = _get_my_tasks_impl(spira_client, limit=10, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=10, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 First page test (limit=10, offset=0):")
@@ -157,12 +161,13 @@ class TestGetMyTasksJSONIntegration:
             assert parsed["data"][0]["TaskId"] == raw_tasks[0]["TaskId"]
             print(f"   ✓ First task matches: TaskId={raw_tasks[0]['TaskId']}")
 
-    def test_pagination_second_page(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_pagination_second_page(self, spira_client, raw_tasks):
         """Test retrieving second page of results."""
         if len(raw_tasks) < 11:
             pytest.skip("Not enough tasks for second page test (need > 10)")
 
-        result = _get_my_tasks_impl(spira_client, limit=10, offset=10)
+        result = await _get_my_tasks_impl(spira_client, limit=10, offset=10)
         parsed = json.loads(result)
 
         print("\n📄 Second page test (limit=10, offset=10):")
@@ -178,7 +183,8 @@ class TestGetMyTasksJSONIntegration:
             assert parsed["data"][0]["TaskId"] == raw_tasks[10]["TaskId"]
             print(f"   ✓ First task on page 2 matches: TaskId={raw_tasks[10]['TaskId']}")
 
-    def test_pagination_last_page(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_pagination_last_page(self, spira_client, raw_tasks):
         """Test retrieving last page with partial results."""
         if len(raw_tasks) < 26:
             pytest.skip("Not enough tasks for last page test (need > 25)")
@@ -186,7 +192,7 @@ class TestGetMyTasksJSONIntegration:
         # Calculate offset for last page
         offset = (len(raw_tasks) // 25) * 25
 
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=offset)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=offset)
         parsed = json.loads(result)
 
         print(f"\n📄 Last page test (limit=25, offset={offset}):")
@@ -202,11 +208,12 @@ class TestGetMyTasksJSONIntegration:
         assert len(parsed["data"]) == expected_count
         print(f"   ✓ Returned {expected_count} remaining tasks")
 
-    def test_pagination_beyond_end(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_pagination_beyond_end(self, spira_client, raw_tasks):
         """Test pagination with offset beyond available data."""
         offset = len(raw_tasks) + 100
 
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=offset)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=offset)
         parsed = json.loads(result)
 
         print(f"\n📄 Beyond end test (offset={offset}):")
@@ -219,12 +226,13 @@ class TestGetMyTasksJSONIntegration:
         assert parsed["pagination"]["has_more"] is False
         print("   ✓ Returns empty data with correct metadata")
 
-    def test_custom_limit(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_custom_limit(self, spira_client, raw_tasks):
         """Test with custom limit parameter."""
         if len(raw_tasks) == 0:
             pytest.skip("No tasks available for custom limit test")
 
-        result = _get_my_tasks_impl(spira_client, limit=5, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=5, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Custom limit test (limit=5):")
@@ -237,9 +245,10 @@ class TestGetMyTasksJSONIntegration:
         assert parsed["pagination"]["limit"] == 5
         print("   ✓ Respects custom limit")
 
-    def test_large_limit(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_large_limit(self, spira_client, raw_tasks):
         """Test with large limit (100)."""
-        result = _get_my_tasks_impl(spira_client, limit=100, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=100, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Large limit test (limit=100):")
@@ -251,9 +260,10 @@ class TestGetMyTasksJSONIntegration:
         assert len(parsed["data"]) == expected_count
         print("   ✓ Returns up to 100 tasks")
 
-    def test_empty_results(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_empty_results(self, spira_client):
         """Test handling of empty results (if user has no tasks)."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Empty results test:")
@@ -267,12 +277,13 @@ class TestGetMyTasksJSONIntegration:
         else:
             print("   ℹ️  User has tasks, skipping empty test")
 
-    def test_data_preservation(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_data_preservation(self, spira_client, raw_tasks):
         """Test that all task fields are preserved in JSON output."""
         if len(raw_tasks) == 0:
             pytest.skip("No tasks available for data preservation test")
 
-        result = _get_my_tasks_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=1, offset=0)
         parsed = json.loads(result)
 
         print("\n🔍 Data preservation test:")
@@ -297,12 +308,13 @@ class TestGetMyTasksJSONIntegration:
                 assert json_task[field] == raw_task[field]
                 print(f"   ✓ {field}: {json_task[field]}")
 
-    def test_task_data_types(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_task_data_types(self, spira_client, raw_tasks):
         """Test that data types are preserved correctly."""
         if len(raw_tasks) == 0:
             pytest.skip("No tasks available for data type test")
 
-        result = _get_my_tasks_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=1, offset=0)
         parsed = json.loads(result)
 
         print("\n🔍 Data type preservation test:")
@@ -324,9 +336,10 @@ class TestGetMyTasksJSONIntegration:
             assert isinstance(task["Description"], str | type(None))
             print("   ✓ Description handles null")
 
-    def test_pagination_metadata_accuracy(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_pagination_metadata_accuracy(self, spira_client, raw_tasks):
         """Test that pagination metadata is calculated correctly."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n📊 Pagination metadata accuracy test:")
@@ -349,7 +362,8 @@ class TestGetMyTasksJSONIntegration:
         assert pagination["has_more"] == expected_has_more
         print(f"   ✓ has_more calculated correctly: {expected_has_more}")
 
-    def test_no_silent_truncation(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_no_silent_truncation(self, spira_client, raw_tasks):
         """Test that there is no silent truncation (all data accessible via pagination)."""
         if len(raw_tasks) <= 25:
             pytest.skip("Not enough tasks to test truncation (need > 25)")
@@ -363,7 +377,7 @@ class TestGetMyTasksJSONIntegration:
         limit = 25
 
         while True:
-            result = _get_my_tasks_impl(spira_client, limit=limit, offset=offset)
+            result = await _get_my_tasks_impl(spira_client, limit=limit, offset=offset)
             parsed = json.loads(result)
 
             all_retrieved_tasks.extend(parsed["data"])
@@ -379,9 +393,10 @@ class TestGetMyTasksJSONIntegration:
         assert len(all_retrieved_tasks) == len(raw_tasks)
         print("   ✓ All tasks accessible via pagination (no silent truncation)")
 
-    def test_json_formatting(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self, spira_client):
         """Test that JSON is properly formatted."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
 
         print("\n📝 JSON formatting test:")
 
@@ -395,10 +410,11 @@ class TestGetMyTasksJSONIntegration:
         assert parsed is not None
         print("   ✓ JSON is valid")
 
-    def test_error_handling_with_real_api(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_with_real_api(self, spira_client):
         """Test error handling with real API."""
         # This should not raise exceptions
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
 
         print("\n⚠️  Error handling test:")
 
@@ -415,12 +431,13 @@ class TestGetMyTasksJSONIntegration:
         else:
             print("   ✓ Success response")
 
-    def test_comparison_with_raw_api(self, spira_client, raw_tasks):
+    @pytest.mark.asyncio
+    async def test_comparison_with_raw_api(self, spira_client, raw_tasks):
         """Test that JSON output matches raw API data."""
         if len(raw_tasks) == 0:
             pytest.skip("No tasks available for comparison test")
 
-        result = _get_my_tasks_impl(spira_client, limit=len(raw_tasks), offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=len(raw_tasks), offset=0)
         parsed = json.loads(result)
 
         print("\n🔄 Comparison with raw API test:")
@@ -446,14 +463,15 @@ class TestGetMyTasksPerformance:
         return get_spira_client()
 
     @pytest.mark.slow
-    def test_performance_with_large_limit(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_performance_with_large_limit(self, spira_client):
         """Test performance with large limit (500)."""
         import time
 
         print("\n⚡ Performance test (limit=500):")
 
         start_time = time.time()
-        result = _get_my_tasks_impl(spira_client, limit=500, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=500, offset=0)
         elapsed_time = time.time() - start_time
 
         parsed = json.loads(result)

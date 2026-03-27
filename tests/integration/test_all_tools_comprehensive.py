@@ -230,11 +230,12 @@ class TestWorkspaceToolsComprehensive:
         assert "pagination" not in parsed, f"{tool_name} should not have pagination"
         print("   ✓ No pagination field (as expected)")
 
-    def test_products_data_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_products_data_structure(self, spira_client):
         """Test products data structure."""
         print("\n🔍 Testing get_products data structure:")
 
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
         parsed = json.loads(result)
 
         if len(parsed["data"]) > 0:
@@ -246,11 +247,12 @@ class TestWorkspaceToolsComprehensive:
             print(f"   ✓ Has expected fields: {expected_fields}")
             print(f"   Sample product: {product.get('Name', 'N/A')}")
 
-    def test_programs_data_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_programs_data_structure(self, spira_client):
         """Test programs data structure."""
         print("\n🔍 Testing get_programs data structure:")
 
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
         parsed = json.loads(result)
 
         if len(parsed["data"]) > 0:
@@ -262,11 +264,12 @@ class TestWorkspaceToolsComprehensive:
             print(f"   ✓ Has expected fields: {expected_fields}")
             print(f"   Sample program: {program.get('Name', 'N/A')}")
 
-    def test_product_templates_data_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_product_templates_data_structure(self, spira_client):
         """Test product templates data structure."""
         print("\n🔍 Testing get_product_templates data structure:")
 
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
         parsed = json.loads(result)
 
         if len(parsed["data"]) > 0:
@@ -411,7 +414,8 @@ class TestDataPreservation:
         """Get a real Spira client."""
         return get_spira_client()
 
-    def test_tasks_data_preservation(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_tasks_data_preservation(self, spira_client):
         """Test that task data is preserved correctly."""
         print("\n🔍 Testing task data preservation:")
 
@@ -422,7 +426,7 @@ class TestDataPreservation:
             pytest.skip("No tasks available")
 
         # Get data through tool
-        result = _get_my_tasks_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=1, offset=0)
         parsed = json.loads(result)
 
         # Compare first task
@@ -448,12 +452,13 @@ class TestErrorHandling:
         """Get a real Spira client."""
         return get_spira_client()
 
-    def test_tools_handle_empty_results(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_tools_handle_empty_results(self, spira_client):
         """Test that tools handle empty results gracefully."""
         print("\n📄 Testing empty results handling:")
 
         # Test with offset beyond data
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=999999)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=999999)
         parsed = json.loads(result)
 
         # Should return empty data with correct structure
@@ -464,12 +469,13 @@ class TestErrorHandling:
         assert parsed["pagination"]["has_more"] is False
         print("   ✓ Handles empty results correctly")
 
-    def test_tools_return_structured_errors(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_tools_return_structured_errors(self, spira_client):
         """Test that tools return structured error responses."""
         print("\n⚠️  Testing structured error responses:")
 
         # Test with invalid parameters
-        result = _get_my_tasks_impl(spira_client, limit=-1, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=-1, offset=0)
         parsed = json.loads(result)
 
         # Should have error structure

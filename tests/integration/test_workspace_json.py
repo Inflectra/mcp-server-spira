@@ -58,9 +58,10 @@ class TestGetProductsIntegration:
         """Get raw products from API for comparison."""
         return spira_client.make_spira_api_get_request("projects")
 
-    def test_returns_valid_json(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_returns_valid_json(self, spira_client):
         """Test that implementation returns valid JSON."""
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
 
         print("\n📋 JSON validation test (products):")
         print(f"   Result type: {type(result)}")
@@ -80,9 +81,10 @@ class TestGetProductsIntegration:
         assert "data" in parsed
         print("   ✓ Has required structure (data)")
 
-    def test_json_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_structure(self, spira_client):
         """Test the structure of JSON response."""
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔍 JSON structure test (products):")
@@ -96,12 +98,13 @@ class TestGetProductsIntegration:
         assert "pagination" not in parsed
         print("   ✓ No pagination field (workspace tool)")
 
-    def test_data_preservation(self, spira_client, raw_products):
+    @pytest.mark.asyncio
+    async def test_data_preservation(self, spira_client, raw_products):
         """Test that all product fields are preserved in JSON output."""
         if len(raw_products) == 0:
             pytest.skip("No products available for data preservation test")
 
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔍 Data preservation test (products):")
@@ -126,9 +129,10 @@ class TestGetProductsIntegration:
                 assert json_product[field] == raw_product[field]
                 print(f"   ✓ {field}: {json_product[field]}")
 
-    def test_no_truncation(self, spira_client, raw_products):
+    @pytest.mark.asyncio
+    async def test_no_truncation(self, spira_client, raw_products):
         """Test that all products are returned without truncation."""
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n✂️  No truncation test (products):")
@@ -139,12 +143,13 @@ class TestGetProductsIntegration:
         assert len(parsed["data"]) == len(raw_products)
         print("   ✓ All products returned (no truncation)")
 
-    def test_comparison_with_raw_api(self, spira_client, raw_products):
+    @pytest.mark.asyncio
+    async def test_comparison_with_raw_api(self, spira_client, raw_products):
         """Test that JSON output matches raw API data."""
         if len(raw_products) == 0:
             pytest.skip("No products available for comparison test")
 
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔄 Comparison with raw API test (products):")
@@ -161,9 +166,10 @@ class TestGetProductsIntegration:
 
         print("   ✓ JSON output matches raw API data")
 
-    def test_json_formatting(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self, spira_client):
         """Test that JSON is properly formatted."""
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
 
         print("\n📝 JSON formatting test (products):")
 
@@ -177,10 +183,11 @@ class TestGetProductsIntegration:
         assert parsed is not None
         print("   ✓ JSON is valid")
 
-    def test_error_handling_with_real_api(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_with_real_api(self, spira_client):
         """Test error handling with real API."""
         # This should not raise exceptions
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
 
         print("\n⚠️  Error handling test (products):")
 
@@ -211,9 +218,10 @@ class TestGetProgramsIntegration:
         """Get raw programs from API for comparison."""
         return spira_client.make_spira_api_get_request("programs")
 
-    def test_returns_valid_json(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_returns_valid_json(self, spira_client):
         """Test that implementation returns valid JSON."""
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
 
         print("\n📋 JSON validation test (programs):")
         print(f"   Result type: {type(result)}")
@@ -233,9 +241,10 @@ class TestGetProgramsIntegration:
         assert "data" in parsed
         print("   ✓ Has required structure (data)")
 
-    def test_json_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_structure(self, spira_client):
         """Test the structure of JSON response."""
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔍 JSON structure test (programs):")
@@ -249,12 +258,13 @@ class TestGetProgramsIntegration:
         assert "pagination" not in parsed
         print("   ✓ No pagination field (workspace tool)")
 
-    def test_data_preservation(self, spira_client, raw_programs):
+    @pytest.mark.asyncio
+    async def test_data_preservation(self, spira_client, raw_programs):
         """Test that all program fields are preserved in JSON output."""
         if len(raw_programs) == 0:
             pytest.skip("No programs available for data preservation test")
 
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔍 Data preservation test (programs):")
@@ -279,9 +289,10 @@ class TestGetProgramsIntegration:
                 assert json_program[field] == raw_program[field]
                 print(f"   ✓ {field}: {json_program[field]}")
 
-    def test_no_truncation(self, spira_client, raw_programs):
+    @pytest.mark.asyncio
+    async def test_no_truncation(self, spira_client, raw_programs):
         """Test that all programs are returned without truncation."""
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n✂️  No truncation test (programs):")
@@ -292,12 +303,13 @@ class TestGetProgramsIntegration:
         assert len(parsed["data"]) == len(raw_programs)
         print("   ✓ All programs returned (no truncation)")
 
-    def test_comparison_with_raw_api(self, spira_client, raw_programs):
+    @pytest.mark.asyncio
+    async def test_comparison_with_raw_api(self, spira_client, raw_programs):
         """Test that JSON output matches raw API data."""
         if len(raw_programs) == 0:
             pytest.skip("No programs available for comparison test")
 
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔄 Comparison with raw API test (programs):")
@@ -314,9 +326,10 @@ class TestGetProgramsIntegration:
 
         print("   ✓ JSON output matches raw API data")
 
-    def test_json_formatting(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self, spira_client):
         """Test that JSON is properly formatted."""
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
 
         print("\n📝 JSON formatting test (programs):")
 
@@ -330,10 +343,11 @@ class TestGetProgramsIntegration:
         assert parsed is not None
         print("   ✓ JSON is valid")
 
-    def test_error_handling_with_real_api(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_with_real_api(self, spira_client):
         """Test error handling with real API."""
         # This should not raise exceptions
-        result = _get_programs_impl(spira_client)
+        result = await _get_programs_impl(spira_client)
 
         print("\n⚠️  Error handling test (programs):")
 
@@ -364,9 +378,10 @@ class TestGetProductTemplatesIntegration:
         """Get raw product templates from API for comparison."""
         return spira_client.make_spira_api_get_request("project-templates")
 
-    def test_returns_valid_json(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_returns_valid_json(self, spira_client):
         """Test that implementation returns valid JSON."""
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
 
         print("\n📋 JSON validation test (product templates):")
         print(f"   Result type: {type(result)}")
@@ -386,9 +401,10 @@ class TestGetProductTemplatesIntegration:
         assert "data" in parsed
         print("   ✓ Has required structure (data)")
 
-    def test_json_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_structure(self, spira_client):
         """Test the structure of JSON response."""
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔍 JSON structure test (product templates):")
@@ -402,12 +418,13 @@ class TestGetProductTemplatesIntegration:
         assert "pagination" not in parsed
         print("   ✓ No pagination field (workspace tool)")
 
-    def test_data_preservation(self, spira_client, raw_templates):
+    @pytest.mark.asyncio
+    async def test_data_preservation(self, spira_client, raw_templates):
         """Test that all template fields are preserved in JSON output."""
         if len(raw_templates) == 0:
             pytest.skip("No product templates available for data preservation test")
 
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔍 Data preservation test (product templates):")
@@ -432,9 +449,10 @@ class TestGetProductTemplatesIntegration:
                 assert json_template[field] == raw_template[field]
                 print(f"   ✓ {field}: {json_template[field]}")
 
-    def test_no_truncation(self, spira_client, raw_templates):
+    @pytest.mark.asyncio
+    async def test_no_truncation(self, spira_client, raw_templates):
         """Test that all templates are returned without truncation."""
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n✂️  No truncation test (product templates):")
@@ -445,12 +463,13 @@ class TestGetProductTemplatesIntegration:
         assert len(parsed["data"]) == len(raw_templates)
         print("   ✓ All templates returned (no truncation)")
 
-    def test_comparison_with_raw_api(self, spira_client, raw_templates):
+    @pytest.mark.asyncio
+    async def test_comparison_with_raw_api(self, spira_client, raw_templates):
         """Test that JSON output matches raw API data."""
         if len(raw_templates) == 0:
             pytest.skip("No product templates available for comparison test")
 
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
         parsed = json.loads(result)
 
         print("\n🔄 Comparison with raw API test (product templates):")
@@ -467,9 +486,10 @@ class TestGetProductTemplatesIntegration:
 
         print("   ✓ JSON output matches raw API data")
 
-    def test_json_formatting(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self, spira_client):
         """Test that JSON is properly formatted."""
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
 
         print("\n📝 JSON formatting test (product templates):")
 
@@ -483,10 +503,11 @@ class TestGetProductTemplatesIntegration:
         assert parsed is not None
         print("   ✓ JSON is valid")
 
-    def test_error_handling_with_real_api(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_with_real_api(self, spira_client):
         """Test error handling with real API."""
         # This should not raise exceptions
-        result = _get_product_templates_impl(spira_client)
+        result = await _get_product_templates_impl(spira_client)
 
         print("\n⚠️  Error handling test (product templates):")
 

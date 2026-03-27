@@ -31,7 +31,7 @@ from mcp_server_spira.features.common.validation import ParameterValidator
 logger = get_logger(__name__)
 
 
-def _get_product_by_id(spira_client, product_id: int) -> Any:
+async def _get_product_by_id(spira_client, product_id: int) -> Any:
     """
     Implementation of retrieving a single Spira product by its ID
 
@@ -45,7 +45,7 @@ def _get_product_by_id(spira_client, product_id: int) -> Any:
     try:
         # Get the product by its ID
         product_url = f"projects/{product_id}"
-        product = spira_client.make_spira_api_get_request(product_url)
+        product = await spira_client.make_spira_api_get_request(product_url)
 
         if not product:
             return "There was no product with that ID available"
@@ -55,7 +55,7 @@ def _get_product_by_id(spira_client, product_id: int) -> Any:
         raise e
 
 
-def _get_release_by_id(spira_client, product_id: int, release_id: int) -> Any:
+async def _get_release_by_id(spira_client, product_id: int, release_id: int) -> Any:
     """
     Retrieves a single release in the specified product with the specified ID
 
@@ -70,7 +70,7 @@ def _get_release_by_id(spira_client, product_id: int, release_id: int) -> Any:
     try:
         # Get the release in the product
         release_url = f"projects/{product_id}/releases/{release_id}"
-        release = spira_client.make_spira_api_get_request(release_url)
+        release = await spira_client.make_spira_api_get_request(release_url)
 
         if not release:
             return "There is no release with the specified ID."
@@ -81,7 +81,7 @@ def _get_release_by_id(spira_client, product_id: int, release_id: int) -> Any:
         raise e
 
 
-def _get_specification_requirements(
+async def _get_specification_requirements(
     spira_client, product_id: int, release_id: int | None
 ) -> list[Any]:
     """
@@ -106,7 +106,7 @@ def _get_specification_requirements(
             while more_results:
                 requirements_url = f"projects/{product_id}/requirements/search?starting_row={starting_row}&number_of_rows={number_of_rows}"
                 body = [{"PropertyName": "ReleaseId", "IntValue": release_id}]
-                results = spira_client.make_spira_api_post_request(requirements_url, body)
+                results = await spira_client.make_spira_api_post_request(requirements_url, body)
                 if not results:
                     more_results = False
                 else:
@@ -115,7 +115,7 @@ def _get_specification_requirements(
         else:
             while more_results:
                 requirements_url = f"projects/{product_id}/requirements?starting_row={starting_row}&number_of_rows={number_of_rows}"
-                results = spira_client.make_spira_api_get_request(requirements_url)
+                results = await spira_client.make_spira_api_get_request(requirements_url)
                 if not results:
                     more_results = False
                 else:
@@ -127,7 +127,7 @@ def _get_specification_requirements(
         raise e
 
 
-def _add_requirement_scenarios(
+async def _add_requirement_scenarios(
     spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]
 ):
     """
@@ -140,7 +140,7 @@ def _add_requirement_scenarios(
         formatted_specification: The output text in markdown format
     """
     scenarios_url = f"projects/{product_id}/requirements/{requirement_id}/steps"
-    scenarios = spira_client.make_spira_api_get_request(scenarios_url)
+    scenarios = await spira_client.make_spira_api_get_request(scenarios_url)
     if scenarios:
         formatted_specification.append("#### Acceptance Criteria\n\n")
         for scenario in scenarios:
@@ -151,7 +151,7 @@ def _add_requirement_scenarios(
         formatted_specification.append("\n")
 
 
-def _add_requirement_test_cases(
+async def _add_requirement_test_cases(
     spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]
 ):
     """
@@ -164,7 +164,7 @@ def _add_requirement_test_cases(
         formatted_specification: The output text in markdown format
     """
     req_test_cases_url = f"projects/{product_id}/requirements/{requirement_id}/test-cases"
-    req_test_cases = spira_client.make_spira_api_get_request(req_test_cases_url)
+    req_test_cases = await spira_client.make_spira_api_get_request(req_test_cases_url)
     if req_test_cases:
         formatted_specification.append("#### Test Cases\n\n")
         for req_test_case in req_test_cases:
@@ -172,7 +172,7 @@ def _add_requirement_test_cases(
 
             # Get the full details of the test case
             test_case_url = f"projects/{product_id}/test-cases/{test_case_id}"
-            test_case = spira_client.make_spira_api_get_request(test_case_url)
+            test_case = await spira_client.make_spira_api_get_request(test_case_url)
 
             if test_case:
                 formatted_specification.append(
@@ -187,7 +187,7 @@ def _add_requirement_test_cases(
 
                 # Get the test case steps
                 test_steps_url = f"projects/{product_id}/test-cases/{test_case_id}/test-steps"
-                test_steps = spira_client.make_spira_api_get_request(test_steps_url)
+                test_steps = await spira_client.make_spira_api_get_request(test_steps_url)
 
                 # Format the test steps as a table
                 if test_steps:
@@ -212,7 +212,7 @@ def _add_requirement_test_cases(
         formatted_specification.append("\n")
 
 
-def _add_requirement_tasks(
+async def _add_requirement_tasks(
     spira_client, product_id: int, requirement_id: int, formatted_specification: list[str]
 ):
     """
@@ -228,7 +228,7 @@ def _add_requirement_tasks(
     # First, get the count of the number of total matching tasks
     body = [{"PropertyName": "RequirementId", "IntValue": requirement_id}]
     tasks_url = f"projects/{product_id}/tasks/count "
-    task_count = spira_client.make_spira_api_post_request(tasks_url, body)
+    task_count = await spira_client.make_spira_api_post_request(tasks_url, body)
 
     # Next, get all of the tasks using pagination
     tasks = []
@@ -236,7 +236,7 @@ def _add_requirement_tasks(
     number_of_rows = 250
     while starting_row < task_count:
         tasks_url = f"projects/{product_id}/tasks?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field=StartDate&sort_direction=ASC"
-        results = spira_client.make_spira_api_post_request(tasks_url, body)
+        results = await spira_client.make_spira_api_post_request(tasks_url, body)
         starting_row += number_of_rows
         tasks.extend(results)
 
@@ -253,7 +253,9 @@ def _add_requirement_tasks(
         formatted_specification.append("\n")
 
 
-def _get_specification_risks(spira_client, product_id: int, release_id: int | None) -> list[Any]:
+async def _get_specification_risks(
+    spira_client, product_id: int, release_id: int | None
+) -> list[Any]:
     """
     Gets the list of risks in the product/release
 
@@ -278,7 +280,7 @@ def _get_specification_risks(spira_client, product_id: int, release_id: int | No
 
         while more_results:
             risks_url = f"projects/{product_id}/risks?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field=RiskExposure&sort_direction=DESC"
-            results = spira_client.make_spira_api_post_request(risks_url, body)
+            results = await spira_client.make_spira_api_post_request(risks_url, body)
             if not results:
                 more_results = False
             else:
@@ -290,7 +292,7 @@ def _get_specification_risks(spira_client, product_id: int, release_id: int | No
         raise e
 
 
-def _add_risk_mitigations(
+async def _add_risk_mitigations(
     spira_client, product_id: int, risk_id: int, formatted_specification: list[str]
 ):
     """
@@ -303,7 +305,7 @@ def _add_risk_mitigations(
         formatted_specification: The output text in markdown format
     """
     mitigations_url = f"projects/{product_id}/risks/{risk_id}/mitigations"
-    mitigations = spira_client.make_spira_api_get_request(mitigations_url)
+    mitigations = await spira_client.make_spira_api_get_request(mitigations_url)
     if mitigations:
         formatted_specification.append("#### Mitigations\n\n")
         for mitigation in mitigations:
@@ -314,7 +316,7 @@ def _add_risk_mitigations(
         formatted_specification.append("\n")
 
 
-def _get_specification_requirements_impl(
+async def _get_specification_requirements_impl(
     spira_client, product_id: int, release_id: int | None
 ) -> str:
     """
@@ -335,13 +337,13 @@ def _get_specification_requirements_impl(
 
         # Get the product information
         logger.info("Getting the product overview")
-        product = _get_product_by_id(spira_client, product_id)
+        product = await _get_product_by_id(spira_client, product_id)
         product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
-            release = _get_release_by_id(spira_client, product_id, release_id)
+            release = await _get_release_by_id(spira_client, product_id, release_id)
             release_version_number = release["VersionNumber"]
             formatted_specification.append(
                 f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
@@ -361,7 +363,7 @@ def _get_specification_requirements_impl(
         formatted_specification.append("## Requirements Document")
 
         # Get the list of requirements in the product, or just the release
-        requirements = _get_specification_requirements(spira_client, product_id, release_id)
+        requirements = await _get_specification_requirements(spira_client, product_id, release_id)
 
         if requirements:
             # Format the requirements into human readable data
@@ -378,7 +380,7 @@ def _get_specification_requirements_impl(
                 formatted_specification.append("\n")
 
                 # See if we have any scenarios for this requirement
-                _add_requirement_scenarios(
+                await _add_requirement_scenarios(
                     spira_client, product_id, requirement_id, formatted_specification
                 )
 
@@ -393,7 +395,9 @@ def _get_specification_requirements_impl(
         return f"There was a problem using this tool: {e}"
 
 
-def _get_specification_design_impl(spira_client, product_id: int, release_id: int | None) -> str:
+async def _get_specification_design_impl(
+    spira_client, product_id: int, release_id: int | None
+) -> str:
     """
     Implementation of retrieving the design markdown specification for the specified product
 
@@ -412,13 +416,13 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
 
         # Get the product information
         logger.info("Getting the product overview")
-        product = _get_product_by_id(spira_client, product_id)
+        product = await _get_product_by_id(spira_client, product_id)
         product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
-            release = _get_release_by_id(spira_client, product_id, release_id)
+            release = await _get_release_by_id(spira_client, product_id, release_id)
             release_version_number = release["VersionNumber"]
             formatted_specification.append(
                 f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
@@ -438,7 +442,7 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
         formatted_specification.append("## Design Document")
 
         # Get the list of risks in the product, or just the release
-        risks = _get_specification_risks(spira_client, product_id, release_id)
+        risks = await _get_specification_risks(spira_client, product_id, release_id)
 
         if risks:
             # Format the risks into human readable data
@@ -451,7 +455,9 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
                 formatted_specification.append("\n")
 
                 # See if we have any mitigations for this risk
-                _add_risk_mitigations(spira_client, product_id, risk_id, formatted_specification)
+                await _add_risk_mitigations(
+                    spira_client, product_id, risk_id, formatted_specification
+                )
 
         return "\n".join(formatted_specification)
 
@@ -459,7 +465,9 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
         return f"There was a problem using this tool: {e}"
 
 
-def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int | None) -> str:
+async def _get_specification_tasks_impl(
+    spira_client, product_id: int, release_id: int | None
+) -> str:
     """
     Implementation of retrieving the tasks markdown specification for the specified product
 
@@ -478,13 +486,13 @@ def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int
 
         # Get the product information
         logger.info("Getting the product overview")
-        product = _get_product_by_id(spira_client, product_id)
+        product = await _get_product_by_id(spira_client, product_id)
         product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
-            release = _get_release_by_id(spira_client, product_id, release_id)
+            release = await _get_release_by_id(spira_client, product_id, release_id)
             release_version_number = release["VersionNumber"]
             formatted_specification.append(
                 f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
@@ -500,7 +508,7 @@ def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int
             formatted_specification.append("\n")
 
         # Get the list of requirements in the product, or just the release
-        requirements = _get_specification_requirements(spira_client, product_id, release_id)
+        requirements = await _get_specification_requirements(spira_client, product_id, release_id)
 
         # Create the sub-header for the Tasks.md section
         formatted_specification.append("\n")
@@ -516,7 +524,7 @@ def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int
                 )
 
                 # See if we have any defined tasks for this requirement
-                _add_requirement_tasks(
+                await _add_requirement_tasks(
                     spira_client, product_id, requirement_id, formatted_specification
                 )
 
@@ -526,7 +534,7 @@ def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int
         return f"There was a problem using this tool: {e}"
 
 
-def _get_specification_test_cases_impl(
+async def _get_specification_test_cases_impl(
     spira_client, product_id: int, release_id: int | None
 ) -> str:
     """
@@ -547,13 +555,13 @@ def _get_specification_test_cases_impl(
 
         # Get the product information
         logger.info("Getting the product overview")
-        product = _get_product_by_id(spira_client, product_id)
+        product = await _get_product_by_id(spira_client, product_id)
         product_name = product["Name"]
 
         # Create the header
         if release_id:
             # Get the release information
-            release = _get_release_by_id(spira_client, product_id, release_id)
+            release = await _get_release_by_id(spira_client, product_id, release_id)
             release_version_number = release["VersionNumber"]
             formatted_specification.append(
                 f"# Specification for {product_name} [PR:{product_id}], Release {release_version_number} [RL:{release_id}]"
@@ -583,7 +591,7 @@ def _get_specification_test_cases_impl(
             test_cases_url = f"projects/{product_id}/test-cases?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field={sort_field}&sort_direction={sort_direction}"
             if release_id is not None:
                 test_cases_url += f"&release_id={release_id}"
-            results = spira_client.make_spira_api_get_request(test_cases_url)
+            results = await spira_client.make_spira_api_get_request(test_cases_url)
             if not results:
                 more_results = False
             else:
@@ -596,7 +604,7 @@ def _get_specification_test_cases_impl(
                 # Get the full details of the test case (with steps)
                 test_case_id = test_case_item["TestCaseId"]
                 test_case_url = f"projects/{product_id}/test-cases/{test_case_id}"
-                test_case = spira_client.make_spira_api_get_request(test_case_url)
+                test_case = await spira_client.make_spira_api_get_request(test_case_url)
 
                 if test_case:
                     formatted_specification.append(
@@ -611,7 +619,7 @@ def _get_specification_test_cases_impl(
 
                     # Get the test case steps
                     test_steps_url = f"projects/{product_id}/test-cases/{test_case_id}/test-steps"
-                    test_steps = spira_client.make_spira_api_get_request(test_steps_url)
+                    test_steps = await spira_client.make_spira_api_get_request(test_steps_url)
 
                     # Format the test steps as a table
                     if test_steps:
@@ -651,7 +659,7 @@ def register_tools(mcp) -> None:
         name="spec_get_requirements",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_requirements(
+    async def get_specification_requirements(
         release_id: int | None, product_id: int | None = None
     ) -> str:
         """
@@ -714,7 +722,7 @@ def register_tools(mcp) -> None:
                     )
 
             spira_client = get_spira_client()
-            return _get_specification_requirements_impl(spira_client, product_id, release_id)
+            return await _get_specification_requirements_impl(spira_client, product_id, release_id)
         except Exception as e:
             return format_error_response(
                 error=f"Failed to retrieve requirements specification: {str(e)}",
@@ -726,7 +734,9 @@ def register_tools(mcp) -> None:
         name="spec_get_design",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_design(release_id: int | None, product_id: int | None = None) -> str:
+    async def get_specification_design(
+        release_id: int | None, product_id: int | None = None
+    ) -> str:
         """
         Retrieves the design specification file for the requested Spira product.
 
@@ -787,7 +797,7 @@ def register_tools(mcp) -> None:
                     )
 
             spira_client = get_spira_client()
-            return _get_specification_design_impl(spira_client, product_id, release_id)
+            return await _get_specification_design_impl(spira_client, product_id, release_id)
         except Exception as e:
             return format_error_response(
                 error=f"Failed to retrieve design specification: {str(e)}",
@@ -799,7 +809,7 @@ def register_tools(mcp) -> None:
         name="spec_get_tasks",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_tasks(release_id: int | None, product_id: int | None = None) -> str:
+    async def get_specification_tasks(release_id: int | None, product_id: int | None = None) -> str:
         """
         Retrieves the tasks specification file for the requested Spira product.
 
@@ -860,7 +870,7 @@ def register_tools(mcp) -> None:
                     )
 
             spira_client = get_spira_client()
-            return _get_specification_tasks_impl(spira_client, product_id, release_id)
+            return await _get_specification_tasks_impl(spira_client, product_id, release_id)
         except Exception as e:
             return format_error_response(
                 error=f"Failed to retrieve tasks specification: {str(e)}",
@@ -872,7 +882,9 @@ def register_tools(mcp) -> None:
         name="spec_get_test_cases",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_specification_test_cases(release_id: int | None, product_id: int | None = None) -> str:
+    async def get_specification_test_cases(
+        release_id: int | None, product_id: int | None = None
+    ) -> str:
         """
         Retrieves the test cases specification file for the requested Spira product.
 
@@ -933,7 +945,7 @@ def register_tools(mcp) -> None:
                     )
 
             spira_client = get_spira_client()
-            return _get_specification_test_cases_impl(spira_client, product_id, release_id)
+            return await _get_specification_test_cases_impl(spira_client, product_id, release_id)
         except Exception as e:
             return format_error_response(
                 error=f"Failed to retrieve test cases specification: {str(e)}",

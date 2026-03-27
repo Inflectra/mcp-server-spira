@@ -14,7 +14,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_test_sets_impl(
+async def _get_test_sets_impl(
     spira_client,
     product_id: int,
     starting_row: int = 1,
@@ -49,7 +49,7 @@ def _get_test_sets_impl(
             test_sets_url += f"&sort_field={sort_field}&sort_direction={sort_direction}"
 
         # Make POST request with empty filter array (no filtering for now)
-        test_sets = spira_client.make_spira_api_post_request(test_sets_url, [])
+        test_sets = await spira_client.make_spira_api_post_request(test_sets_url, [])
 
         # Return JSON response with data structure
         return format_success_response(data=test_sets)
@@ -75,7 +75,7 @@ def register_tools(mcp) -> None:
         name="product_get_test_sets",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_test_sets(
+    async def get_test_sets(
         product_id: int | None = None,
         starting_row: int = 1,
         number_of_rows: int = 100,
@@ -155,7 +155,7 @@ def register_tools(mcp) -> None:
 
             # Get Spira client and retrieve test sets
             spira_client = get_spira_client()
-            return _get_test_sets_impl(
+            return await _get_test_sets_impl(
                 spira_client,
                 product_id,
                 starting_row,

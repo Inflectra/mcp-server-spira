@@ -3,7 +3,7 @@ Unit tests for product releases tools
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -38,7 +38,8 @@ class TestGetReleasesImpl:
         """Create mock SpiraClient."""
         return Mock()
 
-    def test_successful_retrieval(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval(self, mock_spira_client):
         """Test successful release retrieval."""
         mock_releases = [
             {
@@ -50,18 +51,19 @@ class TestGetReleasesImpl:
         ]
         mock_spira_client.make_spira_api_post_request.return_value = mock_releases
 
-        result = _get_releases_impl(mock_spira_client, product_id=55)
+        result = await _get_releases_impl(mock_spira_client, product_id=55)
         response = json.loads(result)
 
         assert "data" in response
         assert len(response["data"]) == 1
         assert response["data"][0]["ReleaseId"] == 1
 
-    def test_pagination_parameters(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_pagination_parameters(self, mock_spira_client):
         """Test pagination parameters are passed correctly."""
         mock_spira_client.make_spira_api_post_request.return_value = []
 
-        _get_releases_impl(
+        await _get_releases_impl(
             mock_spira_client,
             product_id=55,
             start_row=10,
@@ -72,11 +74,12 @@ class TestGetReleasesImpl:
         assert "start_row=10" in call_args[0][0]
         assert "number_rows=50" in call_args[0][0]
 
-    def test_api_error_handling(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self, mock_spira_client):
         """Test API error handling."""
         mock_spira_client.make_spira_api_post_request.side_effect = Exception("API error")
 
-        result = _get_releases_impl(mock_spira_client, product_id=55)
+        result = await _get_releases_impl(mock_spira_client, product_id=55)
         response = json.loads(result)
 
         assert "error" in response
@@ -91,7 +94,8 @@ class TestGetReleaseByIdImpl:
         """Create mock SpiraClient."""
         return Mock()
 
-    def test_successful_retrieval(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval(self, mock_spira_client):
         """Test successful single release retrieval."""
         mock_release = {
             "ReleaseId": 10,
@@ -101,18 +105,19 @@ class TestGetReleaseByIdImpl:
         }
         mock_spira_client.make_spira_api_get_request.return_value = mock_release
 
-        result = _get_release_by_id_impl(mock_spira_client, product_id=55, release_id=10)
+        result = await _get_release_by_id_impl(mock_spira_client, product_id=55, release_id=10)
         response = json.loads(result)
 
         assert "data" in response
         assert len(response["data"]) == 1
         assert response["data"][0]["ReleaseId"] == 10
 
-    def test_api_error_handling(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self, mock_spira_client):
         """Test API error handling."""
         mock_spira_client.make_spira_api_get_request.side_effect = Exception("Release not found")
 
-        result = _get_release_by_id_impl(mock_spira_client, product_id=55, release_id=999)
+        result = await _get_release_by_id_impl(mock_spira_client, product_id=55, release_id=999)
         response = json.loads(result)
 
         assert "error" in response
@@ -131,7 +136,7 @@ class TestGetReleasesMCPWrapper:
     @patch("mcp_server_spira.features.productartifacts.tools.releases.get_spira_client")
     def test_successful_call_through_wrapper(self, mock_get_client):
         """Test successful call through MCP wrapper."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
         mock_get_client.return_value = mock_client
 
@@ -196,7 +201,7 @@ class TestGetReleasesMCPWrapper:
     @patch("mcp_server_spira.features.productartifacts.tools.releases.get_spira_client")
     def test_all_parameters_passed_through(self, mock_get_client):
         """Test all parameters are passed through correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_post_request.return_value = []
         mock_get_client.return_value = mock_client
 
@@ -228,7 +233,7 @@ class TestGetReleaseByIdMCPWrapper:
     @patch("mcp_server_spira.features.productartifacts.tools.releases.get_spira_client")
     def test_successful_call_through_wrapper(self, mock_get_client):
         """Test successful call through MCP wrapper."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = {"ReleaseId": 10}
         mock_get_client.return_value = mock_client
 
@@ -282,7 +287,7 @@ class TestGetReleaseByIdMCPWrapper:
     @patch("mcp_server_spira.features.productartifacts.tools.releases.get_spira_client")
     def test_parameters_passed_through(self, mock_get_client):
         """Test parameters are passed through correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = {"ReleaseId": 10}
         mock_get_client.return_value = mock_client
 

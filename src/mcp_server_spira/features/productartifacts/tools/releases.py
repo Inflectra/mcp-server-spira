@@ -14,7 +14,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_releases_impl(
+async def _get_releases_impl(
     spira_client,
     product_id: int,
     start_row: int = 1,
@@ -40,7 +40,7 @@ def _get_releases_impl(
         )
 
         # Make POST request with empty filter array (no filtering for now)
-        releases = spira_client.make_spira_api_post_request(releases_url, [])
+        releases = await spira_client.make_spira_api_post_request(releases_url, [])
 
         # Return JSON response with data structure
         return format_success_response(data=releases)
@@ -54,7 +54,7 @@ def _get_releases_impl(
         )
 
 
-def _get_release_by_id_impl(spira_client, product_id: int, release_id: int) -> str:
+async def _get_release_by_id_impl(spira_client, product_id: int, release_id: int) -> str:
     """
     Implementation of retrieving a single release in the specified
     product with the specified ID
@@ -72,7 +72,7 @@ def _get_release_by_id_impl(spira_client, product_id: int, release_id: int) -> s
     try:
         # Get the release in the product
         release_url = f"projects/{product_id}/releases/{release_id}"
-        release = spira_client.make_spira_api_get_request(release_url)
+        release = await spira_client.make_spira_api_get_request(release_url)
 
         # Return JSON response with data structure (single item as array)
         return format_success_response(data=[release])
@@ -105,7 +105,7 @@ def register_tools(mcp) -> None:
         name="product_get_releases",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_releases(
+    async def get_releases(
         product_id: int | None = None,
         start_row: int = 1,
         number_rows: int = 100,
@@ -179,7 +179,7 @@ def register_tools(mcp) -> None:
 
             # Get Spira client and retrieve releases
             spira_client = get_spira_client()
-            return _get_releases_impl(
+            return await _get_releases_impl(
                 spira_client,
                 product_id,
                 start_row,
@@ -197,7 +197,7 @@ def register_tools(mcp) -> None:
         name="product_get_release_by_id",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_release_by_id(
+    async def get_release_by_id(
         product_id: int | None = None,
         release_id: int = 0,
     ) -> str:
@@ -262,7 +262,7 @@ def register_tools(mcp) -> None:
 
             # Get Spira client and retrieve release
             spira_client = get_spira_client()
-            return _get_release_by_id_impl(spira_client, product_id, release_id)
+            return await _get_release_by_id_impl(spira_client, product_id, release_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve release",

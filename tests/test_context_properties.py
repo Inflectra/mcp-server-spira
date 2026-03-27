@@ -2,7 +2,7 @@
 """Property-based tests for mcp_server_spira.features.context module."""
 
 import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from hypothesis import given, settings
@@ -42,7 +42,7 @@ def test_context_fetches_both_endpoints(product_id):
     Validates: Requirements 5.1, 5.2
     """
     _reset_context()
-    mock_client = MagicMock()
+    mock_client = AsyncMock()
     mock_client.make_spira_api_get_request.return_value = {"Name": "P", "Description": "D"}
     mock_client.make_spira_api_post_request.return_value = []
 
@@ -73,7 +73,7 @@ def test_context_has_required_fields(product_id, name, description, releases):
     Validates: Requirements 5.3, 5.6
     """
     _reset_context()
-    mock_client = MagicMock()
+    mock_client = AsyncMock()
     mock_client.make_spira_api_get_request.return_value = {
         "Name": name,
         "Description": description,
@@ -112,7 +112,7 @@ def test_resource_reads_use_cached_data(product_id, num_reads):
     Validates: Requirements 5.7
     """
     _reset_context()
-    mock_client = MagicMock()
+    mock_client = AsyncMock()
     mock_client.make_spira_api_get_request.return_value = {"Name": "P", "Description": "D"}
     mock_client.make_spira_api_post_request.return_value = []
 

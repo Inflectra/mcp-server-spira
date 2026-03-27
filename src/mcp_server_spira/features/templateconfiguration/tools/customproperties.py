@@ -15,7 +15,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_custom_properties_impl(spira_client, template_id: int) -> str:
+async def _get_custom_properties_impl(spira_client, template_id: int) -> str:
     """
     Implementation of retrieving the list of artifact types and
     custom properties in the product template
@@ -49,7 +49,7 @@ def _get_custom_properties_impl(spira_client, template_id: int) -> str:
 
         # Retrieve custom properties for each artifact type
         for artifact_type_name in artifact_types:
-            custom_props = _get_custom_properties_for_artifact_type(
+            custom_props = await _get_custom_properties_for_artifact_type(
                 spira_client, template_id, artifact_type_name
             )
 
@@ -72,7 +72,7 @@ def _get_custom_properties_impl(spira_client, template_id: int) -> str:
         )
 
 
-def _get_custom_properties_for_artifact_type(
+async def _get_custom_properties_for_artifact_type(
     spira_client, template_id: int, artifact_type_name: str
 ) -> list:
     """
@@ -91,7 +91,7 @@ def _get_custom_properties_for_artifact_type(
         custom_props_url = (
             "project-templates/" + str(template_id) + "/custom-properties/" + artifact_type_name
         )
-        custom_props = spira_client.make_spira_api_get_request(custom_props_url)
+        custom_props = await spira_client.make_spira_api_get_request(custom_props_url)
 
         return custom_props if custom_props else []
 
@@ -111,7 +111,7 @@ def register_tools(mcp) -> None:
         name="template_get_custom_properties",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_custom_properties(template_id: int) -> str:
+    async def get_custom_properties(template_id: int) -> str:
         """
         Retrieves artifact types and custom properties for the template
 
@@ -149,7 +149,7 @@ def register_tools(mcp) -> None:
                 return format_error_response(**validation_error)
 
             spira_client = get_spira_client()
-            return _get_custom_properties_impl(spira_client, template_id)
+            return await _get_custom_properties_impl(spira_client, template_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve custom properties",

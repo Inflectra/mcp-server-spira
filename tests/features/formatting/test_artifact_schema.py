@@ -61,7 +61,7 @@ def test_valid_type_echoed_in_response():
 # ---------------------------------------------------------------------------
 
 
-# Feature: artifact-schema-tool, Property 1: Valid artifact type returns parseable schema with non-empty fields
+# Feature: artifact-schema-tool, Property 1: Valid artifact type returns parseable schema
 @given(artifact_type=sampled_from(VALID_ARTIFACT_TYPES))
 @settings(max_examples=100)
 def test_valid_type_schema_round_trip(artifact_type):

@@ -15,7 +15,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_automation_hosts_impl(
+async def _get_automation_hosts_impl(
     spira_client,
     product_id: int,
     starting_row: int = 1,
@@ -46,7 +46,7 @@ def _get_automation_hosts_impl(
         )
 
         # Make POST request with empty filter array (no filtering for now)
-        automation_hosts = spira_client.make_spira_api_post_request(automation_hosts_url, [])
+        automation_hosts = await spira_client.make_spira_api_post_request(automation_hosts_url, [])
 
         # Return JSON response with data structure
         return format_success_response(data=automation_hosts)
@@ -72,7 +72,7 @@ def register_tools(mcp) -> None:
         name="product_get_automation_hosts",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_automation_hosts(
+    async def get_automation_hosts(
         product_id: int | None = None,
         starting_row: int = 1,
         number_of_rows: int = 100,
@@ -146,7 +146,7 @@ def register_tools(mcp) -> None:
 
             # Get Spira client and retrieve automation hosts
             spira_client = get_spira_client()
-            return _get_automation_hosts_impl(
+            return await _get_automation_hosts_impl(
                 spira_client,
                 product_id,
                 starting_row,

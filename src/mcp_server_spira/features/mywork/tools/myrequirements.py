@@ -16,7 +16,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_my_requirements_impl(spira_client, limit: int, offset: int) -> str:
+async def _get_my_requirements_impl(spira_client, limit: int, offset: int) -> str:
     """
     Implementation of retrieving my assigned Spira requirements.
 
@@ -36,7 +36,7 @@ def _get_my_requirements_impl(spira_client, limit: int, offset: int) -> str:
 
         # Get the list of open requirements for the current user
         requirements_url = "requirements"
-        all_requirements = spira_client.make_spira_api_get_request(requirements_url)
+        all_requirements = await spira_client.make_spira_api_get_request(requirements_url)
 
         # Handle empty results
         if not all_requirements:
@@ -69,7 +69,7 @@ def register_tools(mcp) -> None:
         name="my_get_requirements",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_my_requirements(limit: int = 25, offset: int = 0) -> str:
+    async def get_my_requirements(limit: int = 25, offset: int = 0) -> str:
         """
         Retrieves requirements assigned to the current user.
 
@@ -111,8 +111,8 @@ def register_tools(mcp) -> None:
             # Get Spira client
             spira_client = get_spira_client()
 
-            # Retrieve and paginate requirements
-            return _get_my_requirements_impl(spira_client, limit, offset)
+            # Run blocking HTTP call in a thread to avoid blocking the event loop
+            return await _get_my_requirements_impl(spira_client, limit, offset)
 
         except Exception as e:
             return format_error_response(

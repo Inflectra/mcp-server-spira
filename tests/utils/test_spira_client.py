@@ -81,7 +81,8 @@ class TestSpiraClientInit:
 class TestSpiraClientGetRequest:
     """Tests for SpiraClient.make_spira_api_get_request method."""
 
-    def test_successful_get_request(self):
+    @pytest.mark.asyncio
+    async def test_successful_get_request(self):
         """Test successful GET request returns JSON data."""
         client = SpiraClient("https://test.com", "user", "key")
 
@@ -91,14 +92,15 @@ class TestSpiraClientGetRequest:
         client._http_client = MagicMock()
         client._http_client.get.return_value = mock_response
 
-        result = client.make_spira_api_get_request("tasks")
+        result = await client.make_spira_api_get_request("tasks")
 
         assert result == {"TaskId": 1, "Name": "Test Task"}
         client._http_client.get.assert_called_once()
         call_args = client._http_client.get.call_args
         assert "https://test.com/Services/v7_0/RestService.svc/tasks" in call_args[0]
 
-    def test_get_request_with_headers(self):
+    @pytest.mark.asyncio
+    async def test_get_request_with_headers(self):
         """Test that GET request includes correct headers."""
         client = SpiraClient("https://test.com", "user", "key")
 
@@ -108,7 +110,7 @@ class TestSpiraClientGetRequest:
         client._http_client = MagicMock()
         client._http_client.get.return_value = mock_response
 
-        client.make_spira_api_get_request("tasks")
+        await client.make_spira_api_get_request("tasks")
 
         call_kwargs = client._http_client.get.call_args[1]
         headers = call_kwargs["headers"]
@@ -132,7 +134,8 @@ class TestSpiraClientGetRequest:
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_API_KEY"):
             SpiraClient("https://test.com", "user", None)  # type: ignore[arg-type]
 
-    def test_get_request_handles_http_error(self):
+    @pytest.mark.asyncio
+    async def test_get_request_handles_http_error(self):
         """Test that GET request handles HTTP errors properly."""
         client = SpiraClient("https://test.com", "user", "key")
         client._http_client = MagicMock()
@@ -145,13 +148,14 @@ class TestSpiraClientGetRequest:
             Exception,
             match="Error returned when calling the Spira REST API",
         ):
-            client.make_spira_api_get_request("tasks")
+            await client.make_spira_api_get_request("tasks")
 
 
 class TestSpiraClientPostRequest:
     """Tests for SpiraClient.make_spira_api_post_request method."""
 
-    def test_successful_post_request(self):
+    @pytest.mark.asyncio
+    async def test_successful_post_request(self):
         """Test successful POST request returns JSON data."""
         client = SpiraClient("https://test.com", "user", "key")
 
@@ -161,12 +165,13 @@ class TestSpiraClientPostRequest:
         client._http_client = MagicMock()
         client._http_client.post.return_value = mock_response
 
-        result = client.make_spira_api_post_request("projects/1/tasks", {"Name": "New Task"})
+        result = await client.make_spira_api_post_request("projects/1/tasks", {"Name": "New Task"})
 
         assert result == {"TaskId": 2, "Name": "New Task"}
         client._http_client.post.assert_called_once()
 
-    def test_post_request_with_list_json(self):
+    @pytest.mark.asyncio
+    async def test_post_request_with_list_json(self):
         """Test POST request with list JSON body."""
         client = SpiraClient("https://test.com", "user", "key")
 
@@ -176,7 +181,7 @@ class TestSpiraClientPostRequest:
         client._http_client = MagicMock()
         client._http_client.post.return_value = mock_response
 
-        result = client.make_spira_api_post_request("tasks/search", [{"filter": "status"}])
+        result = await client.make_spira_api_post_request("tasks/search", [{"filter": "status"}])
 
         assert result == [{"TaskId": 1}, {"TaskId": 2}]
 
@@ -189,7 +194,8 @@ class TestSpiraClientPostRequest:
 class TestSpiraClientPutRequest:
     """Tests for SpiraClient.make_spira_api_put_request method."""
 
-    def test_successful_put_request(self):
+    @pytest.mark.asyncio
+    async def test_successful_put_request(self):
         """Test successful PUT request returns JSON data."""
         client = SpiraClient("https://test.com", "user", "key")
 
@@ -202,7 +208,7 @@ class TestSpiraClientPutRequest:
         client._http_client = MagicMock()
         client._http_client.put.return_value = mock_response
 
-        result = client.make_spira_api_put_request(
+        result = await client.make_spira_api_put_request(
             "projects/1/tasks", {"TaskId": 1, "Name": "Updated Task"}
         )
 
@@ -218,7 +224,8 @@ class TestSpiraClientPutRequest:
 class TestSpiraClientDeleteRequest:
     """Tests for SpiraClient.make_spira_api_delete_request method."""
 
-    def test_successful_delete_request(self):
+    @pytest.mark.asyncio
+    async def test_successful_delete_request(self):
         """Test successful DELETE request returns JSON data."""
         client = SpiraClient("https://test.com", "user", "key")
 
@@ -228,7 +235,7 @@ class TestSpiraClientDeleteRequest:
         client._http_client = MagicMock()
         client._http_client.delete.return_value = mock_response
 
-        result = client.make_spira_api_delete_request("projects/1/tasks/40")
+        result = await client.make_spira_api_delete_request("projects/1/tasks/40")
 
         assert result == {"success": True}
         client._http_client.delete.assert_called_once()
@@ -238,7 +245,8 @@ class TestSpiraClientDeleteRequest:
         with pytest.raises(ValueError, match="INFLECTRA_SPIRA_API_KEY"):
             SpiraClient("https://test.com", "user", None)  # type: ignore[arg-type]
 
-    def test_delete_request_handles_http_error(self):
+    @pytest.mark.asyncio
+    async def test_delete_request_handles_http_error(self):
         """Test that DELETE request handles HTTP errors properly."""
         client = SpiraClient("https://test.com", "user", "key")
         client._http_client = MagicMock()
@@ -251,7 +259,7 @@ class TestSpiraClientDeleteRequest:
             Exception,
             match="Error returned when calling the Spira REST API",
         ):
-            client.make_spira_api_delete_request("tasks/40")
+            await client.make_spira_api_delete_request("tasks/40")
 
 
 class TestGetClient:

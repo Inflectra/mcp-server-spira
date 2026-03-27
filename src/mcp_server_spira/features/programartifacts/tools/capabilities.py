@@ -13,7 +13,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_capabilities_impl(spira_client, program_id: int) -> str:
+async def _get_capabilities_impl(spira_client, program_id: int) -> str:
     """
     Implementation of retrieving the list of capabilities in the specified program
 
@@ -34,7 +34,7 @@ def _get_capabilities_impl(spira_client, program_id: int) -> str:
 
         # Get the list of capabilities in the program
         capabilities_url = f"programs/{program_id}/capabilities/search?current_page=1&page_size=500"
-        capabilities = spira_client.make_spira_api_get_request(capabilities_url)
+        capabilities = await spira_client.make_spira_api_get_request(capabilities_url)
 
         # Return JSON response
         return format_success_response(data=capabilities if capabilities else [])
@@ -60,7 +60,7 @@ def register_tools(mcp) -> None:
         name="program_get_capabilities",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_capabilities(program_id: int) -> str:
+    async def get_capabilities(program_id: int) -> str:
         """
         Retrieves a list of the capabilities in the specified program
 
@@ -91,7 +91,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_capabilities_impl(spira_client, program_id)
+            return await _get_capabilities_impl(spira_client, program_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve capabilities",

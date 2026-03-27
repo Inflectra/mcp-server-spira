@@ -3,7 +3,7 @@ Tests for the Products workspace features of the Inflectra Spira MCP Server.
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -19,10 +19,11 @@ from mcp_server_spira.features.workspaces.tools.products import (
 class TestGetProductsImpl:
     """Tests for _get_products_impl function."""
 
-    def test_successful_retrieval_with_products(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_products(self):
         """Test successful product retrieval with data."""
         # Mock Spira client
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_products = [
             {
                 "ProjectId": 1,
@@ -44,7 +45,7 @@ class TestGetProductsImpl:
         mock_client.make_spira_api_get_request.return_value = mock_products
 
         # Call implementation
-        result = _get_products_impl(mock_client)
+        result = await _get_products_impl(mock_client)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("projects")
@@ -60,24 +61,26 @@ class TestGetProductsImpl:
         assert parsed["data"][1]["Name"] == "Product 2"
         assert parsed["data"][1]["Active"] is False
 
-    def test_successful_retrieval_empty_products(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_empty_products(self):
         """Test successful retrieval with no products."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
-        result = _get_products_impl(mock_client)
+        result = await _get_products_impl(mock_client)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert len(parsed["data"]) == 0
         assert parsed["data"] == []
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
-        result = _get_products_impl(mock_client)
+        result = await _get_products_impl(mock_client)
 
         # Verify error response structure
         parsed = json.loads(result)
@@ -89,9 +92,10 @@ class TestGetProductsImpl:
         assert "message" in parsed["details"]
         assert "suggestion" in parsed
 
-    def test_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_preserves_all_fields(self):
         """Test that all product fields are preserved in JSON output."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_products = [
             {
                 "ProjectId": 55,
@@ -119,7 +123,7 @@ class TestGetProductsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_products
 
-        result = _get_products_impl(mock_client)
+        result = await _get_products_impl(mock_client)
 
         parsed = json.loads(result)
         product = parsed["data"][0]
@@ -147,13 +151,14 @@ class TestGetProductsImpl:
         assert product["ConcurrencyGuid"] == "xyz-789"
         assert product["CustomProperties"] == []
 
-    def test_json_formatting(self):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self):
         """Test that JSON is properly formatted with indentation."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_products = [{"ProjectId": 1, "Name": "Product 1", "Active": True}]
         mock_client.make_spira_api_get_request.return_value = mock_products
 
-        result = _get_products_impl(mock_client)
+        result = await _get_products_impl(mock_client)
 
         # Verify it's valid JSON
         parsed = json.loads(result)
@@ -168,9 +173,10 @@ class TestGetProductsImpl:
 class TestGetProductByIdImpl:
     """Tests for _get_product_by_id_impl function."""
 
-    def test_successful_retrieval_valid_id(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_valid_id(self):
         """Test successful product retrieval with valid ID."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_product = {
             "ProjectId": 55,
             "Name": "Web Application",
@@ -181,7 +187,7 @@ class TestGetProductByIdImpl:
         }
         mock_client.make_spira_api_get_request.return_value = mock_product
 
-        result = _get_product_by_id_impl(mock_client, 55)
+        result = await _get_product_by_id_impl(mock_client, 55)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("projects/55")
@@ -190,33 +196,36 @@ class TestGetProductByIdImpl:
         assert "Web Application" in result
         assert "Main web application project" in result
 
-    def test_product_not_found(self):
+    @pytest.mark.asyncio
+    async def test_product_not_found(self):
         """Test handling when product ID doesn't exist."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = None
 
-        result = _get_product_by_id_impl(mock_client, 999)
+        result = await _get_product_by_id_impl(mock_client, 999)
 
         parsed = json.loads(result)
         assert parsed["error"] == "Product not found"
         assert parsed["error_code"] == "NOT_FOUND"
         assert parsed["details"]["product_id"] == 999
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
-        result = _get_product_by_id_impl(mock_client, 55)
+        result = await _get_product_by_id_impl(mock_client, 55)
 
         parsed = json.loads(result)
         assert parsed["error"] == "Failed to retrieve product"
         assert parsed["error_code"] == "API_ERROR"
         assert "Connection timeout" in parsed["details"]["message"]
 
-    def test_various_product_ids(self):
+    @pytest.mark.asyncio
+    async def test_various_product_ids(self):
         """Test with various product IDs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_product = {
             "ProjectId": 1,
             "Name": "Test Product",
@@ -227,7 +236,7 @@ class TestGetProductByIdImpl:
 
         # Test with different IDs
         for product_id in [1, 10, 100, 999]:
-            result = _get_product_by_id_impl(mock_client, product_id)
+            result = await _get_product_by_id_impl(mock_client, product_id)
             mock_client.make_spira_api_get_request.assert_called_with(f"projects/{product_id}")
             assert "Test Product" in result
 
@@ -236,9 +245,10 @@ class TestGetProductByIdImpl:
 class TestGetProgramProductsImpl:
     """Tests for _get_program_products_impl function."""
 
-    def test_successful_retrieval_with_matching_products(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_matching_products(self):
         """Test successful retrieval with products matching program ID."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_products = [
             {
                 "ProjectId": 1,
@@ -264,7 +274,7 @@ class TestGetProgramProductsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_products
 
-        result = _get_program_products_impl(mock_client, 10)
+        result = await _get_program_products_impl(mock_client, 10)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("projects")
@@ -274,9 +284,10 @@ class TestGetProgramProductsImpl:
         assert "Product 2" in result
         assert "Product 3" not in result
 
-    def test_no_matching_products(self):
+    @pytest.mark.asyncio
+    async def test_no_matching_products(self):
         """Test when no products match the program ID."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_products = [
             {
                 "ProjectId": 1,
@@ -288,37 +299,40 @@ class TestGetProgramProductsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_products
 
-        result = _get_program_products_impl(mock_client, 999)
+        result = await _get_program_products_impl(mock_client, 999)
 
         # Should return empty result (no products match)
         parsed = json.loads(result)
         assert parsed["data"] == []
 
-    def test_empty_products_list(self):
+    @pytest.mark.asyncio
+    async def test_empty_products_list(self):
         """Test when API returns no products."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
-        result = _get_program_products_impl(mock_client, 10)
+        result = await _get_program_products_impl(mock_client, 10)
 
         parsed = json.loads(result)
         assert parsed["data"] == []
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
-        result = _get_program_products_impl(mock_client, 10)
+        result = await _get_program_products_impl(mock_client, 10)
 
         parsed = json.loads(result)
         assert parsed["error"] == "Failed to retrieve program products"
         assert parsed["error_code"] == "API_ERROR"
         assert "Connection timeout" in parsed["details"]["message"]
 
-    def test_multiple_programs_filtering(self):
+    @pytest.mark.asyncio
+    async def test_multiple_programs_filtering(self):
         """Test that filtering correctly handles multiple programs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_products = [
             {
                 "ProjectId": 1,
@@ -351,7 +365,7 @@ class TestGetProgramProductsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_products
 
-        result = _get_program_products_impl(mock_client, 5)
+        result = await _get_program_products_impl(mock_client, 5)
 
         # Should only include products from program 5
         assert "P1" in result
@@ -374,12 +388,13 @@ class TestRegisterTools:
         # Verify that mcp.tool() was called (decorator pattern)
         assert mock_mcp.tool.called
 
-    def test_get_products_mcp_wrapper_calls_implementation(self):
+    @pytest.mark.asyncio
+    async def test_get_products_mcp_wrapper_calls_implementation(self):
         """Test that get_products MCP wrapper properly calls implementation."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
         ) as mock_get_client:
-            mock_client = Mock()
+            mock_client = AsyncMock()
             mock_products = [{"ProjectId": 1, "Name": "Product 1", "Active": True}]
             mock_client.make_spira_api_get_request.return_value = mock_products
             mock_get_client.return_value = mock_client
@@ -401,14 +416,15 @@ class TestRegisterTools:
 
             # Call the first registered tool (get_products)
             get_products_func = mock_mcp.tools[0]
-            result = get_products_func()
+            result = await get_products_func()
 
             # Verify successful response
             parsed = json.loads(result)
             assert "data" in parsed
             assert len(parsed["data"]) == 1
 
-    def test_get_products_mcp_wrapper_handles_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_products_mcp_wrapper_handles_exception(self):
         """Test that get_products MCP wrapper handles exceptions."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
@@ -432,19 +448,20 @@ class TestRegisterTools:
 
             # Call the first registered tool (get_products)
             get_products_func = mock_mcp.tools[0]
-            result = get_products_func()
+            result = await get_products_func()
 
             # Verify error response
             parsed = json.loads(result)
             assert "error" in parsed
             assert parsed["error_code"] == "API_ERROR"
 
-    def test_get_product_by_id_mcp_wrapper_calls_implementation(self):
+    @pytest.mark.asyncio
+    async def test_get_product_by_id_mcp_wrapper_calls_implementation(self):
         """Test that get_product_by_id MCP wrapper properly calls implementation."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
         ) as mock_get_client:
-            mock_client = Mock()
+            mock_client = AsyncMock()
             mock_product = {"ProjectId": 55, "Name": "Test Product", "Active": True}
             mock_client.make_spira_api_get_request.return_value = mock_product
             mock_get_client.return_value = mock_client
@@ -466,12 +483,13 @@ class TestRegisterTools:
 
             # Call the second registered tool (get_product_by_id)
             get_product_by_id_func = mock_mcp.tools[1]
-            result = get_product_by_id_func(55)
+            result = await get_product_by_id_func(55)
 
             # Verify result contains product info
             assert "Test Product" in result
 
-    def test_get_product_by_id_mcp_wrapper_handles_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_product_by_id_mcp_wrapper_handles_exception(self):
         """Test that get_product_by_id MCP wrapper handles exceptions."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
@@ -495,19 +513,20 @@ class TestRegisterTools:
 
             # Call the second registered tool (get_product_by_id)
             get_product_by_id_func = mock_mcp.tools[1]
-            result = get_product_by_id_func(55)
+            result = await get_product_by_id_func(55)
 
             # Verify error response
             parsed = json.loads(result)
             assert "error" in parsed
             assert parsed["error_code"] == "API_ERROR"
 
-    def test_get_program_products_mcp_wrapper_calls_implementation(self):
+    @pytest.mark.asyncio
+    async def test_get_program_products_mcp_wrapper_calls_implementation(self):
         """Test that get_program_products MCP wrapper properly calls implementation."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
         ) as mock_get_client:
-            mock_client = Mock()
+            mock_client = AsyncMock()
             mock_products = [{"ProjectId": 1, "Name": "P1", "ProjectGroupId": 10, "Active": True}]
             mock_client.make_spira_api_get_request.return_value = mock_products
             mock_get_client.return_value = mock_client
@@ -529,12 +548,13 @@ class TestRegisterTools:
 
             # Call the third registered tool (get_program_products)
             get_program_products_func = mock_mcp.tools[2]
-            result = get_program_products_func(10)
+            result = await get_program_products_func(10)
 
             # Verify result contains product info
             assert "P1" in result
 
-    def test_get_program_products_mcp_wrapper_handles_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_program_products_mcp_wrapper_handles_exception(self):
         """Test that get_program_products MCP wrapper handles exceptions."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.products.get_spira_client"
@@ -558,7 +578,7 @@ class TestRegisterTools:
 
             # Call the third registered tool (get_program_products)
             get_program_products_func = mock_mcp.tools[2]
-            result = get_program_products_func(10)
+            result = await get_program_products_func(10)
 
             # Verify error response
             parsed = json.loads(result)

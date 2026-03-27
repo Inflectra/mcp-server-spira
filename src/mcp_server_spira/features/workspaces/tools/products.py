@@ -13,7 +13,7 @@ from mcp_server_spira.features.common.responses import (
 )
 
 
-def _get_product_by_id_impl(spira_client, product_id: int) -> str:
+async def _get_product_by_id_impl(spira_client, product_id: int) -> str:
     """
     Implementation of retrieving a single Spira product by its ID
 
@@ -28,7 +28,7 @@ def _get_product_by_id_impl(spira_client, product_id: int) -> str:
     try:
         # Get the product by its ID
         product_url = f"projects/{product_id}"
-        product = spira_client.make_spira_api_get_request(product_url)
+        product = await spira_client.make_spira_api_get_request(product_url)
 
         if not product:
             return format_error_response(
@@ -49,7 +49,7 @@ def _get_product_by_id_impl(spira_client, product_id: int) -> str:
         )
 
 
-def _get_products_impl(spira_client) -> str:
+async def _get_products_impl(spira_client) -> str:
     """
     Implementation of retrieving the list of Spira products (projects)
     the current user has access to
@@ -63,7 +63,7 @@ def _get_products_impl(spira_client) -> str:
     try:
         # Get the list of available products for the current user
         products_url = "projects"
-        products = spira_client.make_spira_api_get_request(products_url)
+        products = await spira_client.make_spira_api_get_request(products_url)
 
         if not products:
             # Return empty data array if no products
@@ -80,7 +80,7 @@ def _get_products_impl(spira_client) -> str:
         )
 
 
-def _get_program_products_impl(spira_client, program_id: int) -> str:
+async def _get_program_products_impl(spira_client, program_id: int) -> str:
     """
     Implementation of retrieving the list of Spira products (projects)
     that belong to a specific program
@@ -96,7 +96,7 @@ def _get_program_products_impl(spira_client, program_id: int) -> str:
     try:
         # Get the list of available products for the current user
         products_url = "projects"
-        products = spira_client.make_spira_api_get_request(products_url)
+        products = await spira_client.make_spira_api_get_request(products_url)
 
         if not products:
             return format_success_response(data=[])
@@ -128,7 +128,7 @@ def register_tools(mcp) -> None:
         name="system_get_products",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_products() -> str:
+    async def get_products() -> str:
         """
         Retrieves a list of the products (projects) that the current
         user has access to
@@ -160,7 +160,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_products_impl(spira_client)
+            return await _get_products_impl(spira_client)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve products",
@@ -173,7 +173,7 @@ def register_tools(mcp) -> None:
         name="system_get_product_by_id",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_product_by_id(product_id: int) -> str:
+    async def get_product_by_id(product_id: int) -> str:
         """
         Retrieves the details of a single product in the specified
         product
@@ -209,7 +209,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_product_by_id_impl(spira_client, product_id)
+            return await _get_product_by_id_impl(spira_client, product_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve product",
@@ -222,7 +222,7 @@ def register_tools(mcp) -> None:
         name="system_get_program_products",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_program_products(program_id: int) -> str:
+    async def get_program_products(program_id: int) -> str:
         """
         Retrieves a list of the products (projects) that belong to the
         specified program
@@ -259,7 +259,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_program_products_impl(spira_client, program_id)
+            return await _get_program_products_impl(spira_client, program_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve program products",

@@ -3,7 +3,7 @@ Unit tests for program milestones tools
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -60,11 +60,12 @@ class TestGetMilestones:
             },
         ]
 
-    def test_get_milestones_success(self, mock_spira_client, sample_milestones):
+    @pytest.mark.asyncio
+    async def test_get_milestones_success(self, mock_spira_client, sample_milestones):
         """Test successful milestone retrieval."""
         mock_spira_client.make_spira_api_get_request.return_value = sample_milestones
 
-        result = _get_milestones_impl(mock_spira_client, program_id=10)
+        result = await _get_milestones_impl(mock_spira_client, program_id=10)
 
         # Parse response
         response = json.loads(result)
@@ -84,29 +85,32 @@ class TestGetMilestones:
             "programs/10/milestones"
         )
 
-    def test_get_milestones_empty_results(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_empty_results(self, mock_spira_client):
         """Test empty milestone list."""
         mock_spira_client.make_spira_api_get_request.return_value = []
 
-        result = _get_milestones_impl(mock_spira_client, program_id=10)
+        result = await _get_milestones_impl(mock_spira_client, program_id=10)
 
         response = json.loads(result)
 
         assert response["data"] == []
 
-    def test_get_milestones_none_results(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_none_results(self, mock_spira_client):
         """Test None milestone list."""
         mock_spira_client.make_spira_api_get_request.return_value = None
 
-        result = _get_milestones_impl(mock_spira_client, program_id=10)
+        result = await _get_milestones_impl(mock_spira_client, program_id=10)
 
         response = json.loads(result)
 
         assert response["data"] == []
 
-    def test_get_milestones_invalid_program_id_negative(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_invalid_program_id_negative(self, mock_spira_client):
         """Test validation - negative program_id."""
-        result = _get_milestones_impl(mock_spira_client, program_id=-1)
+        result = await _get_milestones_impl(mock_spira_client, program_id=-1)
         response = json.loads(result)
 
         assert "error" in response
@@ -114,22 +118,24 @@ class TestGetMilestones:
         assert response["details"]["parameter"] == "program_id"
         assert response["details"]["value"] == -1
 
-    def test_get_milestones_invalid_program_id_zero(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_invalid_program_id_zero(self, mock_spira_client):
         """Test validation - zero program_id."""
-        result = _get_milestones_impl(mock_spira_client, program_id=0)
+        result = await _get_milestones_impl(mock_spira_client, program_id=0)
         response = json.loads(result)
 
         assert "error" in response
         assert response["error_code"] == "INVALID_VALUE"
         assert response["details"]["parameter"] == "program_id"
 
-    def test_get_milestones_api_error(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_api_error(self, mock_spira_client):
         """Test API error handling."""
         mock_spira_client.make_spira_api_get_request.side_effect = Exception(
             "API connection failed"
         )
 
-        result = _get_milestones_impl(mock_spira_client, program_id=10)
+        result = await _get_milestones_impl(mock_spira_client, program_id=10)
 
         response = json.loads(result)
 
@@ -137,7 +143,8 @@ class TestGetMilestones:
         assert response["error_code"] == "API_ERROR"
         assert "API connection failed" in response["details"]["message"]
 
-    def test_get_milestones_preserves_all_fields(self, mock_spira_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_preserves_all_fields(self, mock_spira_client):
         """Test that all fields from API are preserved in JSON output."""
         milestone_with_all_fields = {
             "MilestoneId": 1,
@@ -160,7 +167,7 @@ class TestGetMilestones:
 
         mock_spira_client.make_spira_api_get_request.return_value = [milestone_with_all_fields]
 
-        result = _get_milestones_impl(mock_spira_client, program_id=10)
+        result = await _get_milestones_impl(mock_spira_client, program_id=10)
         response = json.loads(result)
 
         # Verify all fields are preserved
@@ -169,17 +176,18 @@ class TestGetMilestones:
             assert key in milestone
             assert milestone[key] == value
 
-    def test_get_milestones_multiple_programs(self, mock_spira_client, sample_milestones):
+    @pytest.mark.asyncio
+    async def test_get_milestones_multiple_programs(self, mock_spira_client, sample_milestones):
         """Test retrieving milestones for different programs."""
         mock_spira_client.make_spira_api_get_request.return_value = sample_milestones
 
         # Test program 10
-        result1 = _get_milestones_impl(mock_spira_client, program_id=10)
+        result1 = await _get_milestones_impl(mock_spira_client, program_id=10)
         response1 = json.loads(result1)
         assert len(response1["data"]) == 2
 
         # Test program 20
-        result2 = _get_milestones_impl(mock_spira_client, program_id=20)
+        result2 = await _get_milestones_impl(mock_spira_client, program_id=20)
         response2 = json.loads(result2)
         assert len(response2["data"]) == 2
 
@@ -207,10 +215,11 @@ class TestRegisterTools:
         assert mock_mcp.tool.call_count == 1
 
     @patch("mcp_server_spira.features.programartifacts.tools.milestones.get_spira_client")
-    def test_get_milestones_wrapper_success(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_success(self, mock_get_client):
         """Test get_milestones MCP tool wrapper with successful call."""
         # Setup mocks
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_milestones = [
             {
                 "MilestoneId": 1,
@@ -226,7 +235,7 @@ class TestRegisterTools:
         mock_get_client.return_value = mock_client
 
         # Call the implementation (simulating what the wrapper does)
-        result = _get_milestones_impl(mock_client, program_id=10)
+        result = await _get_milestones_impl(mock_client, program_id=10)
 
         # Verify successful response
         response = json.loads(result)
@@ -252,15 +261,16 @@ class TestRegisterTools:
         assert mock_mcp.tool.called
 
     @patch("mcp_server_spira.features.programartifacts.tools.milestones.get_spira_client")
-    def test_get_milestones_wrapper_api_error(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_api_error(self, mock_get_client):
         """Test get_milestones MCP tool wrapper with API error."""
         # Setup mock client that raises exception
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("API connection failed")
         mock_get_client.return_value = mock_client
 
         # Call the implementation
-        result = _get_milestones_impl(mock_client, program_id=10)
+        result = await _get_milestones_impl(mock_client, program_id=10)
 
         # Verify error response
         response = json.loads(result)
@@ -269,14 +279,15 @@ class TestRegisterTools:
         assert "API connection failed" in response["details"]["message"]
 
     @patch("mcp_server_spira.features.programartifacts.tools.milestones.get_spira_client")
-    def test_get_milestones_wrapper_validation_error(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_validation_error(self, mock_get_client):
         """Test get_milestones MCP tool wrapper with validation error."""
         # Setup mock client (won't be called due to validation failure)
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
 
         # Call with invalid program_id
-        result = _get_milestones_impl(mock_client, program_id=-1)
+        result = await _get_milestones_impl(mock_client, program_id=-1)
 
         # Verify validation error response
         response = json.loads(result)
@@ -287,15 +298,16 @@ class TestRegisterTools:
         # Verify API was not called
         mock_client.make_spira_api_get_request.assert_not_called()
 
-    def test_get_milestones_wrapper_different_program_ids(self):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_different_program_ids(self):
         """Test get_milestones with various program IDs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_milestones = [{"MilestoneId": 1, "Name": "Test", "ProgramId": 10}]
         mock_client.make_spira_api_get_request.return_value = mock_milestones
 
         # Test with different program IDs
         for program_id in [1, 10, 100, 999]:
-            result = _get_milestones_impl(mock_client, program_id=program_id)
+            result = await _get_milestones_impl(mock_client, program_id=program_id)
             response = json.loads(result)
 
             # Verify successful response
@@ -306,14 +318,15 @@ class TestRegisterTools:
             mock_client.make_spira_api_get_request.assert_called_with(expected_url)
 
     @patch("mcp_server_spira.features.programartifacts.tools.milestones.get_spira_client")
-    def test_get_milestones_wrapper_json_formatting(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_json_formatting(self, mock_get_client):
         """Test that get_milestones returns properly formatted JSON."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_milestones = [{"MilestoneId": 1, "Name": "Test"}]
         mock_client.make_spira_api_get_request.return_value = mock_milestones
         mock_get_client.return_value = mock_client
 
-        result = _get_milestones_impl(mock_client, program_id=10)
+        result = await _get_milestones_impl(mock_client, program_id=10)
 
         # Verify it's valid JSON
         parsed = json.loads(result)
@@ -324,26 +337,28 @@ class TestRegisterTools:
         assert "  " in result  # 2-space indentation
 
     @patch("mcp_server_spira.features.programartifacts.tools.milestones.get_spira_client")
-    def test_get_milestones_wrapper_empty_results(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_empty_results(self, mock_get_client):
         """Test get_milestones with empty results."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
         mock_get_client.return_value = mock_client
 
-        result = _get_milestones_impl(mock_client, program_id=10)
+        result = await _get_milestones_impl(mock_client, program_id=10)
 
         response = json.loads(result)
         assert "data" in response
         assert response["data"] == []
 
     @patch("mcp_server_spira.features.programartifacts.tools.milestones.get_spira_client")
-    def test_get_milestones_wrapper_none_results(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_get_milestones_wrapper_none_results(self, mock_get_client):
         """Test get_milestones with None results."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = None
         mock_get_client.return_value = mock_client
 
-        result = _get_milestones_impl(mock_client, program_id=10)
+        result = await _get_milestones_impl(mock_client, program_id=10)
 
         response = json.loads(result)
         assert "data" in response
@@ -374,30 +389,32 @@ class TestRegisterTools:
         # The wrapper has a try-except that should catch this
         assert mock_get_client.side_effect is not None
 
-    def test_get_milestones_type_validation(self):
+    @pytest.mark.asyncio
+    async def test_get_milestones_type_validation(self):
         """Test that program_id type validation works correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
 
         # Test with string instead of int (should fail validation)
-        result = _get_milestones_impl(mock_client, program_id="not_an_int")  # type: ignore[arg-type]
+        result = await _get_milestones_impl(mock_client, program_id="not_an_int")  # type: ignore[arg-type]
         response = json.loads(result)
 
         assert "error" in response
         assert response["error_code"] == "INVALID_TYPE"
 
-    def test_get_milestones_boundary_values(self):
+    @pytest.mark.asyncio
+    async def test_get_milestones_boundary_values(self):
         """Test boundary values for program_id."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_milestones = [{"MilestoneId": 1, "Name": "Test"}]
         mock_client.make_spira_api_get_request.return_value = mock_milestones
 
         # Test with minimum valid value (1)
-        result = _get_milestones_impl(mock_client, program_id=1)
+        result = await _get_milestones_impl(mock_client, program_id=1)
         response = json.loads(result)
         assert "data" in response
 
         # Test with large value
-        result = _get_milestones_impl(mock_client, program_id=999999)
+        result = await _get_milestones_impl(mock_client, program_id=999999)
         response = json.loads(result)
         assert "data" in response
 
@@ -406,7 +423,7 @@ class TestRegisterTools:
     def test_get_milestones_wrapper_catches_impl_exception(self, mock_get_client, mock_impl):
         """Test that wrapper catches exceptions from implementation."""
         # Setup mocks
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
         # Make implementation raise an unexpected exception
         mock_impl.side_effect = RuntimeError("Unexpected error in implementation")

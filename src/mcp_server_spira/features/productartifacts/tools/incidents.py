@@ -14,7 +14,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_incidents_impl(
+async def _get_incidents_impl(
     spira_client,
     product_id: int,
     start_row: int = 1,
@@ -47,7 +47,7 @@ def _get_incidents_impl(
             incidents_url += f"&sort_by={sort_by}"
 
         # Make POST request with empty filter array (no filtering for now)
-        incidents = spira_client.make_spira_api_post_request(incidents_url, [])
+        incidents = await spira_client.make_spira_api_post_request(incidents_url, [])
 
         # Return JSON response with data structure
         return format_success_response(data=incidents)
@@ -73,7 +73,7 @@ def register_tools(mcp) -> None:
         name="product_get_incidents",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_incidents(
+    async def get_incidents(
         product_id: int | None = None,
         start_row: int = 1,
         number_rows: int = 100,
@@ -150,7 +150,7 @@ def register_tools(mcp) -> None:
 
             # Get Spira client and retrieve incidents
             spira_client = get_spira_client()
-            return _get_incidents_impl(
+            return await _get_incidents_impl(
                 spira_client,
                 product_id,
                 start_row,

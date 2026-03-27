@@ -39,7 +39,8 @@ class TestCurrentServerIntegration:
         """Get a real Spira client."""
         return get_spira_client()
 
-    def test_connection_to_spira(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_connection_to_spira(self, spira_client):
         """Test that we can connect to Spira."""
         # Try to get products - this will fail if connection is bad
         try:
@@ -50,9 +51,10 @@ class TestCurrentServerIntegration:
         except Exception as e:
             pytest.fail(f"Failed to connect to Spira: {e}")
 
-    def test_get_my_tasks_current(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_get_my_tasks_current(self, spira_client):
         """Test current get_my_tasks implementation."""
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
 
         print("\n📋 get_my_tasks result:")
         print(f"   Type: {type(result)}")
@@ -78,9 +80,10 @@ class TestCurrentServerIntegration:
         except json.JSONDecodeError:
             pytest.fail(f"Expected JSON but got: {result[:200]}...")
 
-    def test_get_my_incidents_current(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_get_my_incidents_current(self, spira_client):
         """Test current get_my_incidents implementation."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
 
         print("\n🐛 get_my_incidents result:")
         print(f"   Type: {type(result)}")
@@ -106,9 +109,10 @@ class TestCurrentServerIntegration:
         except json.JSONDecodeError:
             pytest.fail(f"Expected JSON but got: {result[:200]}...")
 
-    def test_get_products_current(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_get_products_current(self, spira_client):
         """Test current get_products implementation."""
-        result = _get_products_impl(spira_client)
+        result = await _get_products_impl(spira_client)
 
         print("\n🏢 get_products result:")
         print(f"   Type: {type(result)}")
@@ -129,7 +133,8 @@ class TestCurrentServerIntegration:
             print(f"   Content: {result[:200]}...")
 
     @pytest.mark.slow
-    def test_truncation_behavior(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_truncation_behavior(self, spira_client):
         """Test that current implementation truncates at 25 items."""
         # Get raw tasks from API
         tasks = spira_client.make_spira_api_get_request("tasks")
@@ -138,7 +143,7 @@ class TestCurrentServerIntegration:
         print(f"   Total tasks from API: {len(tasks)}")
 
         # Get formatted result
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
 
         if "The current user does not have any tasks" not in result:
             # Count how many task entries are in the result
@@ -172,10 +177,11 @@ class TestCurrentServerIntegration:
         ], f"Expected pagination parameters, got {params}"
         print("   ✓ Has pagination parameters (limit and offset)")
 
-    def test_error_handling_current(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_current(self, spira_client):
         """Test current error handling."""
         # This should handle errors gracefully
-        result = _get_my_tasks_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_tasks_impl(spira_client, limit=25, offset=0)
 
         print("\n⚠️  Error handling test:")
 
@@ -196,7 +202,8 @@ class TestCurrentServerDataStructure:
         """Get a real Spira client."""
         return get_spira_client()
 
-    def test_raw_api_response_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_raw_api_response_structure(self, spira_client):
         """Test the structure of raw API responses."""
         tasks = spira_client.make_spira_api_get_request("tasks")
 

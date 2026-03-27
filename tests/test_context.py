@@ -3,7 +3,7 @@
 
 import asyncio
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -24,7 +24,7 @@ def _reset_context():
 
 def _make_mock_client(product=None, releases=None, raise_exc=None):
     """Build a mock Spira client."""
-    client = MagicMock()
+    client = AsyncMock()
     if raise_exc is not None:
         client.make_spira_api_get_request.side_effect = raise_exc
         client.make_spira_api_post_request.side_effect = raise_exc

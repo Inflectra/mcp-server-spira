@@ -3,7 +3,7 @@ Tests for the Programs workspace features of the Inflectra Spira MCP Server.
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -17,10 +17,11 @@ from mcp_server_spira.features.workspaces.tools.programs import (
 class TestGetProgramsImpl:
     """Tests for _get_programs_impl function."""
 
-    def test_successful_retrieval_with_programs(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_with_programs(self):
         """Test successful program retrieval with data."""
         # Mock Spira client
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_programs = [
             {
                 "ProgramId": 1,
@@ -48,7 +49,7 @@ class TestGetProgramsImpl:
         mock_client.make_spira_api_get_request.return_value = mock_programs
 
         # Call implementation
-        result = _get_programs_impl(mock_client)
+        result = await _get_programs_impl(mock_client)
 
         # Verify API was called correctly
         mock_client.make_spira_api_get_request.assert_called_once_with("programs")
@@ -66,24 +67,26 @@ class TestGetProgramsImpl:
         assert parsed["data"][1]["isActive"] is False
         assert parsed["data"][1]["isDefault"] is True
 
-    def test_successful_retrieval_empty_programs(self):
+    @pytest.mark.asyncio
+    async def test_successful_retrieval_empty_programs(self):
         """Test successful retrieval with no programs."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
-        result = _get_programs_impl(mock_client)
+        result = await _get_programs_impl(mock_client)
 
         parsed = json.loads(result)
         assert "data" in parsed
         assert len(parsed["data"]) == 0
         assert parsed["data"] == []
 
-    def test_api_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_api_error_handling(self):
         """Test error handling when API call fails."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
-        result = _get_programs_impl(mock_client)
+        result = await _get_programs_impl(mock_client)
 
         # Verify error response structure
         parsed = json.loads(result)
@@ -95,9 +98,10 @@ class TestGetProgramsImpl:
         assert "message" in parsed["details"]
         assert "suggestion" in parsed
 
-    def test_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_preserves_all_fields(self):
         """Test that all program fields are preserved in JSON output."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_programs = [
             {
                 "ProgramId": 10,
@@ -118,7 +122,7 @@ class TestGetProgramsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_programs
 
-        result = _get_programs_impl(mock_client)
+        result = await _get_programs_impl(mock_client)
 
         parsed = json.loads(result)
         program = parsed["data"][0]
@@ -139,13 +143,14 @@ class TestGetProgramsImpl:
         assert program["ConcurrencyGuid"] == "xyz-789"
         assert program["CustomProperties"] == []
 
-    def test_json_formatting(self):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self):
         """Test that JSON is properly formatted with indentation."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_programs = [{"ProgramId": 1, "Name": "Program 1", "isActive": True}]
         mock_client.make_spira_api_get_request.return_value = mock_programs
 
-        result = _get_programs_impl(mock_client)
+        result = await _get_programs_impl(mock_client)
 
         # Verify it's valid JSON
         parsed = json.loads(result)
@@ -155,9 +160,10 @@ class TestGetProgramsImpl:
         assert "\n" in result
         assert "  " in result  # 2-space indentation
 
-    def test_null_values_preserved(self):
+    @pytest.mark.asyncio
+    async def test_null_values_preserved(self):
         """Test that null values are preserved as JSON null."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_programs = [
             {
                 "ProgramId": 1,
@@ -171,7 +177,7 @@ class TestGetProgramsImpl:
         ]
         mock_client.make_spira_api_get_request.return_value = mock_programs
 
-        result = _get_programs_impl(mock_client)
+        result = await _get_programs_impl(mock_client)
 
         parsed = json.loads(result)
         program = parsed["data"][0]
@@ -196,12 +202,13 @@ class TestRegisterTools:
         # Verify that mcp.tool() was called (decorator pattern)
         assert mock_mcp.tool.called
 
-    def test_get_programs_mcp_wrapper_calls_implementation(self):
+    @pytest.mark.asyncio
+    async def test_get_programs_mcp_wrapper_calls_implementation(self):
         """Test that get_programs MCP wrapper properly calls implementation."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.programs.get_spira_client"
         ) as mock_get_client:
-            mock_client = Mock()
+            mock_client = AsyncMock()
             mock_programs = [{"ProgramId": 1, "Name": "Program 1", "isActive": True}]
             mock_client.make_spira_api_get_request.return_value = mock_programs
             mock_get_client.return_value = mock_client
@@ -223,14 +230,15 @@ class TestRegisterTools:
 
             # Call the registered tool (get_programs)
             get_programs_func = mock_mcp.tools[0]
-            result = get_programs_func()
+            result = await get_programs_func()
 
             # Verify successful response
             parsed = json.loads(result)
             assert "data" in parsed
             assert len(parsed["data"]) == 1
 
-    def test_get_programs_mcp_wrapper_handles_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_programs_mcp_wrapper_handles_exception(self):
         """Test that get_programs MCP wrapper handles exceptions."""
         with patch(
             "mcp_server_spira.features.workspaces.tools.programs.get_spira_client"
@@ -254,7 +262,7 @@ class TestRegisterTools:
 
             # Call the registered tool (get_programs)
             get_programs_func = mock_mcp.tools[0]
-            result = get_programs_func()
+            result = await get_programs_func()
 
             # Verify error response
             parsed = json.loads(result)

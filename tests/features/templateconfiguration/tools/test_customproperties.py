@@ -3,7 +3,9 @@ Unit tests for get_custom_properties tool
 """
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
     _get_custom_properties_for_artifact_type,
@@ -14,10 +16,11 @@ from mcp_server_spira.features.templateconfiguration.tools.customproperties impo
 class TestGetCustomProperties:
     """Test suite for get_custom_properties tool"""
 
-    def test_get_custom_properties_success_all_types(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_success_all_types(self):
         """Test successful retrieval of custom properties for all artifact types"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
 
         # Mock responses for each artifact type
         mock_responses = [
@@ -102,7 +105,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -119,10 +122,11 @@ class TestGetCustomProperties:
         # Verify API was called 11 times (once for each artifact type)
         assert mock_client.make_spira_api_get_request.call_count == 11
 
-    def test_get_custom_properties_success_requirement_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_success_requirement_structure(self):
         """Test that requirement custom properties are structured correctly"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             # Requirement
             [
@@ -155,7 +159,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -168,23 +172,25 @@ class TestGetCustomProperties:
         assert requirement_artifact["CustomProperties"][1]["CustomPropertyId"] == 2
         assert requirement_artifact["CustomProperties"][1]["Name"] == "Priority Score"
 
-    def test_get_custom_properties_empty_properties(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_empty_properties(self):
         """Test when all artifact types return empty arrays"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
         assert len(result_data["data"]) == 0  # No artifact types with custom properties
 
-    def test_get_custom_properties_none_response(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_none_response(self):
         """Test when API returns None for some types"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             [{"CustomPropertyId": 1, "Name": "Test Property"}],  # Requirement
             None,  # Release
@@ -201,21 +207,22 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
         assert len(result_data["data"]) == 1
         assert result_data["data"][0]["ArtifactTypeName"] == "Requirement"
 
-    def test_get_custom_properties_correct_urls(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_correct_urls(self):
         """Test that correct API URLs are called"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        _get_custom_properties_impl(mock_client, template_id=42)
+        await _get_custom_properties_impl(mock_client, template_id=42)
 
         # Assert
         calls = mock_client.make_spira_api_get_request.call_args_list
@@ -239,16 +246,17 @@ class TestGetCustomProperties:
             expected_url = f"project-templates/42/custom-properties/{artifact_type}"
             assert calls[i][0][0] == expected_url
 
-    def test_get_custom_properties_api_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_api_exception(self):
         """Test error handling when API raises exception in helper function"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         # The helper function catches exceptions and returns empty list
         # So individual API failures don't propagate to main function
         mock_client.make_spira_api_get_request.side_effect = Exception("Connection timeout")
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         # Since helper catches exceptions, we get empty data array
@@ -256,10 +264,11 @@ class TestGetCustomProperties:
         assert "data" in result_data
         assert len(result_data["data"]) == 0
 
-    def test_get_custom_properties_preserves_all_fields(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_preserves_all_fields(self):
         """Test that all fields from API response are preserved"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             [
                 {
@@ -280,7 +289,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -295,10 +304,11 @@ class TestGetCustomProperties:
         assert custom_prop["Options"] is None
         assert custom_prop["CustomField"] == "CustomValue"
 
-    def test_get_custom_properties_multiple_properties_per_artifact(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_multiple_properties_per_artifact(self):
         """Test handling multiple custom properties for each artifact"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             # Requirement - 3 properties
             [
@@ -318,7 +328,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -342,10 +352,11 @@ class TestGetCustomProperties:
         )
         assert len(testcase_artifact["CustomProperties"]) == 1
 
-    def test_get_custom_properties_list_type_with_options(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_list_type_with_options(self):
         """Test custom properties with list type and options"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             [
                 {
@@ -365,7 +376,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -376,14 +387,15 @@ class TestGetCustomProperties:
         assert custom_prop["Options"][0]["CustomPropertyValueId"] == 1
         assert custom_prop["Options"][0]["Name"] == "High"
 
-    def test_get_custom_properties_different_template_ids(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_different_template_ids(self):
         """Test with different template IDs"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        _get_custom_properties_impl(mock_client, template_id=999)
+        await _get_custom_properties_impl(mock_client, template_id=999)
 
         # Assert
         calls = mock_client.make_spira_api_get_request.call_args_list
@@ -391,16 +403,17 @@ class TestGetCustomProperties:
             url = call[0][0]
             assert "project-templates/999/" in url
 
-    def test_get_custom_properties_json_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_json_structure(self):
         """Test that response has correct JSON structure"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [[{"CustomPropertyId": 1, "Name": "Test Property"}]]
         mock_responses.extend([[] for _ in range(10)])
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -411,12 +424,13 @@ class TestGetCustomProperties:
         assert "CustomProperties" in result_data["data"][0]
         assert isinstance(result_data["data"][0]["CustomProperties"], list)
 
-    def test_get_custom_properties_error_response_structure(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_error_response_structure(self):
         """Test that error responses have correct structure when main function fails"""
         # Arrange
         from unittest.mock import patch
 
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Patch format_success_response to raise an exception
@@ -426,7 +440,7 @@ class TestGetCustomProperties:
             mock_format.side_effect = Exception("Formatting error")
 
             # Act
-            result = _get_custom_properties_impl(mock_client, template_id=1)
+            result = await _get_custom_properties_impl(mock_client, template_id=1)
 
             # Assert
             result_data = json.loads(result)
@@ -438,10 +452,11 @@ class TestGetCustomProperties:
             assert "message" in result_data["details"]
             assert "template_id" in result_data["details"]
 
-    def test_get_custom_properties_required_and_optional_fields(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_required_and_optional_fields(self):
         """Test custom properties with required and optional fields"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             [
                 {
@@ -460,7 +475,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -468,10 +483,11 @@ class TestGetCustomProperties:
         assert props[0]["IsRequired"] is True
         assert props[1]["IsRequired"] is False
 
-    def test_get_custom_properties_rich_text_field(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_rich_text_field(self):
         """Test custom properties with rich text support"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             [
                 {
@@ -490,7 +506,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -498,10 +514,11 @@ class TestGetCustomProperties:
         assert props[0]["IsRichText"] is True
         assert props[1]["IsRichText"] is False
 
-    def test_get_custom_properties_deleted_field(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_deleted_field(self):
         """Test custom properties with deleted flag"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_responses = [
             [
                 {
@@ -520,7 +537,7 @@ class TestGetCustomProperties:
         mock_client.make_spira_api_get_request.side_effect = mock_responses
 
         # Act
-        result = _get_custom_properties_impl(mock_client, template_id=1)
+        result = await _get_custom_properties_impl(mock_client, template_id=1)
 
         # Assert
         result_data = json.loads(result)
@@ -532,16 +549,17 @@ class TestGetCustomProperties:
 class TestGetCustomPropertiesForArtifactType:
     """Test suite for _get_custom_properties_for_artifact_type helper function"""
 
-    def test_get_custom_properties_for_artifact_type_success(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_for_artifact_type_success(self):
         """Test successful retrieval of custom properties for a specific artifact type"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = [
             {"CustomPropertyId": 1, "Name": "Test Property"}
         ]
 
         # Act
-        result = _get_custom_properties_for_artifact_type(
+        result = await _get_custom_properties_for_artifact_type(
             mock_client, template_id=1, artifact_type_name="Requirement"
         )
 
@@ -553,56 +571,60 @@ class TestGetCustomPropertiesForArtifactType:
             "project-templates/1/custom-properties/Requirement"
         )
 
-    def test_get_custom_properties_for_artifact_type_empty_response(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_for_artifact_type_empty_response(self):
         """Test when API returns empty array"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        result = _get_custom_properties_for_artifact_type(
+        result = await _get_custom_properties_for_artifact_type(
             mock_client, template_id=1, artifact_type_name="Task"
         )
 
         # Assert
         assert result == []
 
-    def test_get_custom_properties_for_artifact_type_none_response(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_for_artifact_type_none_response(self):
         """Test when API returns None"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = None
 
         # Act
-        result = _get_custom_properties_for_artifact_type(
+        result = await _get_custom_properties_for_artifact_type(
             mock_client, template_id=1, artifact_type_name="Task"
         )
 
         # Assert
         assert result == []
 
-    def test_get_custom_properties_for_artifact_type_exception(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_for_artifact_type_exception(self):
         """Test error handling when API raises exception"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.side_effect = Exception("API Error")
 
         # Act
-        result = _get_custom_properties_for_artifact_type(
+        result = await _get_custom_properties_for_artifact_type(
             mock_client, template_id=1, artifact_type_name="Requirement"
         )
 
         # Assert
         assert result == []
 
-    def test_get_custom_properties_for_artifact_type_correct_url_format(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_for_artifact_type_correct_url_format(self):
         """Test that URL is formatted correctly"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = []
 
         # Act
-        _get_custom_properties_for_artifact_type(
+        await _get_custom_properties_for_artifact_type(
             mock_client, template_id=42, artifact_type_name="TestCase"
         )
 
@@ -611,10 +633,11 @@ class TestGetCustomPropertiesForArtifactType:
             "project-templates/42/custom-properties/TestCase"
         )
 
-    def test_get_custom_properties_for_artifact_type_multiple_properties(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_for_artifact_type_multiple_properties(self):
         """Test retrieval of multiple custom properties"""
         # Arrange
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.make_spira_api_get_request.return_value = [
             {"CustomPropertyId": 1, "Name": "Property 1"},
             {"CustomPropertyId": 2, "Name": "Property 2"},
@@ -622,7 +645,7 @@ class TestGetCustomPropertiesForArtifactType:
         ]
 
         # Act
-        result = _get_custom_properties_for_artifact_type(
+        result = await _get_custom_properties_for_artifact_type(
             mock_client, template_id=1, artifact_type_name="Incident"
         )
 
@@ -636,12 +659,12 @@ class TestGetCustomPropertiesForArtifactType:
 class TestGetCustomPropertiesValidation:
     """Test suite for get_custom_properties input validation"""
 
-    def test_get_custom_properties_invalid_template_id_negative(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_invalid_template_id_negative(self):
         """Test validation error when template_id is negative"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock
 
         from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
             register_tools,
@@ -663,7 +686,7 @@ class TestGetCustomPropertiesValidation:
 
         # Act
         assert tool_func is not None
-        result = tool_func(template_id=-1)
+        result = await tool_func(template_id=-1)
 
         # Assert
         result_data = json.loads(result)
@@ -672,12 +695,12 @@ class TestGetCustomPropertiesValidation:
         assert result_data["details"]["parameter"] == "template_id"
         assert result_data["details"]["value"] == -1
 
-    def test_get_custom_properties_invalid_template_id_zero(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_invalid_template_id_zero(self):
         """Test validation error when template_id is zero"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock
 
         from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
             register_tools,
@@ -699,7 +722,7 @@ class TestGetCustomPropertiesValidation:
 
         # Act
         assert tool_func is not None
-        result = tool_func(template_id=0)
+        result = await tool_func(template_id=0)
 
         # Assert
         result_data = json.loads(result)
@@ -708,12 +731,12 @@ class TestGetCustomPropertiesValidation:
         assert result_data["details"]["parameter"] == "template_id"
         assert result_data["details"]["value"] == 0
 
-    def test_get_custom_properties_invalid_template_id_string(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_invalid_template_id_string(self):
         """Test validation error when template_id is a string"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock
 
         from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
             register_tools,
@@ -735,7 +758,7 @@ class TestGetCustomPropertiesValidation:
 
         # Act
         assert tool_func is not None
-        result = tool_func(template_id="invalid")
+        result = await tool_func(template_id="invalid")
 
         # Assert
         result_data = json.loads(result)
@@ -744,12 +767,13 @@ class TestGetCustomPropertiesValidation:
         assert result_data["details"]["parameter"] == "template_id"
         assert result_data["details"]["value"] == "invalid"
 
-    def test_get_custom_properties_valid_template_id_positive(self):
+    @pytest.mark.asyncio
+    async def test_get_custom_properties_valid_template_id_positive(self):
         """Test that positive template_id passes validation"""
         # Arrange
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import AsyncMock, patch
 
         from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
             register_tools,
@@ -773,13 +797,13 @@ class TestGetCustomPropertiesValidation:
         with patch(
             "mcp_server_spira.features.templateconfiguration.tools.customproperties.get_spira_client"
         ) as mock_get_client:
-            mock_client = MagicMock()
+            mock_client = AsyncMock()
             mock_client.make_spira_api_get_request.return_value = []
             mock_get_client.return_value = mock_client
 
             # Act
             assert tool_func is not None
-            result = tool_func(template_id=1)
+            result = await tool_func(template_id=1)
 
             # Assert
             result_data = json.loads(result)
@@ -790,11 +814,12 @@ class TestGetCustomPropertiesValidation:
 class TestGetCustomPropertiesMCPWrapper:
     """Test suite for MCP wrapper of get_custom_properties"""
 
-    def test_mcp_wrapper_success(self):
+    @pytest.mark.asyncio
+    async def test_mcp_wrapper_success(self):
         """Test MCP wrapper with successful execution"""
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import AsyncMock, patch
 
         from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
             register_tools,
@@ -819,23 +844,24 @@ class TestGetCustomPropertiesMCPWrapper:
         with patch(
             "mcp_server_spira.features.templateconfiguration.tools.customproperties.get_spira_client"
         ) as mock_get_client:
-            mock_client = MagicMock()
+            mock_client = AsyncMock()
             mock_client.make_spira_api_get_request.return_value = []
             mock_get_client.return_value = mock_client
 
             # Call the tool
             assert tool_func is not None
-            result = tool_func(template_id=1)
+            result = await tool_func(template_id=1)
 
             # Verify result
             result_data = json.loads(result)
             assert "data" in result_data
 
-    def test_mcp_wrapper_exception_handling(self):
+    @pytest.mark.asyncio
+    async def test_mcp_wrapper_exception_handling(self):
         """Test MCP wrapper handles exceptions from implementation"""
         from collections.abc import Callable
         from typing import Any
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from mcp_server_spira.features.templateconfiguration.tools.customproperties import (
             register_tools,
@@ -864,7 +890,7 @@ class TestGetCustomPropertiesMCPWrapper:
 
             # Call the tool
             assert tool_func is not None
-            result = tool_func(template_id=1)
+            result = await tool_func(template_id=1)
 
             # Verify error response
             result_data = json.loads(result)

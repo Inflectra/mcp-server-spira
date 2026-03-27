@@ -14,7 +14,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_my_tasks_impl(spira_client, limit: int, offset: int) -> str:
+async def _get_my_tasks_impl(spira_client, limit: int, offset: int) -> str:
     """
     Implementation of retrieving my assigned Spira tasks.
 
@@ -34,7 +34,7 @@ def _get_my_tasks_impl(spira_client, limit: int, offset: int) -> str:
 
         # Get the list of open tasks for the current user
         tasks_url = "tasks"
-        all_tasks = spira_client.make_spira_api_get_request(tasks_url)
+        all_tasks = await spira_client.make_spira_api_get_request(tasks_url)
 
         # Handle empty results
         if not all_tasks:
@@ -67,7 +67,7 @@ def register_tools(mcp) -> None:
         name="my_get_tasks",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_my_tasks(limit: int = 25, offset: int = 0) -> str:
+    async def get_my_tasks(limit: int = 25, offset: int = 0) -> str:
         """
         Retrieves tasks assigned to the current user.
 
@@ -109,8 +109,8 @@ def register_tools(mcp) -> None:
             # Get Spira client
             spira_client = get_spira_client()
 
-            # Retrieve and paginate tasks
-            return _get_my_tasks_impl(spira_client, limit, offset)
+            # Run blocking HTTP call in a thread to avoid blocking the event loop
+            return await _get_my_tasks_impl(spira_client, limit, offset)
 
         except Exception as e:
             return format_error_response(

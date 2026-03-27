@@ -3,7 +3,9 @@ Unit tests for product specification tools
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from mcp_server_spira.features.specifications.tools.productspecification import (
     register_tools,
@@ -253,7 +255,7 @@ class TestGetSpecificationTestCasesMCPWrapper:
     @patch("mcp_server_spira.features.specifications.tools.productspecification.get_spira_client")
     def test_successful_call_passes_parameters(self, mock_get_client, mock_impl):
         """Test successful call passes parameters correctly."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
         mock_impl.return_value = "# Test Cases"
 
@@ -272,7 +274,8 @@ class TestAllSpecificationTools:
     """Test suite for all specification tools together."""
 
     @patch("mcp_server_spira.features.specifications.tools.productspecification.get_spira_client")
-    def test_all_tools_validate_product_id(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_all_tools_validate_product_id(self, mock_get_client):
         """Test that all specification tools validate product_id."""
         mock_mcp = Mock()
         registered_tools = {}
@@ -296,13 +299,14 @@ class TestAllSpecificationTools:
 
         for tool_name in tool_names:
             tool_func = registered_tools[tool_name]
-            result = tool_func(product_id=-1, release_id=None)
+            result = await tool_func(product_id=-1, release_id=None)
             response = json.loads(result)
             assert "error" in response, f"{tool_name} should validate product_id"
             assert response["error_code"] == "INVALID_VALUE"
 
     @patch("mcp_server_spira.features.specifications.tools.productspecification.get_spira_client")
-    def test_all_tools_validate_release_id(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_all_tools_validate_release_id(self, mock_get_client):
         """Test that all specification tools validate release_id."""
         mock_mcp = Mock()
         registered_tools = {}
@@ -326,15 +330,16 @@ class TestAllSpecificationTools:
 
         for tool_name in tool_names:
             tool_func = registered_tools[tool_name]
-            result = tool_func(product_id=55, release_id=0)
+            result = await tool_func(product_id=55, release_id=0)
             response = json.loads(result)
             assert "error" in response, f"{tool_name} should validate release_id"
             assert response["error_code"] == "INVALID_VALUE"
 
     @patch("mcp_server_spira.features.specifications.tools.productspecification.get_spira_client")
-    def test_all_tools_accept_none_release_id(self, mock_get_client):
+    @pytest.mark.asyncio
+    async def test_all_tools_accept_none_release_id(self, mock_get_client):
         """Test that all specification tools accept None for release_id."""
-        mock_client = Mock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
 
         mock_mcp = Mock()
@@ -378,7 +383,7 @@ class TestAllSpecificationTools:
 
             for tool_name in tool_names:
                 tool_func = registered_tools[tool_name]
-                result = tool_func(product_id=55, release_id=None)
+                result = await tool_func(product_id=55, release_id=None)
                 # Should not return JSON error
                 assert not result.startswith("{"), f"{tool_name} should accept None release_id"
                 assert result == "# Test"

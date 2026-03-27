@@ -13,7 +13,7 @@ from mcp_server_spira.features.common.responses import (
 from mcp_server_spira.features.common.validation import ParameterValidator
 
 
-def _get_milestones_impl(spira_client, program_id: int) -> str:
+async def _get_milestones_impl(spira_client, program_id: int) -> str:
     """
     Implementation of retrieving the list of milestones in the specified program
 
@@ -34,7 +34,7 @@ def _get_milestones_impl(spira_client, program_id: int) -> str:
 
         # Get the list of milestones in the program
         milestones_url = f"programs/{program_id}/milestones"
-        milestones = spira_client.make_spira_api_get_request(milestones_url)
+        milestones = await spira_client.make_spira_api_get_request(milestones_url)
 
         # Return JSON response
         return format_success_response(data=milestones if milestones else [])
@@ -60,7 +60,7 @@ def register_tools(mcp) -> None:
         name="program_get_milestones",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_milestones(program_id: int) -> str:
+    async def get_milestones(program_id: int) -> str:
         """
         Retrieves a list of the milestones in the specified program
 
@@ -91,7 +91,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_milestones_impl(spira_client, program_id)
+            return await _get_milestones_impl(spira_client, program_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve milestones",

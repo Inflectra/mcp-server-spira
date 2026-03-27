@@ -13,7 +13,7 @@ from mcp_server_spira.features.common.responses import (
 )
 
 
-def _get_product_templates_impl(spira_client) -> str:
+async def _get_product_templates_impl(spira_client) -> str:
     """
     Implementation of retrieving the list of Spira product templates
     the current user has access to
@@ -27,7 +27,7 @@ def _get_product_templates_impl(spira_client) -> str:
     try:
         # Get the list of available product templates for the current user
         product_templates_url = "project-templates"
-        product_templates = spira_client.make_spira_api_get_request(product_templates_url)
+        product_templates = await spira_client.make_spira_api_get_request(product_templates_url)
 
         if not product_templates:
             # Return empty data array if no product templates
@@ -44,7 +44,7 @@ def _get_product_templates_impl(spira_client) -> str:
         )
 
 
-def _get_product_template_impl(spira_client, template_id: int) -> str:
+async def _get_product_template_impl(spira_client, template_id: int) -> str:
     """
     Implementation of retrieving a single Spira product template
 
@@ -59,7 +59,7 @@ def _get_product_template_impl(spira_client, template_id: int) -> str:
     try:
         # Get the product template by its ID
         product_templates_url = f"project-templates/{template_id}"
-        product_template = spira_client.make_spira_api_get_request(product_templates_url)
+        product_template = await spira_client.make_spira_api_get_request(product_templates_url)
 
         if not product_template:
             return format_error_response(
@@ -92,7 +92,7 @@ def register_tools(mcp) -> None:
         name="system_get_product_templates",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_product_templates() -> str:
+    async def get_product_templates() -> str:
         """
         Retrieves a list of the product templates that the current user
         has access to
@@ -122,7 +122,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_product_templates_impl(spira_client)
+            return await _get_product_templates_impl(spira_client)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve product templates",
@@ -135,7 +135,7 @@ def register_tools(mcp) -> None:
         name="system_get_product_template",
         annotations={"readOnlyHint": True, "destructiveHint": False, "openWorldHint": True},
     )
-    def get_product_template(template_id: int) -> str:
+    async def get_product_template(template_id: int) -> str:
         """
         Retrieves a product template by its unique numeric ID
         (remove any PT prefixes)
@@ -174,7 +174,7 @@ def register_tools(mcp) -> None:
         """
         try:
             spira_client = get_spira_client()
-            return _get_product_template_impl(spira_client, template_id)
+            return await _get_product_template_impl(spira_client, template_id)
         except Exception as e:
             return format_error_response(
                 error="Failed to retrieve product template",

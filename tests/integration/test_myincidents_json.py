@@ -46,9 +46,10 @@ class TestGetMyIncidentsJSONIntegration:
         """Get raw incidents from API for comparison."""
         return spira_client.make_spira_api_get_request("incidents")
 
-    def test_returns_valid_json(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_returns_valid_json(self, spira_client):
         """Test that implementation returns valid JSON."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
 
         print("\n📋 JSON validation test:")
         print(f"   Result type: {type(result)}")
@@ -69,9 +70,10 @@ class TestGetMyIncidentsJSONIntegration:
         assert "pagination" in parsed
         print("   ✓ Has required structure (data, pagination)")
 
-    def test_json_structure(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_structure(self, spira_client):
         """Test the structure of JSON response."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n🔍 JSON structure test:")
@@ -104,9 +106,10 @@ class TestGetMyIncidentsJSONIntegration:
         assert pagination["pagination_type"] == "client-side"
         print("   ✓ pagination_type is 'client-side'")
 
-    def test_pagination_default_parameters(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_pagination_default_parameters(self, spira_client, raw_incidents):
         """Test pagination with default parameters (limit=25, offset=0)."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Default pagination test:")
@@ -136,12 +139,13 @@ class TestGetMyIncidentsJSONIntegration:
 
         print("   ✓ Pagination metadata is accurate")
 
-    def test_pagination_first_page(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_pagination_first_page(self, spira_client, raw_incidents):
         """Test retrieving first page of results."""
         if len(raw_incidents) == 0:
             pytest.skip("No incidents available for pagination test")
 
-        result = _get_my_incidents_impl(spira_client, limit=10, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=10, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 First page test (limit=10, offset=0):")
@@ -157,12 +161,13 @@ class TestGetMyIncidentsJSONIntegration:
             assert parsed["data"][0]["IncidentId"] == raw_incidents[0]["IncidentId"]
             print(f"   ✓ First incident matches: IncidentId={raw_incidents[0]['IncidentId']}")
 
-    def test_pagination_second_page(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_pagination_second_page(self, spira_client, raw_incidents):
         """Test retrieving second page of results."""
         if len(raw_incidents) < 11:
             pytest.skip("Not enough incidents for second page test (need > 10)")
 
-        result = _get_my_incidents_impl(spira_client, limit=10, offset=10)
+        result = await _get_my_incidents_impl(spira_client, limit=10, offset=10)
         parsed = json.loads(result)
 
         print("\n📄 Second page test (limit=10, offset=10):")
@@ -180,7 +185,8 @@ class TestGetMyIncidentsJSONIntegration:
                 f"   ✓ First incident on page 2 matches: IncidentId={raw_incidents[10]['IncidentId']}"
             )
 
-    def test_pagination_last_page(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_pagination_last_page(self, spira_client, raw_incidents):
         """Test retrieving last page with partial results."""
         if len(raw_incidents) < 26:
             pytest.skip("Not enough incidents for last page test (need > 25)")
@@ -188,7 +194,7 @@ class TestGetMyIncidentsJSONIntegration:
         # Calculate offset for last page
         offset = (len(raw_incidents) // 25) * 25
 
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=offset)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=offset)
         parsed = json.loads(result)
 
         print(f"\n📄 Last page test (limit=25, offset={offset}):")
@@ -204,11 +210,12 @@ class TestGetMyIncidentsJSONIntegration:
         assert len(parsed["data"]) == expected_count
         print(f"   ✓ Returned {expected_count} remaining incidents")
 
-    def test_pagination_beyond_end(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_pagination_beyond_end(self, spira_client, raw_incidents):
         """Test pagination with offset beyond available data."""
         offset = len(raw_incidents) + 100
 
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=offset)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=offset)
         parsed = json.loads(result)
 
         print(f"\n📄 Beyond end test (offset={offset}):")
@@ -221,12 +228,13 @@ class TestGetMyIncidentsJSONIntegration:
         assert parsed["pagination"]["has_more"] is False
         print("   ✓ Returns empty data with correct metadata")
 
-    def test_custom_limit(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_custom_limit(self, spira_client, raw_incidents):
         """Test with custom limit parameter."""
         if len(raw_incidents) == 0:
             pytest.skip("No incidents available for custom limit test")
 
-        result = _get_my_incidents_impl(spira_client, limit=5, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=5, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Custom limit test (limit=5):")
@@ -239,9 +247,10 @@ class TestGetMyIncidentsJSONIntegration:
         assert parsed["pagination"]["limit"] == 5
         print("   ✓ Respects custom limit")
 
-    def test_large_limit(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_large_limit(self, spira_client, raw_incidents):
         """Test with large limit (100)."""
-        result = _get_my_incidents_impl(spira_client, limit=100, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=100, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Large limit test (limit=100):")
@@ -253,9 +262,10 @@ class TestGetMyIncidentsJSONIntegration:
         assert len(parsed["data"]) == expected_count
         print("   ✓ Returns up to 100 incidents")
 
-    def test_empty_results(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_empty_results(self, spira_client):
         """Test handling of empty results (if user has no incidents)."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n📄 Empty results test:")
@@ -269,12 +279,13 @@ class TestGetMyIncidentsJSONIntegration:
         else:
             print("   ℹ️  User has incidents, skipping empty test")
 
-    def test_data_preservation(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_data_preservation(self, spira_client, raw_incidents):
         """Test that all incident fields are preserved in JSON output."""
         if len(raw_incidents) == 0:
             pytest.skip("No incidents available for data preservation test")
 
-        result = _get_my_incidents_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=1, offset=0)
         parsed = json.loads(result)
 
         print("\n🔍 Data preservation test:")
@@ -299,12 +310,13 @@ class TestGetMyIncidentsJSONIntegration:
                 assert json_incident[field] == raw_incident[field]
                 print(f"   ✓ {field}: {json_incident[field]}")
 
-    def test_incident_data_types(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_incident_data_types(self, spira_client, raw_incidents):
         """Test that data types are preserved correctly."""
         if len(raw_incidents) == 0:
             pytest.skip("No incidents available for data type test")
 
-        result = _get_my_incidents_impl(spira_client, limit=1, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=1, offset=0)
         parsed = json.loads(result)
 
         print("\n🔍 Data type preservation test:")
@@ -326,9 +338,10 @@ class TestGetMyIncidentsJSONIntegration:
             assert isinstance(incident["Description"], str | type(None))
             print("   ✓ Description handles null")
 
-    def test_pagination_metadata_accuracy(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_pagination_metadata_accuracy(self, spira_client, raw_incidents):
         """Test that pagination metadata is calculated correctly."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
         parsed = json.loads(result)
 
         print("\n📊 Pagination metadata accuracy test:")
@@ -351,7 +364,8 @@ class TestGetMyIncidentsJSONIntegration:
         assert pagination["has_more"] == expected_has_more
         print(f"   ✓ has_more calculated correctly: {expected_has_more}")
 
-    def test_no_silent_truncation(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_no_silent_truncation(self, spira_client, raw_incidents):
         """Test that there is no silent truncation (all data accessible via pagination)."""
         if len(raw_incidents) <= 25:
             pytest.skip("Not enough incidents to test truncation (need > 25)")
@@ -365,7 +379,7 @@ class TestGetMyIncidentsJSONIntegration:
         limit = 25
 
         while True:
-            result = _get_my_incidents_impl(spira_client, limit=limit, offset=offset)
+            result = await _get_my_incidents_impl(spira_client, limit=limit, offset=offset)
             parsed = json.loads(result)
 
             all_retrieved_incidents.extend(parsed["data"])
@@ -381,9 +395,10 @@ class TestGetMyIncidentsJSONIntegration:
         assert len(all_retrieved_incidents) == len(raw_incidents)
         print("   ✓ All incidents accessible via pagination (no silent truncation)")
 
-    def test_json_formatting(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_json_formatting(self, spira_client):
         """Test that JSON is properly formatted."""
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
 
         print("\n📝 JSON formatting test:")
 
@@ -397,10 +412,11 @@ class TestGetMyIncidentsJSONIntegration:
         assert parsed is not None
         print("   ✓ JSON is valid")
 
-    def test_error_handling_with_real_api(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_error_handling_with_real_api(self, spira_client):
         """Test error handling with real API."""
         # This should not raise exceptions
-        result = _get_my_incidents_impl(spira_client, limit=25, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=25, offset=0)
 
         print("\n⚠️  Error handling test:")
 
@@ -417,12 +433,13 @@ class TestGetMyIncidentsJSONIntegration:
         else:
             print("   ✓ Success response")
 
-    def test_comparison_with_raw_api(self, spira_client, raw_incidents):
+    @pytest.mark.asyncio
+    async def test_comparison_with_raw_api(self, spira_client, raw_incidents):
         """Test that JSON output matches raw API data."""
         if len(raw_incidents) == 0:
             pytest.skip("No incidents available for comparison test")
 
-        result = _get_my_incidents_impl(spira_client, limit=len(raw_incidents), offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=len(raw_incidents), offset=0)
         parsed = json.loads(result)
 
         print("\n🔄 Comparison with raw API test:")
@@ -452,14 +469,15 @@ class TestGetMyIncidentsPerformance:
         return get_spira_client()
 
     @pytest.mark.slow
-    def test_performance_with_large_limit(self, spira_client):
+    @pytest.mark.asyncio
+    async def test_performance_with_large_limit(self, spira_client):
         """Test performance with large limit (500)."""
         import time
 
         print("\n⚡ Performance test (limit=500):")
 
         start_time = time.time()
-        result = _get_my_incidents_impl(spira_client, limit=500, offset=0)
+        result = await _get_my_incidents_impl(spira_client, limit=500, offset=0)
         elapsed_time = time.time() - start_time
 
         parsed = json.loads(result)
