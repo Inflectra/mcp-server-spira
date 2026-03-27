@@ -2,7 +2,7 @@
   "mcpServers": {
     "spira": {
       "command": "uvx",
-      "args": ["mcp-server-spira"],
+      "args": [],
       "env": {
         "INFLECTRA_SPIRA_BASE_URL": "${INFLECTRA_SPIRA_BASE_URL}",
         "INFLECTRA_SPIRA_USERNAME": "${INFLECTRA_SPIRA_USERNAME}",

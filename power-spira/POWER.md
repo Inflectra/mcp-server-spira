@@ -27,6 +27,15 @@ This Power connects Kiro to your Inflectra Spira instance, giving it read and wr
 
 # Onboarding
 
+## Set up credentials
+
+The `${VAR}` placeholders in the MCP config are **not** auto-loaded from `.env`. You have two options:
+
+1. **Hardcode values** directly in `~/.kiro/settings/mcp.json` under the `power-power-spira-spira` env block.
+2. **Export from your shell profile** (`~/.zshrc` or `~/.bash_profile`) — requires a full Kiro restart to take effect.
+
+After either change, reconnect the server from the MCP Server view in Kiro's feature panel.
+
 ## Configure environment variables
 
 Set the following in your MCP client configuration or `.env` file:
