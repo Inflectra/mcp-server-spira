@@ -25,6 +25,68 @@ from typing import Any
 # Get a logger instance, typically named after the current module
 logger = get_logger(__name__)
 
+def _normalize_release_id(release_id) -> int | None:
+    """
+    Normalize release_id so that None, 0, "null", "none", "" etc.
+    are all treated as 'no release specified' (returns None).
+    Valid positive integers are returned as-is.
+    """
+    if release_id is None:
+        return None
+    if isinstance(release_id, str):
+        if release_id.strip().lower() in ("", "null", "none"):
+            return None
+        try:
+            release_id = int(release_id)
+        except ValueError:
+            return None
+    if isinstance(release_id, (int, float)) and release_id <= 0:
+        return None
+    return release_id
+
+def _format_linked_test_step(spira_client, product_id: int, linked_test_case_id: int, test_step: dict) -> str:
+    """
+    Format a linked (call) test step with the linked test case name, ID, and any parameters.
+
+    Args:
+        spira_client: The Inflectra Spira API client instance
+        product_id: The numeric ID of the product
+        linked_test_case_id: The ID of the linked test case being called
+        test_step: The raw test step dict from the API
+
+    Returns:
+        A formatted description string for the linked step
+    """
+    try:
+        linked_tc_url = f"projects/{product_id}/test-cases/{linked_test_case_id}"
+        linked_tc = spira_client.make_spira_api_get_request(linked_tc_url)
+        if linked_tc:
+            linked_name = linked_tc.get('Name', 'Unknown')
+        else:
+            linked_name = 'Unknown'
+    except Exception:
+        linked_name = 'Unknown'
+
+    description = f"Call TC:{linked_test_case_id} — {linked_name}"
+
+    # Include any parameters passed to the linked test case
+    parameters = test_step.get('Parameters')
+    if parameters:
+        param_parts = []
+        if isinstance(parameters, dict):
+            for key, value in parameters.items():
+                param_parts.append(f"{key}={value}")
+        elif isinstance(parameters, list):
+            for param in parameters:
+                name = param.get('Name', param.get('name', ''))
+                value = param.get('Value', param.get('value', ''))
+                if name:
+                    param_parts.append(f"{name}={value}")
+        if param_parts:
+            description += f" [{', '.join(param_parts)}]"
+
+    return description
+
 def _get_product_by_id(spira_client, product_id: int) -> Any:
     """
     Implementation of retrieving a single Spira product by its ID
@@ -86,6 +148,7 @@ def _get_specification_requirements(spira_client, product_id: int, release_id: i
         List of requirements
     """
     try:
+        release_id = _normalize_release_id(release_id)
         requirements = []
         starting_row = 1
         number_of_rows = 250
@@ -178,9 +241,18 @@ def _add_requirement_test_cases(spira_client, product_id: int, requirement_id: i
                     for test_step in test_steps:
                         test_step_id = test_step['TestStepId']
                         position = test_step['Position']
-                        description = test_step['Description']
-                        expected_result = test_step['ExpectedResult']
-                        sample_data = test_step['SampleData']
+                        linked_test_case_id = test_step.get('LinkedTestCaseId')
+
+                        if linked_test_case_id:
+                            # This is a linked (call) step — resolve the linked test case details
+                            description = _format_linked_test_step(spira_client, product_id, linked_test_case_id, test_step)
+                            expected_result = ''
+                            sample_data = ''
+                        else:
+                            description = test_step['Description']
+                            expected_result = test_step['ExpectedResult']
+                            sample_data = test_step['SampleData']
+
                         formatted_specification.append("<tr>")
                         formatted_specification.append(f"<td>{position}.</td>")
                         formatted_specification.append(f"<td>{description}.</td>")
@@ -243,6 +315,7 @@ def _get_specification_risks(spira_client, product_id: int, release_id: int | No
         List of risks
     """
     try:
+        release_id = _normalize_release_id(release_id)
         risks = []
         starting_row = 1
         number_of_rows = 250
@@ -303,6 +376,7 @@ def _get_specification_requirements_impl(spira_client, product_id: int, release_
         Formatted string containing the product requirements specification
     """
     try:
+        release_id = _normalize_release_id(release_id)
         formatted_specification = []
 
         # Get the product information
@@ -371,6 +445,7 @@ def _get_specification_design_impl(spira_client, product_id: int, release_id: in
         Formatted string containing the product design specification
     """
     try:
+        release_id = _normalize_release_id(release_id)
         formatted_specification = []
 
         # Get the product information
@@ -434,6 +509,7 @@ def _get_specification_tasks_impl(spira_client, product_id: int, release_id: int
         Formatted string containing the product tasks specification
     """
     try:
+        release_id = _normalize_release_id(release_id)
         formatted_specification = []
 
         # Get the product information
@@ -494,6 +570,7 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
         Formatted string containing the product test cases specification
     """
     try:
+        release_id = _normalize_release_id(release_id)
         formatted_specification = []
 
         # Get the product information
@@ -529,7 +606,9 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
         sort_field = 'TestCaseId'
         sort_direction = 'ASC'        
         while more_results:
-            test_cases_url = f"projects/{product_id}/test-cases?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field={sort_field}&sort_direction={sort_direction}&release_id={release_id}"
+            test_cases_url = f"projects/{product_id}/test-cases?starting_row={starting_row}&number_of_rows={number_of_rows}&sort_field={sort_field}&sort_direction={sort_direction}"
+            if release_id:
+                test_cases_url += f"&release_id={release_id}"
             results = spira_client.make_spira_api_get_request(test_cases_url)
             if not results:
                 more_results = False
@@ -565,9 +644,18 @@ def _get_specification_test_cases_impl(spira_client, product_id: int, release_id
                         for test_step in test_steps:
                             test_step_id = test_step['TestStepId']
                             position = test_step['Position']
-                            description = test_step['Description']
-                            expected_result = test_step['ExpectedResult']
-                            sample_data = test_step['SampleData']
+                            linked_test_case_id = test_step.get('LinkedTestCaseId')
+
+                            if linked_test_case_id:
+                                # This is a linked (call) step — resolve the linked test case details
+                                description = _format_linked_test_step(spira_client, product_id, linked_test_case_id, test_step)
+                                expected_result = ''
+                                sample_data = ''
+                            else:
+                                description = test_step['Description']
+                                expected_result = test_step['ExpectedResult']
+                                sample_data = test_step['SampleData']
+
                             formatted_specification.append("<tr>")
                             formatted_specification.append(f"<td>{position}.</td>")
                             formatted_specification.append(f"<td>{description}.</td>")
