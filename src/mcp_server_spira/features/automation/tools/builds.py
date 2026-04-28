@@ -15,7 +15,7 @@ def _create_build_url_impl(spira_client, product_id: int, release_id: int, build
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PG:45, just use 45.
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         release_id: The ID of the release/sprint/phase in Spira that the build is for, without the RL prefix (e.g. RL:12 would be 12)
         build_status_id: The status of the build (1=Failed, 2=Passed)
         name: The name of the build (usually containing the project name and the date/time of the build)
@@ -77,7 +77,7 @@ def register_tools(mcp) -> None:
         - Push the results of an automated software build into Spira
                     
         Args:
-            product_id: The numeric ID of the product. If the ID is PG:45, just use 45.
+            product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
             release_id: The ID of the release/sprint/phase in Spira that the build is for, without the RL prefix (e.g. RL:12 would be 12)
             build_status_id: The status of the build (1=Failed, 2=Passed)
             name: The name of the build (usually containing the project name and the date/time of the build)

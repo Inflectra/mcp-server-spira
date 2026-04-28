@@ -91,7 +91,7 @@ def register_tools(mcp) -> None:
         - Access the full description and selected fields of test sets
 
         Args:
-            product_id: The numeric ID of the product. If the ID is PG:45, just use 45. 
+            product_id: The numeric ID of the product. If the ID is PR:45, just use 45. 
         
         Returns:
             Formatted string containing comprehensive information for the
