@@ -1,0 +1,70 @@
+"""Capability artifact config — extracted from RemoteCapability OpenAPI schema."""
+
+from mcp_server_spira.models import ArtifactConfig
+
+CAPABILITY_CONFIG = ArtifactConfig(
+    artifact_type="capability",
+    workspace_type="program",
+    search_endpoint="programs/{program_id}/capabilities/search",
+    single_endpoint="programs/{program_id}/capabilities/{artifact_id}",
+    description="Capabilities tracked in a Spira program.",
+    # Normalised field mappings
+    status_field="StatusId",
+    owner_field="OwnerId",
+    priority_field="PriorityId",
+    release_field=None,
+    type_field="TypeId",
+    summary_fields=[
+        "CapabilityId",
+        "MilestoneName",
+        "Name",
+        "OwnerName",
+        "PercentComplete",
+        "PriorityName",
+        "StatusName",
+        "TypeName",
+    ],
+    # all_fields: LLM-visible fields from RemoteCapability schema
+    all_fields=[
+        "CapabilityId",
+        "CreationDate",
+        "CreatorId",
+        "CreatorName",
+        "Description",
+        "IsSummary",
+        "LastUpdateDate",
+        "MilestoneId",
+        "MilestoneName",
+        "Name",
+        "OwnerId",
+        "OwnerName",
+        "PercentComplete",
+        "PriorityId",
+        "PriorityName",
+        "ProjectGroupId",
+        "RequirementCount",
+        "StatusId",
+        "StatusIsOpen",
+        "StatusName",
+        "TypeId",
+        "TypeName",
+    ],
+    # excluded_fields: valid OpenAPI fields hidden from LLM
+    excluded_fields=[
+        "ArtifactTypeId",
+        "ConcurrencyGuid",
+        "CustomProperties",
+        "Guid",
+        "IndentLevel",
+    ],
+    supports_server_search=True,
+    mywork_endpoint=None,
+    search_query_params={
+        "row_start": "starting_row",
+        "row_count": "number_of_rows",
+        "sort_field": "sort_field",
+        "sort_direction": "sort_direction",
+    },
+    default_sort_field="LastUpdateDate",
+    default_sort_direction="desc",
+)

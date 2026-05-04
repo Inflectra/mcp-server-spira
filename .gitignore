@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.DS_STORE
 
 # C extensions
 *.so
@@ -129,12 +130,18 @@ celerybeat.pid
 
 # Environments
 .env
+.envrc
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.DS_STORE
+
+# Spira pytest integration credentials (contains sensitive data)
+.env.spira
+.env.test
 
 # Spyder project settings
 .spyderproject
@@ -174,9 +181,9 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  and can be added to the global gitignore or merged into this file. However, if you prefer,
 #  you could uncomment the following to ignore the enitre vscode folder
 # .vscode/
 
@@ -196,3 +203,11 @@ cython_debug/
 # MCP publishing authentication tokens
 .mcpregistry_github_token
 .mcpregistry_registry_token
+
+# Generated artifacts
+coverage.json
+workspace.code-workspace
+
+# Kiro
+# keep specs and other shared files, but exclude files specific to each user
+.kiro/settings
