@@ -32,7 +32,7 @@ async def _record_automated_test_run_impl(
 
     Args:
         spira_client: The Inflectra Spira API client instance
-        product_id: The numeric ID of the product. If the ID is PG:45, just use 45.
+        product_id: The numeric ID of the product. If the ID is PR:45, just use 45.
         test_name: The name of the test being run
         short_message: A short description (50 characters or less) of the result of the test execution
         long_message: The full description of the testing outcome, in plain text format
