@@ -24,6 +24,7 @@ from mcp_server_spira.features.context import (
     load_active_product_context,
 )
 from mcp_server_spira.utils import register_all_prompts
+from mcp_server_spira.utils.common.schema_optimization import optimize_tool_schemas
 
 
 @asynccontextmanager
@@ -42,15 +43,17 @@ mcp = FastMCP(
         "Inflectra Spira MCP Server — project management, testing, and requirements tools.\n"
         "Hierarchy: Programs contain Products (projects). Products contain artifacts.\n"
         "\n"
-        "TOOL SCOPES (prefix_action):\n"
-        "  mywork_     — user's items via mywork_search_artifacts (task, incident, requirement, test_case, test_set)\n"
-        "  product_    — product_search_artifacts (11 types), product_get_artifact, create_build, create_automated_test_run\n"
-        "  program_    — requires program_id: program_search_artifacts (capability, milestone)\n"
-        "  workspace_  — workspace_search, workspace_get for products, programs, product templates\n"
-        "  template_   — template_get_metadata (types, custom_properties, statuses, priorities, severities, importances, probabilities, impacts)\n"
-        "  get_artifact_schema — local-only field schema introspection\n"
+        "TOOL SCOPES:\n"
+        "  mywork_ — mywork_search_artifacts (task, incident, requirement, test_case, test_set)\n"
+        "  product_ — product_search/get/create/update_artifact, product_record_test_run\n"
+        "  program_ — program_search_artifacts (capability, milestone)\n"
+        "  workspace_ — workspace_search, workspace_get\n"
+        "  template_ — template_get_metadata (types, statuses, priorities, custom_properties, severities, importances, probabilities, impacts)\n"
+        "  get_artifact_schema — field schema lookup\n"
+        "  create_comment — comment on artifact (7 types)\n"
+        "  create_association — link artifacts (related-to, depends-on, coverage)\n"
         "\n"
-        "10 tools total. "
+        "13 tools total. "
         "If user asks for artifacts without context: use my_ for their own items, "
         "or call workspace_search(workspace_type='product') first to find a product_id."
     ),
@@ -59,6 +62,9 @@ mcp = FastMCP(
 # Register all features
 register_all(mcp)
 register_all_prompts(mcp)
+
+# Reduce schema token cost for tools/list (strips titles, collapses nullable)
+optimize_tool_schemas(mcp)
 
 
 @mcp.resource("spira://active-product")

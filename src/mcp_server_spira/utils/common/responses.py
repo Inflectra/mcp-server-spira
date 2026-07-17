@@ -15,6 +15,15 @@ def format_success_response(data: Any, pagination: dict | None = None) -> str:
     Returns:
         JSON string with proper formatting
 
+    Spec:
+        - ALWAYS returns a valid JSON string — never raises
+        - Output always contains a "data" key with the provided data
+        - "pagination" key is present only when pagination arg is truthy;
+          absent (not null) when pagination is None or empty dict
+        - Non-JSON-serializable values (e.g. datetime) are coerced via
+          default=str — never raises TypeError
+        - Output uses 2-space indentation for LLM readability
+
     Example:
         >>> data = [{"TaskId": 1, "Name": "Task 1"}]
         >>> pagination = {"limit": 25, "offset": 0, "total_count": 100}
@@ -55,6 +64,16 @@ def format_error_response(
 
     Returns:
         JSON string with error information
+
+    Spec:
+        - ALWAYS returns a valid JSON string — never raises
+        - Output always contains "error" and "error_code" keys
+        - "details" key is present only when details arg is truthy (not
+          None, not empty dict)
+        - "suggestion" key is present only when suggestion arg is truthy
+        - Output never contains a "data" key — callers distinguish
+          success from error by checking for "error" vs "data"
+        - Output uses 2-space indentation for LLM readability
 
     Example:
         >>> result = format_error_response(
@@ -110,6 +129,21 @@ def format_search_response(
 
     Returns:
         JSON string with the unified search envelope.
+
+    Spec:
+        - ALWAYS returns a valid JSON string — never raises
+        - Required keys always present: "data", "artifact_type",
+          "fields_returned", "warnings"
+        - "warnings" is always a list (never None) — defaults to [] when
+          arg is None
+        - "fields_available" is present (even as []) when explicitly
+          passed as a list; absent when None — this is the delta contract
+        - "pagination" is present only when arg is truthy
+        - "custom_properties_resolved" is present only when True; absent
+          when False or omitted — keeps envelope minimal
+        - "includes_fetched" is present only when not None
+        - Non-JSON-serializable values coerced via default=str
+        - Output uses 2-space indentation for LLM readability
     """
     response: dict[str, Any] = {
         "data": data,
@@ -143,6 +177,18 @@ def format_multi_product_response(
 
     Returns:
         JSON string with the multi-product envelope.
+
+    Spec:
+        - ALWAYS returns a valid JSON string — never raises
+        - Required keys always present: "artifact_type", "products",
+          "warnings"
+        - "warnings" is always a list (never None) — defaults to [] when
+          arg is None
+        - Every product_id in the fan-out gets an entry in "products" —
+          failed products have an "error" key, never silently dropped
+          (caller responsibility, but this formatter preserves them)
+        - Non-JSON-serializable values coerced via default=str
+        - Output uses 2-space indentation for LLM readability
     """
     response: dict[str, Any] = {
         "artifact_type": artifact_type,

@@ -19,6 +19,23 @@ def apply_field_projection(
 
     Returns ``(projected_data, fields_returned, fields_available, warnings)``.
 
+    Spec:
+        - ALWAYS returns a 4-tuple — never raises
+        - fields=None or [] → uses summary_fields as the projection set
+        - Explicit fields → intersected with all_fields; unknown names
+          silently dropped with a warning listing them
+        - ALL requested fields unknown → falls back to summary_fields with
+          an additional warning
+        - fields_returned = the actual field list used for projection
+          (either summary_fields or the valid subset of requested fields)
+        - fields_available = all_fields minus fields_returned; empty list
+          when all fields are returned (not None, not omitted)
+        - projected_data contains new dict objects (not mutated originals)
+          with only keys in the valid field set
+        - warnings is always a list (never None)
+        - Order of fields_returned matches the order of the input fields
+          list (or summary_fields order when defaulting)
+
     Behaviour:
     - *fields* is ``None`` or empty → use *summary_fields*.
     - Explicit *fields* → intersect with *all_fields*, drop unknowns with

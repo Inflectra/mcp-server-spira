@@ -29,7 +29,7 @@ from mcp_server_spira.features.metadata.helpers import (
     _get_severities_impl,
     _get_statuses_impl,
 )
-from mcp_server_spira.utils.common import get_spira_client
+from mcp_server_spira.utils.common import _sanitize_error, get_spira_client
 from mcp_server_spira.utils.common.responses import (
     ErrorCodes,
     format_error_response,
@@ -98,20 +98,37 @@ async def _template_get_metadata_impl(
     mock without touching MCP registration.
 
     Returns a JSON string — either a response envelope or an error response.
+
+    Spec:
+        - ALWAYS returns a JSON string (never raises to the MCP layer)
+        - On success: response has exactly three keys — template_id (int),
+          sections (dict), warnings (list) — callers destructure without
+          checking for extra keys
+        - warnings is always a list, never None — even on full success
+        - sections dict keys equal exactly the requested (deduplicated)
+          metadata_type set — no missing, no extra
+        - Bare string metadata_type is silently coerced to [string] —
+          callers can pass either form
+        - Duplicate metadata_type values are deduplicated with a warning
+          (search still runs)
+        - Validation failures (invalid template_id, invalid metadata_type
+          values) short-circuit before any API call
+        - None metadata_type → fetch all sections (coerced to full list)
+        - artifact_type filters each section to a single artifact kind;
+          if invalid for ALL requested sections → hard error; if invalid
+          for SOME → valid sections fetched, invalid get error entries
+          with warnings
+        - Multiple sections fetched concurrently via asyncio.gather;
+          single section fetched directly (no gather overhead)
+        - Partial failure resilience: if one section's fetch raises, that
+          section gets an error entry in sections dict and a warning —
+          other sections still returned successfully
     """
     warnings: list[str] = []
 
-    # 0. Handle None (omitted parameter)
+    # 0. Handle None (omitted parameter) — fetch all sections
     if metadata_type is None:
-        return format_error_response(
-            error="metadata_type is required",
-            error_code=ErrorCodes.INVALID_PARAMETER,
-            details={
-                "parameter": "metadata_type",
-                "valid_values": list(VALID_METADATA_TYPES),
-            },
-            suggestion="Provide at least one metadata type: " + ", ".join(VALID_METADATA_TYPES),
-        )
+        metadata_type = list(VALID_METADATA_TYPES)
 
     # 1. Coerce bare string to single-element list
     if isinstance(metadata_type, str):
@@ -235,8 +252,10 @@ async def _template_get_metadata_impl(
                 spira_client, template_id, artifact_type=artifact_type
             )
         except Exception as e:
-            sections[section_name] = {"error": f"Failed to retrieve {section_name} data: {e}"}
-            warnings.append(f"Failed to retrieve {section_name} section: {e}")
+            sections[section_name] = {
+                "error": f"Failed to retrieve {section_name} data: {_sanitize_error(e)}"
+            }
+            warnings.append(f"Failed to retrieve {section_name} section: {_sanitize_error(e)}")
     elif len(sections_to_fetch) > 1:
         # Multiple sections — concurrent fetch
         coros = [
@@ -247,8 +266,10 @@ async def _template_get_metadata_impl(
 
         for name, result in zip(sections_to_fetch, results, strict=True):
             if isinstance(result, BaseException):
-                sections[name] = {"error": f"Failed to retrieve {name} data: {result}"}
-                warnings.append(f"Failed to retrieve {name} section: {result}")
+                sections[name] = {
+                    "error": f"Failed to retrieve {name} data: {_sanitize_error(result)}"
+                }
+                warnings.append(f"Failed to retrieve {name} section: {_sanitize_error(result)}")
             else:
                 sections[name] = result
 
@@ -263,9 +284,19 @@ async def _template_get_metadata_impl(
 
 def register_tools(mcp) -> None:
     """Register the template_get_metadata unified tool."""
+    docstring = (
+        "Retrieves template metadata sections for a product template.\n"
+        "\n"
+        "template_id: numeric ID (e.g. 45 for PT:45).\n"
+        "metadata_type: sections to fetch (see enum). Omit for all.\n"
+        'artifact_type: filter to one kind (e.g. "Requirement"). Omit for all.\n'
+        "Some sections are artifact-specific (e.g. severities\u2192Incident, importances\u2192Requirement).\n"
+        "Returns JSON: {template_id, sections, warnings}."
+    )
 
     @mcp.tool(
         name="template_get_metadata",
+        description=docstring,
         annotations={
             "readOnlyHint": True,
             "destructiveHint": False,
@@ -277,27 +308,7 @@ def register_tools(mcp) -> None:
         metadata_type: TemplateMetadataType | None = None,
         artifact_type: str | None = None,
     ) -> str:
-        """Retrieves template metadata sections for a product template.
-
-        metadata_type (list[str], required): Sections to fetch.
-          - "types": Artifact type definitions per artifact kind
-            (e.g. Requirement types: Use Case, User Story).
-          - "custom_properties": Custom field definitions per artifact kind.
-          - "statuses": Status definitions per artifact kind
-            (Requirement, Incident, Task, Risk, Release, Test Case, Document).
-          - "priorities": Priority definitions per artifact kind
-            (Incident, Task, Test Case).
-          - "severities": Severity definitions (Incident only).
-          - "importances": Importance definitions (Requirement only).
-          - "probabilities": Probability definitions (Risk only).
-          - "impacts": Impact definitions (Risk only).
-        template_id (int, required): Numeric ID of the product template
-          (e.g. 45 for PT:45).
-        artifact_type (str, optional): Filter to a single artifact kind
-          (e.g. "Requirement"). When omitted, all artifact kinds are fetched.
-
-        Returns JSON with template_id, sections dict, and warnings list.
-        """
+        """Retrieves template metadata sections for a product template."""
         spira_client = get_spira_client()
         return await _template_get_metadata_impl(
             spira_client, template_id, metadata_type, artifact_type=artifact_type

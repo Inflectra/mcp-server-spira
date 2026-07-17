@@ -4,7 +4,17 @@ from typing import Any
 
 
 class ParameterValidator:
-    """Validates tool input parameters."""
+    """Validates tool input parameters.
+
+    Spec:
+        - All methods are static — no instance state, no side effects
+        - All methods return None on success, a dict on failure — never raise
+        - Error dicts always contain keys: "error", "error_code", "details",
+          "suggestion" — callers unpack with **error_dict into
+          format_error_response without checking for missing keys
+        - Validation short-circuits: first failing check returns immediately,
+          callers depend on this for fast feedback before any API call
+    """
 
     @staticmethod
     def validate_positive_integer(value: Any, param_name: str, min_value: int = 1) -> dict | None:
@@ -18,6 +28,18 @@ class ParameterValidator:
 
         Returns:
             None if valid, error dict if invalid
+
+        Spec:
+            - Returns None when value is an int >= min_value
+            - Returns error dict with INVALID_TYPE when value is not an int
+              (including float, str, None, bool subclass excluded by
+              isinstance check)
+            - Returns error dict with INVALID_VALUE when value is int but
+              below min_value
+            - Error dict always has keys: error, error_code, details,
+              suggestion — callers unpack directly
+            - details always contains: parameter, value, and either
+              expected_type (for type errors) or expected (for value errors)
 
         Example:
             >>> validator = ParameterValidator()
@@ -63,6 +85,16 @@ class ParameterValidator:
         Returns:
             None if valid, error dict with INVALID_PARAMETER code if invalid
 
+        Spec:
+            - Returns None if and only if value is a member of valid_types
+              (uses ``in`` operator — works for any hashable value)
+            - Returns error dict with INVALID_PARAMETER for any value not
+              in valid_types, including None, int, float, bool, list, dict
+            - Error dict details always includes "valid_values" as a list —
+              callers use this to show the LLM what options are available
+            - Error dict suggestion always includes param_name — helps the
+              LLM self-correct
+
         Example:
             >>> ParameterValidator.validate_type_param("product", ("product", "program"), "workspace_type")
             >>> ParameterValidator.validate_type_param("bad", ("product", "program"), "workspace_type")
@@ -93,6 +125,18 @@ class ParameterValidator:
 
         Returns:
             None if valid, error dict if invalid
+
+        Spec:
+            - Returns None when limit is int in [1, 500] AND offset is
+              int >= 0
+            - Validates limit first — when both are invalid, the error
+              reports limit (callers depend on deterministic first-failure)
+            - limit must be int AND in range [1, 500]; non-int types
+              (str, float, None) fail with INVALID_PARAMETER
+            - offset must be int AND >= 0; non-int types fail with
+              INVALID_PARAMETER
+            - Error dict always has keys: error, error_code, details,
+              suggestion — callers unpack directly
 
         Example:
             >>> validator = ParameterValidator()

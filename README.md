@@ -65,7 +65,7 @@ Set these environment variables (or use a `.env` file):
 
 ## Available Tools
 
-10 tools organized by scope. All data-retrieval tools return structured JSON
+13 tools organized by scope. All data-retrieval tools return structured JSON
 with field projection, filtering, and a consistent response envelope.
 
 ### Search Tools
@@ -79,8 +79,11 @@ with field projection, filtering, and a consistent response envelope.
 ### Write Tools
 | Tool | Description |
 |---|---|
-| `product_create_automated_test_run` | Record automated test results from CI/CD |
-| `product_create_build` | Record a CI/CD build result |
+| `product_create_artifact` | Create artifacts (incident, task, requirement, test_case, risk, release, test_set, build, test_step, mitigation, requirement_step) |
+| `product_update_artifact` | Update existing artifacts |
+| `product_record_test_run` | Record automated test results from CI/CD |
+| `create_comment` | Add a comment to an artifact |
+| `create_association` | Link two artifacts (related-to, depends-on, coverage) |
 
 ### Workspace & Configuration Tools
 | Tool | Description |

@@ -9,7 +9,7 @@ from typing import Annotated, Any
 from pydantic import WithJsonSchema
 
 from mcp_server_spira.features.workspace_configs import WORKSPACE_CONFIG, WORKSPACE_TYPES
-from mcp_server_spira.utils.common import get_spira_client
+from mcp_server_spira.utils.common import SpiraApiError, get_spira_client
 from mcp_server_spira.utils.common.responses import (
     ErrorCodes,
     format_error_response,
@@ -39,6 +39,24 @@ async def _get_workspace_impl(
     a mock without touching MCP registration.
 
     Returns a JSON string — success envelope or error response.
+
+    Spec:
+        - ALWAYS returns a JSON string (never raises to the MCP layer)
+        - On success: response has "data" key containing the full workspace
+          object with all fields — no field projection applied (callers
+          get the complete entity)
+        - On failure: response has "error" and "error_code" keys — callers
+          distinguish success from error by checking for "error" vs "data"
+        - No fields_returned or fields_available keys in the response —
+          get always returns the full object
+        - Validation failures (invalid workspace_type, invalid workspace_id)
+          short-circuit before any API call
+        - For types with a single_endpoint (product, product_template):
+          direct GET by ID; API returning None/falsy → NOT_FOUND
+        - For types without single_endpoint (program): fetches full list
+          and filters client-side by ID field; no match → NOT_FOUND with
+          suggestion to use workspace_search
+        - API exceptions → error response with API_ERROR code (not crash)
     """
     # 1. Validate workspace_type
     type_error = ParameterValidator.validate_type_param(
@@ -93,10 +111,10 @@ async def _get_workspace_impl(
 
             return format_success_response(match)
 
-    except Exception as e:
+    except SpiraApiError as e:
         return format_error_response(
             error=f"Failed to retrieve {workspace_type} data: {e}",
-            error_code=ErrorCodes.API_ERROR,
+            error_code=e.error_code,
             details={"workspace_type": workspace_type, "workspace_id": workspace_id},
             suggestion="Check your Spira connection and try again.",
         )
@@ -113,17 +131,8 @@ def _id_field_for(workspace_type: str) -> str:
 
 def _build_docstring() -> str:
     """Build the dynamic docstring for workspace_get at registration time."""
-    lines = ["Retrieves a single workspace entity by its numeric ID.\n"]
-    lines.append(
-        f"workspace_type (str, required): One of {', '.join(repr(t) for t in WORKSPACE_TYPES)}."
-    )
-    for wtype in WORKSPACE_TYPES:
-        cfg = WORKSPACE_CONFIG[wtype]
-        lines.append(f'  - "{wtype}": {cfg.description}')
-    lines.append(
-        "workspace_id (int, required): The numeric ID of the workspace entity (without prefix)."
-    )
-    return "\n".join(lines)
+    type_names = ", ".join(repr(t) for t in WORKSPACE_TYPES)
+    return f"Retrieve a single workspace entity by its numeric ID.\n\nworkspace_type: {type_names}"
 
 
 def register_tools(mcp) -> None:
@@ -132,6 +141,7 @@ def register_tools(mcp) -> None:
 
     @mcp.tool(
         name="workspace_get",
+        description=docstring,
         annotations={
             "readOnlyHint": True,
             "destructiveHint": False,
@@ -144,5 +154,3 @@ def register_tools(mcp) -> None:
     ) -> str:
         spira_client = get_spira_client()
         return await _get_workspace_impl(spira_client, workspace_type, workspace_id)
-
-    workspace_get.__doc__ = docstring

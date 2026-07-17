@@ -9,6 +9,11 @@ keywords = ["MCP", "AI", "GenAI"]
 dependencies = [
     "httpx>=0.28.1",
     "mcp[cli]>=1.9.2",
+    "python-multipart>=0.0.27",
+    # Transitive pins — security fixes
+    "idna>=3.15",          # CVE-2026-45409 (DoS via crafted domain names)
+    "starlette>=1.0.1",    # PYSEC-2026-161 (Host header injection)
+    "pyjwt>=2.13.0",       # PYSEC-2026-175/177/178/179 (HMAC confusion, SSRF, DoS)
 ]
 authors = [{name = "Inflectra Corporation", email = "support@inflectra.com"}]
 classifiers = [
@@ -119,7 +124,7 @@ addopts = [
     "--cov-report=html",
     "--cov-report=json",
     "--cov-report=term-missing",
-    "--cov-fail-under=0",
+    "--cov-fail-under=95",
     "-v",
 ]
 markers = [

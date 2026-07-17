@@ -36,6 +36,24 @@ def paginate_client_side(all_items: list[Any], limit: int, offset: int) -> Pagin
     Returns:
         Dictionary with paginated data and metadata
 
+    Spec:
+        - ALWAYS returns a PaginationResult dict with "data" and
+          "pagination" keys — never raises
+        - data = all_items[offset : offset + limit] — standard Python
+          slice semantics (no IndexError on out-of-bounds)
+        - pagination.returned_count == len(data) — always matches actual
+          slice length
+        - pagination.total_count == len(all_items) — reflects full input
+          regardless of offset/limit
+        - pagination.has_more is True iff (offset + returned_count) <
+          total_count — callers use this to decide whether to request
+          another page
+        - pagination.pagination_type == "client-side" — callers use this
+          to distinguish from server-side pagination
+        - Does NOT validate limit/offset (caller must validate first via
+          ParameterValidator) — accepts any int without error
+        - Does NOT mutate all_items — returns a slice (new list)
+
     Example:
         >>> items = [1, 2, 3, 4, 5]
         >>> result = paginate_client_side(items, limit=2, offset=1)
@@ -80,6 +98,22 @@ def paginate_server_side(
 
     Returns:
         Dictionary with data and pagination metadata
+
+    Spec:
+        - ALWAYS returns a PaginationResult dict with "data" and
+          "pagination" keys — never raises
+        - data is the items list as-is (no slicing — server already
+          paginated)
+        - pagination.returned_count == len(items) — always matches actual
+          items length, not the requested limit
+        - pagination.total_count == total_count arg — passed through from
+          caller (server-reported total)
+        - pagination.has_more is True iff (offset + returned_count) <
+          total_count — same formula as client-side for consistency
+        - pagination.pagination_type == "server-side" — callers use this
+          to distinguish from client-side pagination
+        - Does NOT validate inputs — caller must ensure limit/offset are
+          valid before calling
     """
     returned_count = len(items)
     has_more = (offset + returned_count) < total_count

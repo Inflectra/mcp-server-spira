@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Valid artifact kinds for the "types" section (6 kinds)
+# Valid artifact kinds for the "types" section (7 kinds)
 VALID_TYPES_ARTIFACT_KINDS: tuple[str, ...] = (
     "Requirement",
     "Test Case",
@@ -33,6 +33,7 @@ VALID_TYPES_ARTIFACT_KINDS: tuple[str, ...] = (
     "Risk",
     "Incident",
     "Document",
+    "Release",
 )
 
 # Valid artifact kinds for the "custom_properties" section (11 kinds)
@@ -98,6 +99,19 @@ def _filter_metadata_items(items: list[dict], config: TemplateMetadataFieldConfi
 
     Returns:
         Filtered and projected list of dicts.
+
+    Spec:
+        - Pure function — no side effects, no API calls, no exceptions
+          on valid input
+        - Items where config.active_field is explicitly False are excluded;
+          items where active_field is missing or any other value are kept
+          (permissive — only explicit False filters out)
+        - Output dicts contain only config.id_field, "Name", and
+          config.include_fields — noise fields (Guid, ConcurrencyGuid,
+          LastUpdateDate, etc.) are stripped
+        - Output preserves input ordering of items that pass the filter
+        - Missing keys in an item are silently skipped (no KeyError) —
+          output dict may have fewer keys than the projection set
     """
     keep_fields = (config.id_field, "Name", *config.include_fields)
     return [
@@ -121,6 +135,14 @@ async def _get_custom_properties_for_artifact_type(
 
     Returns:
         List of custom property dictionaries, or empty list if none found
+
+    Spec:
+        - NEVER raises — returns empty list on any failure (API error,
+          network timeout, unexpected response shape)
+        - On success: returns the raw list from the API (no filtering or
+          projection applied at this level)
+        - API returning None/falsy → empty list (not error)
+        - Single GET call to project-templates/{template_id}/custom-properties/{artifact_type_name}
     """
     try:
         custom_props_url = (
@@ -143,6 +165,7 @@ _TYPES_ENDPOINT_MAP: dict[str, str] = {
     "Risk": "project-templates/{template_id}/risks/types",
     "Incident": "project-templates/{template_id}/incidents/types",
     "Document": "project-templates/{template_id}/document-types?active_only=true",
+    "Release": "project-templates/{template_id}/releases/types",
 }
 
 
@@ -152,7 +175,7 @@ async def _get_artifact_types_impl(
     """
     Fetch type definitions for artifact kinds.
 
-    When artifact_type is None, fetches all 6 kinds.
+    When artifact_type is None, fetches all 7 kinds.
     When artifact_type is provided, fetches only that kind (single API call).
 
     Returns a list of dicts (not a JSON string) for composability.
@@ -165,6 +188,22 @@ async def _get_artifact_types_impl(
 
     Returns:
         List of dicts, each with ArtifactTypeName and Types.
+
+    Spec:
+        - Returns a list of dicts (not JSON string) — caller
+          (_template_get_metadata_impl) is responsible for JSON
+          serialization and error wrapping
+        - MAY raise on API failure — caller wraps exceptions into error
+          entries in the sections dict
+        - When artifact_type is None: makes 7 sequential API calls (one
+          per kind in _TYPES_ENDPOINT_MAP order)
+        - When artifact_type is provided: makes exactly 1 API call
+        - Each result dict has "ArtifactTypeName" (str) and "Types" (list)
+        - Types entries are filtered via _filter_metadata_items — noise
+          fields (Guid, ConcurrencyGuid, LastUpdateDate, IsActive) are
+          stripped from each type entry
+        - Kinds where the API returns None/empty are silently omitted
+          from the result list (not included as empty entries)
     """
     kinds_to_fetch = (
         {artifact_type: _TYPES_ENDPOINT_MAP[artifact_type]}
@@ -212,6 +251,22 @@ async def _get_section_metadata_impl(
 
     Returns:
         List of dicts, each with ArtifactTypeName and data_key.
+
+    Spec:
+        - Returns a list of dicts (not JSON string) — caller is
+          responsible for JSON serialization and error wrapping
+        - MAY raise on API failure — caller wraps exceptions into error
+          entries
+        - When artifact_type is None: iterates all field_configs (one API
+          call per kind, sequential)
+        - When artifact_type is provided: fetches only that kind (single
+          API call) — caller must ensure artifact_type is a valid key in
+          field_configs
+        - Each result dict has "ArtifactTypeName" (str) and data_key (list)
+        - Items are filtered and projected via _filter_metadata_items —
+          inactive items excluded, noise fields stripped
+        - Kinds where the API returns None/empty are silently omitted
+          from the result list
     """
     configs_to_fetch: dict[str, TemplateMetadataFieldConfig] = (
         {artifact_type: field_configs[artifact_type]}
@@ -233,7 +288,21 @@ async def _get_section_metadata_impl(
 async def _get_statuses_impl(
     spira_client, template_id: int, artifact_type: str | None = None
 ) -> list[dict]:
-    """Fetch status definitions for artifact kinds."""
+    """Fetch status definitions for artifact kinds.
+
+    Spec:
+        - Thin delegation wrapper — passes STATUS_FIELD_CONFIGS and
+          data_key="Statuses" to _get_section_metadata_impl; no
+          additional logic
+        - When artifact_type is None: fetches all 7 status kinds
+          (Requirement, Incident, Task, Risk, Release, Test Case,
+          Document) — one API call per kind
+        - When artifact_type is provided: fetches exactly 1 kind
+        - MAY raise — caller (_template_get_metadata_impl) wraps
+          exceptions into error entries in the sections dict
+        - Returns list[dict] with "ArtifactTypeName" and "Statuses"
+          keys per entry
+    """
     return await _get_section_metadata_impl(
         spira_client, template_id, STATUS_FIELD_CONFIGS, "Statuses", artifact_type
     )
@@ -242,7 +311,20 @@ async def _get_statuses_impl(
 async def _get_priorities_impl(
     spira_client, template_id: int, artifact_type: str | None = None
 ) -> list[dict]:
-    """Fetch priority definitions for artifact kinds."""
+    """Fetch priority definitions for artifact kinds.
+
+    Spec:
+        - Thin delegation wrapper — passes PRIORITY_FIELD_CONFIGS and
+          data_key="Priorities" to _get_section_metadata_impl; no
+          additional logic
+        - When artifact_type is None: fetches all 4 priority kinds
+          (Incident, Task, Test Case, Requirement) — one API call per
+          kind
+        - When artifact_type is provided: fetches exactly 1 kind
+        - MAY raise — caller wraps exceptions into error entries
+        - Returns list[dict] with "ArtifactTypeName" and "Priorities"
+          keys per entry
+    """
     return await _get_section_metadata_impl(
         spira_client, template_id, PRIORITY_FIELD_CONFIGS, "Priorities", artifact_type
     )
@@ -251,7 +333,19 @@ async def _get_priorities_impl(
 async def _get_severities_impl(
     spira_client, template_id: int, artifact_type: str | None = None
 ) -> list[dict]:
-    """Fetch severity definitions for artifact kinds."""
+    """Fetch severity definitions for artifact kinds.
+
+    Spec:
+        - Thin delegation wrapper — passes SEVERITY_FIELD_CONFIGS and
+          data_key="Severities" to _get_section_metadata_impl; no
+          additional logic
+        - When artifact_type is None: fetches all 1 severity kind
+          (Incident only) — single API call
+        - When artifact_type is provided: fetches exactly that kind
+        - MAY raise — caller wraps exceptions into error entries
+        - Returns list[dict] with "ArtifactTypeName" and "Severities"
+          keys per entry
+    """
     return await _get_section_metadata_impl(
         spira_client, template_id, SEVERITY_FIELD_CONFIGS, "Severities", artifact_type
     )
@@ -260,7 +354,19 @@ async def _get_severities_impl(
 async def _get_importances_impl(
     spira_client, template_id: int, artifact_type: str | None = None
 ) -> list[dict]:
-    """Fetch importance definitions for artifact kinds."""
+    """Fetch importance definitions for artifact kinds.
+
+    Spec:
+        - Thin delegation wrapper — passes IMPORTANCE_FIELD_CONFIGS and
+          data_key="Importances" to _get_section_metadata_impl; no
+          additional logic
+        - When artifact_type is None: fetches all 1 importance kind
+          (Requirement only) — single API call
+        - When artifact_type is provided: fetches exactly that kind
+        - MAY raise — caller wraps exceptions into error entries
+        - Returns list[dict] with "ArtifactTypeName" and "Importances"
+          keys per entry
+    """
     return await _get_section_metadata_impl(
         spira_client, template_id, IMPORTANCE_FIELD_CONFIGS, "Importances", artifact_type
     )
@@ -269,7 +375,19 @@ async def _get_importances_impl(
 async def _get_probabilities_impl(
     spira_client, template_id: int, artifact_type: str | None = None
 ) -> list[dict]:
-    """Fetch probability definitions for artifact kinds."""
+    """Fetch probability definitions for artifact kinds.
+
+    Spec:
+        - Thin delegation wrapper — passes PROBABILITY_FIELD_CONFIGS and
+          data_key="Probabilities" to _get_section_metadata_impl; no
+          additional logic
+        - When artifact_type is None: fetches all 1 probability kind
+          (Risk only) — single API call
+        - When artifact_type is provided: fetches exactly that kind
+        - MAY raise — caller wraps exceptions into error entries
+        - Returns list[dict] with "ArtifactTypeName" and
+          "Probabilities" keys per entry
+    """
     return await _get_section_metadata_impl(
         spira_client, template_id, PROBABILITY_FIELD_CONFIGS, "Probabilities", artifact_type
     )
@@ -278,7 +396,19 @@ async def _get_probabilities_impl(
 async def _get_impacts_impl(
     spira_client, template_id: int, artifact_type: str | None = None
 ) -> list[dict]:
-    """Fetch impact definitions for artifact kinds."""
+    """Fetch impact definitions for artifact kinds.
+
+    Spec:
+        - Thin delegation wrapper — passes IMPACT_FIELD_CONFIGS and
+          data_key="Impacts" to _get_section_metadata_impl; no
+          additional logic
+        - When artifact_type is None: fetches all 1 impact kind
+          (Risk only) — single API call
+        - When artifact_type is provided: fetches exactly that kind
+        - MAY raise — caller wraps exceptions into error entries
+        - Returns list[dict] with "ArtifactTypeName" and "Impacts"
+          keys per entry
+    """
     return await _get_section_metadata_impl(
         spira_client, template_id, IMPACT_FIELD_CONFIGS, "Impacts", artifact_type
     )
@@ -303,6 +433,22 @@ async def _get_custom_properties_impl(
 
     Returns:
         List of dicts, each with ArtifactTypeName and CustomProperties.
+
+    Spec:
+        - Returns a list of dicts (not JSON string) — caller is
+          responsible for JSON serialization and error wrapping
+        - MAY raise on API failure — caller wraps exceptions into error
+          entries (though _get_custom_properties_for_artifact_type
+          swallows exceptions internally, so raises are unlikely)
+        - When artifact_type is None: makes up to 11 sequential API calls
+          (one per kind in VALID_CUSTOM_PROPERTIES_ARTIFACT_KINDS order)
+        - When artifact_type is provided: makes exactly 1 API call
+        - Each result dict has "ArtifactTypeName" (str) and
+          "CustomProperties" (list)
+        - Kinds where the API returns empty/None are silently omitted
+          from the result list (not included as empty entries)
+        - No filtering/projection applied — raw custom property dicts
+          are returned as-is from the API
     """
     kinds_to_fetch = (
         (artifact_type,) if artifact_type is not None else VALID_CUSTOM_PROPERTIES_ARTIFACT_KINDS

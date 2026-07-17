@@ -7,7 +7,24 @@ _active_product_context: dict | None = None
 
 
 async def load_active_product_context() -> None:
-    """Fetches product details and active releases. Called once in lifespan."""
+    """Fetches product details and active releases. Called once in lifespan.
+
+    Spec:
+        - NEVER raises — catches all exceptions and logs a warning
+        - When SPIRA_PROJECT_ID env is unset (get_default_product_id
+          returns None): returns immediately without any API calls,
+          leaving _active_product_context as None
+        - On success: sets _active_product_context to a dict with keys
+          product_id (int), name (str|None), description (str|None),
+          active_releases (list of dicts with ReleaseId, Name,
+          VersionNumber)
+        - active_releases filters to releases where Active is not False
+          (missing Active field treated as True — permissive)
+        - Makes exactly 2 API calls: GET projects/{id} and POST
+          projects/{id}/releases/search with empty body
+        - Called once during server lifespan startup — not called per
+          request
+    """
     global _active_product_context
     product_id = get_default_product_id()
     if product_id is None:
