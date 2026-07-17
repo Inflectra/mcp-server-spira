@@ -1,6 +1,6 @@
 [project]
 name = "mcp-server-spira"
-version = "1.1.1"
+version = "2.0.0"
 description = "A Model Context Protocol (MCP) server enabling AI assistants to interact with Spira by Inflectra."
 readme = "README.md"
 license = "MIT"
