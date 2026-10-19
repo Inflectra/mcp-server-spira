@@ -52,6 +52,20 @@ _CUSTOM_PROPERTY_API_NAME_MAP: dict[str, str] = {
 }
 
 
+def metadata_artifact_kind(artifact_type: str) -> str | None:
+    """Canonical mapping: tool-facing name → template metadata kind.
+
+    Returns "Incident", "Test Case", etc. Shared by `TemplateContext` and
+    `artifact_schema.py` so the kind comes from one canonical source.
+
+    Spec:
+        - Pure lookup — no I/O, no side effects, no client required
+        - Backed by `_METADATA_ARTIFACT_KIND_MAP`
+        - Returns None for unknown artifact types (callers decide handling)
+    """
+    return _METADATA_ARTIFACT_KIND_MAP.get(artifact_type)
+
+
 class TemplateContext:
     """Shared per-invocation context for template-dependent resolution.
 
@@ -106,14 +120,15 @@ class TemplateContext:
     def get_metadata_artifact_kind(self, artifact_type: str) -> str | None:
         """Canonical mapping: tool-facing name → template metadata kind.
 
-        Returns "Incident", "Test Case", "Requirement", etc.
-        Used by NameResolver for status/priority/type resolution.
+        Returns "Incident", "Test Case", etc.; used by NameResolver for
+        status/priority/type resolution. Delegates to the module-level pure
+        `metadata_artifact_kind` (single canonical source).
 
         Spec:
             - Pure lookup — no I/O, no side effects
             - Returns None for unknown artifact types
         """
-        return _METADATA_ARTIFACT_KIND_MAP.get(artifact_type)
+        return metadata_artifact_kind(artifact_type)
 
     def get_custom_property_api_name(self, artifact_type: str) -> str | None:
         """Canonical mapping: tool-facing name → custom property API name.

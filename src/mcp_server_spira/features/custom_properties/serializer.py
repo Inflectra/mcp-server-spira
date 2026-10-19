@@ -253,7 +253,9 @@ def _resolve_list_for_wire(
 
     Spec:
         - int value → passthrough (no lookup needed)
-        - str value → case-insensitive lookup in CustomList.Values by Name
+        - str value → exact-case lookup in CustomList.Values by Name first,
+          then case-insensitive fallback. Exact match wins so names that
+          differ only by case each resolve to their own ID (round-trip safe).
         - Match found → return CustomPropertyValueId int
         - No match → append warning, return None (caller skips)
         - Non-str/non-int → append warning, return None
@@ -271,13 +273,23 @@ def _resolve_list_for_wire(
 
     custom_list = definition.get("CustomList") or {}
     list_values = custom_list.get("Values") or []
-    # Case-insensitive lookup for list display names
+    # Prefer an exact-case match so names that differ only by case (e.g.
+    # "V" and "v") each resolve to their own ID; fall back to the first
+    # case-insensitive match for user convenience when no exact name matches.
     value_lower = value.lower()
+    ci_match_id: int | None = None
     for item in list_values:
         item_name = item.get("Name")
-        if item_name is not None and item_name.lower() == value_lower:
-            val_id: int | None = item.get("CustomPropertyValueId")
-            return val_id
+        if item_name is None:
+            continue
+        if item_name == value:
+            exact_id: int | None = item.get("CustomPropertyValueId")
+            return exact_id
+        if ci_match_id is None and item_name.lower() == value_lower:
+            ci_match_id = item.get("CustomPropertyValueId")
+
+    if ci_match_id is not None:
+        return ci_match_id
 
     warnings.append(f"Unresolvable list value '{value}' for property '{prop_name}' — skipped")
     return None
@@ -297,7 +309,10 @@ def _resolve_multi_list_for_wire(
 
     Spec:
         - value must be a list — non-list → warning + return None
-        - Each element: int → passthrough, str → case-insensitive lookup by Name
+        - Each element: int → passthrough; str → exact-case lookup by Name
+          first, then case-insensitive fallback. Exact match wins so names
+          that differ only by case each resolve to their own ID (round-trip
+          safe).
         - Any unresolvable string → warning + return None (entire property skipped)
         - Non-str/non-int element → warning + return None
         - All resolved → return list[int]
@@ -312,19 +327,28 @@ def _resolve_multi_list_for_wire(
 
     custom_list = definition.get("CustomList") or {}
     list_values = custom_list.get("Values") or []
-    # Build case-insensitive lookup: lower(name) → id
-    name_to_id: dict[str, int] = {
-        item["Name"].lower(): item["CustomPropertyValueId"]
-        for item in list_values
-        if "Name" in item and "CustomPropertyValueId" in item
-    }
+    # Build two lookups so names differing only by case each resolve to their
+    # own ID. Exact-name match wins; case-insensitive is a convenience fallback
+    # used only when no exact-case name matches. For case-colliding names the
+    # case-insensitive map keeps the first-seen ID (deterministic).
+    name_to_id: dict[str, int] = {}
+    name_to_id_ci: dict[str, int] = {}
+    for item in list_values:
+        if "Name" not in item or "CustomPropertyValueId" not in item:
+            continue
+        item_name = item["Name"]
+        item_id = item["CustomPropertyValueId"]
+        name_to_id[item_name] = item_id
+        name_to_id_ci.setdefault(item_name.lower(), item_id)
 
     resolved_ids: list[int] = []
     for element in value:
         if isinstance(element, int):
             resolved_ids.append(element)
         elif isinstance(element, str):
-            val_id = name_to_id.get(element.lower())
+            val_id = name_to_id.get(element)
+            if val_id is None:
+                val_id = name_to_id_ci.get(element.lower())
             if val_id is not None:
                 resolved_ids.append(val_id)
             else:

@@ -470,6 +470,19 @@ class TemplateMetadataFieldConfig:
 
     Works for types, priorities, statuses, severities, importances — any
     Remote* schema returned by project-templates/ endpoints.
+
+    Spec:
+        - Carries optional open/closed state-support config for the `state`
+          Tier 1 filter; state knowledge lives on status configs only.
+        - `open_flag_field` is the strict boolean flag for metadata-driven
+          kinds (incident, risk) and must appear in `include_fields`.
+        - `fixed_open_ids` / `fixed_closed_ids` are explicit system-wide tuples
+          for fixed kinds (requirement, task, test case); neither derived from
+          the other.
+        - All three fields at defaults = no state support.
+        - A valid config is exactly one source: flag-only OR both-tuples —
+          never both, never a single tuple (enforced in `validate`).
+        - `validate` is pure and non-raising.
     """
 
     active_field: str  # "IsActive" or "Active" — varies by schema
@@ -481,6 +494,10 @@ class TemplateMetadataFieldConfig:
         "ConcurrencyGuid",
         "LastUpdateDate",
     )
+    # State-support config (see class Spec). All three defaults = no state support.
+    open_flag_field: str | None = None  # strict boolean flag for metadata-driven state
+    fixed_open_ids: tuple[int, ...] = ()  # explicit open status IDs for fixed artifacts
+    fixed_closed_ids: tuple[int, ...] = ()  # explicit closed status IDs for fixed artifacts
 
     def validate(self) -> list[str]:
         """Return list of error messages. Empty list means valid.
@@ -489,9 +506,20 @@ class TemplateMetadataFieldConfig:
         - ALWAYS returns a list[str], never raises — callers aggregate errors
           across all template metadata configs and raise a single ValueError
           at import time
-        - Returns [] when config is fully valid (all required fields non-empty)
+        - Returns [] when config is fully valid (all required fields non-empty
+          and state-support invariants hold)
         - Checks three required string fields: active_field, id_field, endpoint —
           each empty string produces exactly one error
+        - State-support invariants (each violation is exactly one error):
+          1. Source exclusivity — a metadata flag (`open_flag_field`) and either
+             fixed tuple must not both be set; a config is either metadata-driven,
+             fixed, or has no state support.
+          2. Fixed completeness — the two fixed tuples are both empty or both
+             non-empty; a single populated tuple is invalid.
+          3. Fixed values — every fixed ID is positive, each tuple is
+             duplicate-free, and the open/closed tuples are disjoint.
+          4. Flag presence — a configured `open_flag_field` must appear in
+             `include_fields`.
         - Pure function — no I/O, no side effects, no mutation of self
         """
         errors: list[str] = []
@@ -501,6 +529,40 @@ class TemplateMetadataFieldConfig:
             errors.append("id_field is empty")
         if not self.endpoint:
             errors.append("endpoint is empty")
+
+        has_flag = self.open_flag_field is not None
+        has_open = bool(self.fixed_open_ids)
+        has_closed = bool(self.fixed_closed_ids)
+
+        # Rule 1: metadata source and fixed source are mutually exclusive.
+        if has_flag and (has_open or has_closed):
+            errors.append(
+                "state config has both open_flag_field and fixed tuples "
+                "(a config is metadata-driven or fixed, never both)"
+            )
+
+        # Rule 2: fixed tuples are both empty or both non-empty.
+        if has_open != has_closed:
+            errors.append(
+                "fixed state requires both fixed_open_ids and fixed_closed_ids "
+                "non-empty (a single populated tuple is invalid)"
+            )
+
+        # Rule 3: fixed IDs are positive, duplicate-free, and disjoint.
+        for attr in ("fixed_open_ids", "fixed_closed_ids"):
+            ids: tuple[int, ...] = getattr(self, attr)
+            if any(i <= 0 for i in ids):
+                errors.append(f"{attr} contains a non-positive ID")
+            if len(set(ids)) != len(ids):
+                errors.append(f"{attr} contains duplicate IDs")
+        overlap = set(self.fixed_open_ids) & set(self.fixed_closed_ids)
+        if overlap:
+            errors.append(f"fixed_open_ids and fixed_closed_ids overlap: {sorted(overlap)}")
+
+        # Rule 4: metadata flag must be an included field.
+        if self.open_flag_field is not None and self.open_flag_field not in self.include_fields:
+            errors.append(f"open_flag_field '{self.open_flag_field}' not in include_fields")
+
         return errors
 
 

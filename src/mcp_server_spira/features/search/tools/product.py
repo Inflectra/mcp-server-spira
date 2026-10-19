@@ -14,7 +14,7 @@ import json
 from dataclasses import dataclass
 from typing import Annotated, Any, NotRequired, TypedDict
 
-from pydantic import WithJsonSchema
+from pydantic import Field, WithJsonSchema
 
 from mcp_server_spira.config import resolve_product_id
 from mcp_server_spira.features.artifact_configs import ARTIFACT_CONFIG
@@ -28,7 +28,7 @@ from mcp_server_spira.features.search.filter_builder import (
     build_remote_filters,
     merge_date_range_filters,
 )
-from mcp_server_spira.features.search.name_resolver import NameResolver
+from mcp_server_spira.features.search.name_resolver import NameResolver, StateResolutionError
 from mcp_server_spira.features.search.template_context import TemplateContext
 from mcp_server_spira.features.search.tools._include import (
     MAX_INCLUDE_RESULTS,
@@ -202,6 +202,7 @@ class ProductSearchRequest:
 
     # --- Tier 1 filters (generic — apply to most artifact types) ---
     status: str | None = None  # Display name or ID; resolved via template metadata
+    state: str | None = None  # Lifecycle bucket "open"/"closed"; mutually exclusive with status
     priority: str | None = None  # Display name or ID; "importance" for requirements
     release_id: int | str | None = None  # Int ID or version string like "1.0.0"
     owner_id: int | None = None  # User ID to filter by owner
@@ -461,6 +462,7 @@ class _SearchPipelineContext:
             self.template_id,
             artifact_type=self._request.artifact_type,
             status=self._request.status,
+            state=self._request.state,
             priority=self._request.priority,
             owner_id=self._request.owner_id,
             current_user=self._request.current_user,
@@ -608,7 +610,30 @@ async def _multi_product_search(
 
     products: list[dict[str, Any]] = []
     for req, result in zip(requests, results, strict=True):
-        if isinstance(result, BaseException):
+        if isinstance(result, StateResolutionError):
+            # Supported state filter that could not be resolved (R9/ADR-0016):
+            # a hard per-product error distinguished by its error code, not a
+            # generic API failure. resolve_filters raises before execute_search,
+            # so no search POST was issued; sibling successes are untouched.
+            products.append(
+                {
+                    "product_id": req.product_id,
+                    "error_code": ErrorCodes.STATE_UNRESOLVED,
+                    "error": (
+                        f"State '{req.state}' could not be resolved for artifact type "
+                        f"'{req.artifact_type}': {_sanitize_error(result)}"
+                    ),
+                    "suggestion": (
+                        "Retry after verifying the product template status metadata is "
+                        "available and complete for this artifact type."
+                    ),
+                    "warnings": [
+                        "State filter was not applied because it could not be resolved "
+                        f"for product {req.product_id}: {_sanitize_error(result)}"
+                    ],
+                }
+            )
+        elif isinstance(result, BaseException):
             products.append(
                 {
                     "product_id": req.product_id,
@@ -634,6 +659,7 @@ async def _product_search_impl(
     product_ids: Any,
     fields: list[str] | None,
     status: str | None,
+    state: str | None,
     release_id: int | str | None,
     priority: str | None,
     starting_row: int,
@@ -704,6 +730,30 @@ async def _product_search_impl(
     if validation_error is not None:
         return json.dumps(validation_error, indent=2)
 
+    # 2b. Validate state vocabulary and mutual exclusion with status, before any
+    # template/API work so invalid input never issues a request (R1/R2, AC3/AC4).
+    # resolve_state expects pre-normalized lowercase "open"/"closed".
+    if state is not None and status is not None:
+        return format_error_response(
+            error="state and status cannot be combined",
+            error_code=ErrorCodes.INVALID_PARAMETER,
+            details={"parameter": "state", "conflicting_parameter": "status"},
+            suggestion=(
+                "Use state to filter by lifecycle bucket (open/closed), or status "
+                "to filter by one named status — not both."
+            ),
+        )
+    if state is not None:
+        normalized_state = state.casefold()
+        if normalized_state not in ("open", "closed"):
+            return format_error_response(
+                error="Invalid state parameter",
+                error_code=ErrorCodes.INVALID_PARAMETER,
+                details={"parameter": "state", "value": state, "valid_values": ["open", "closed"]},
+                suggestion="Use state 'open' or 'closed'.",
+            )
+        state = normalized_state
+
     # 3. Parse release_id: int-string → int, otherwise keep as str
     if release_id is not None:
         if isinstance(release_id, int):
@@ -772,6 +822,7 @@ async def _product_search_impl(
                 product_id=product_id_list[0],
                 fields=fields,
                 status=status,
+                state=state,
                 priority=priority,
                 release_id=release_id,
                 owner_id=owner_id,
@@ -789,6 +840,27 @@ async def _product_search_impl(
                 spira_client,
                 request,
                 resolver,
+            )
+        except StateResolutionError as e:
+            # Supported state filter that could not be resolved is a hard error
+            # (R9/ADR-0016), not an unsupported-filter warning. Raised in
+            # resolve_filters before execute_search, so no search POST ran and
+            # there is no data/fallback. `state` is the normalized value below.
+            return format_error_response(
+                error=(
+                    f"State '{state}' could not be resolved for artifact type "
+                    f"'{artifact_type}' in product {product_id_list[0]}: {e}"
+                ),
+                error_code=ErrorCodes.STATE_UNRESOLVED,
+                details={
+                    "product_id": product_id_list[0],
+                    "artifact_type": artifact_type,
+                    "state": state,
+                },
+                suggestion=(
+                    "Retry after verifying the product template status metadata is "
+                    "available and complete for this artifact type."
+                ),
             )
         except SpiraApiError as e:
             return format_error_response(
@@ -824,6 +896,7 @@ async def _product_search_impl(
             product_id=pid,
             fields=fields,
             status=status,
+            state=state,
             priority=priority,
             release_id=release_id,
             owner_id=owner_id,
@@ -882,7 +955,27 @@ def register_tools(mcp) -> None:
         artifact_type: ProductArtifactType,
         product_ids: list[int] | None = None,
         fields: list[str] | None = None,
-        status: str | None = None,
+        status: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Filter by one named status (e.g. `New`, `Accepted`). "
+                    "To filter by lifecycle bucket across every open or closed "
+                    "status, use `state` instead. Mutually exclusive with `state`."
+                )
+            ),
+        ] = None,
+        state: Annotated[
+            str | None,
+            WithJsonSchema({"type": "string", "enum": ["open", "closed"]}),
+            Field(
+                description=(
+                    "Filter by lifecycle state (open/closed) regardless of the "
+                    "specific status name; for one named status use `status`. "
+                    "Mutually exclusive with `status`."
+                )
+            ),
+        ] = None,
         release_id: str | None = None,
         priority: str | None = None,
         starting_row: int = 1,
@@ -903,6 +996,7 @@ def register_tools(mcp) -> None:
             product_ids,
             fields,
             status,
+            state,
             release_id,
             priority,
             starting_row,

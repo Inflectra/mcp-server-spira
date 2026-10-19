@@ -1,18 +1,15 @@
 """Name_Resolver — resolves display names to Spira integer IDs.
 
-Async module that resolves human-readable display names (e.g. "Open",
-"High", "Bug") to Spira integer IDs for Tier 1 named filter parameters.
-
-Delegates to the metadata feature's public API
-(``features/metadata/api.py``) for fetching and filtering active metadata
-items. No direct imports of internal metadata configs or helpers.
-
-Requires a TemplateContext for shared template_id caching across
-resolvers within the same tool invocation.
+Async: resolves human-readable display names (e.g. "Open", "High", "Bug")
+to Spira integer IDs for Tier 1 named filter parameters. Delegates fetching
+and active-item filtering to the metadata feature's public API
+(``features/metadata/api.py``). Requires a TemplateContext for shared
+template_id caching across resolvers within one tool invocation.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -20,6 +17,7 @@ from mcp_server_spira.features.artifact_configs import ARTIFACT_CONFIG
 from mcp_server_spira.features.metadata.api import (
     fetch_active_metadata_items,
     get_id_field,
+    get_state_config,
 )
 from mcp_server_spira.models import ArtifactConfig
 
@@ -29,18 +27,47 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Spira's /requirements/search always returns summary (parent) rows regardless
+# of the status filter, and their rolled-up status may fall outside it. We
+# surface this note instead of post-filtering (ADR-0008: no client-side filtering).
+_REQUIREMENT_SUMMARY_FILTER_NOTE = (
+    "Spira always returns summary (parent) requirements regardless of the status filter, "
+    "so some returned rows may show a status outside the requested filter — those are "
+    "summary requirements. Child requirements are filtered correctly."
+)
+
+
+class StateResolutionError(Exception):
+    """A supported `state` filter could not be resolved into a trustworthy set.
+
+    Raised by `resolve_state` when a *supported* artifact's lifecycle state
+    cannot become a Tier 1 status-ID filter. Unsupported artifacts degrade to a
+    warning (ADR-0002); a supported artifact whose state *is* the query must
+    fail loudly rather than silently return unfiltered/empty results (ADR-0016).
+    The product tool boundary maps it to the `STATE_UNRESOLVED` envelope; it is
+    raised before `execute_search`, so no search POST is issued.
+
+    Spec:
+        - Raised only for supported metadata-driven kinds (incident, risk) that
+          fail to resolve: missing Product Template ID; metadata fetch
+          failure/warning; a non-boolean `Open` flag (missing, None, str, int,
+          etc.); an empty or all-inactive status list; or an empty resolved
+          open/closed partition.
+        - Never for unsupported artifacts (they return a warning tuple).
+        - Never for fixed artifacts (config-sourced tuples cannot fail at runtime).
+    """
+
 
 class NameResolver:
     """Resolves display names to Spira integer IDs with caching.
 
-    Delegates to the metadata feature's public API
-    (fetch_active_metadata_items, get_id_field) for fetching and filtering
-    active metadata items.
-
-    Requires a TemplateContext for template_id resolution and
+    Delegates fetching and active-item filtering to the metadata feature's
+    public API; requires a TemplateContext for template_id resolution and
     artifact-kind mapping (shared cache across resolvers).
 
-    All caches are instance-level, scoped to a single tool invocation.
+    All caches are instance-level, scoped to one tool invocation and shared
+    across a fan-out's concurrent searches; ``_get_cached_items`` owns how
+    concurrent misses coalesce into one fetch per key.
     """
 
     def __init__(
@@ -50,12 +77,17 @@ class NameResolver:
     ) -> None:
         self._client = spira_client
         self._template_context = template_context
-        # Cache: (template_id, metadata_section, artifact_kind, name_lower) → int
+        # Keyed (template_id, metadata_section, artifact_kind, name_lower) → id.
         self._name_cache: dict[tuple[int, str, str, str], int] = {}
-        # Cache: product_id → dict[name_lower, (component_id, original_name)]
+        # Keyed product_id → {name_lower: (component_id, original_name)}.
         self._component_cache: dict[int, dict[str, tuple[int, str]]] = {}
-        # Cache: current user ID (singleton)
         self._current_user_id: int | None = None
+        # Successful full active-item list, shared by status + state resolution
+        # across the concurrent searches of one invocation.
+        self._item_cache: dict[tuple[int, str, str], list[dict]] = {}
+        # One lock per in-flight _item_cache key so concurrent callers coalesce
+        # into a single fetch instead of racing.
+        self._item_locks: dict[tuple[int, str, str], asyncio.Lock] = {}
 
     async def get_template_id(self, product_id: int) -> int | None:
         """Fetch and cache ProjectTemplateId for a product.
@@ -86,26 +118,15 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Resolve a status display name to its integer ID.
 
-        Maps *artifact_type* to the template metadata artifact kind via
-        TemplateContext (or ``_ARTIFACT_KIND_MAP`` fallback), looks up the
-        kind in ``STATUS_FIELD_CONFIGS``, and delegates to ``_resolve_name``.
+        Delegates via the artifact-kind map to ``_resolve_name`` on the
+        ``statuses`` section. Shared resolver contract: returns `(int, None)`
+        or `(None, warning)`, never raises; integer-string bypass; active-only,
+        case-insensitive match; successful resolutions cached.
 
         Spec:
-            - Returns (int, None) on successful resolution
-            - Returns (None, warning_string) on any failure — never raises
-            - Unknown artifact_type (not in mapping) → (None,
-              warning mentioning the artifact_type)
-            - Artifact kind not in STATUS_FIELD_CONFIGS → (None, warning
-              suggesting Tier 2 integer IDs)
-            - Integer-string display_name (e.g. "42") → (42, None) without
-              any API call — bypass path
-            - Case-insensitive exact match on Name field of active items only
-            - No match → (None, warning listing valid status names)
-            - API failure → (None, warning suggesting integer ID fallback)
-            - Successful resolution is cached — subsequent calls with same
-              (template_id, artifact_type, display_name) skip the API
-
-        Returns ``(id, warning)``.
+            - Unknown artifact_type → `(None, warning)`.
+            - Artifact kind not in STATUS_FIELD_CONFIGS → `(None, warning)`
+              suggesting Tier 2 integer IDs.
         """
         artifact_kind = self._get_artifact_kind(artifact_type)
         if artifact_kind is None:
@@ -118,6 +139,121 @@ class NameResolver:
         )
         return resolved_id, warning
 
+    async def resolve_state(
+        self,
+        template_id: int | None,
+        artifact_type: str,
+        state: str,
+    ) -> tuple[list[int] | None, str | None]:
+        """Resolve a lifecycle `state` ("open"/"closed") to matching status IDs.
+
+        Turns the two-value lifecycle abstraction over an artifact's statuses
+        into one Tier 1 `RemoteFilter` `MultiValue` list on its status field.
+        Config-driven: metadata-driven kinds (incident, risk) partition active
+        statuses by the strict boolean `Open` flag; fixed kinds (requirement,
+        task, test case) select a configured tuple with no metadata request.
+
+        Spec:
+            - Caller pre-normalizes `state` to lowercase "open"/"closed"; any
+              other value raises `StateResolutionError`.
+            - Success → `(non-empty ids, None)`, ready for exactly one status
+              `MultiValue` entry.
+            - `(None, warning)` only for an unsupported artifact (R6 unfiltered
+              path); never for a supported one — the only non-raising failure.
+            - Fixed artifacts resolve ONLY from `fixed_open_ids`/
+              `fixed_closed_ids` (never one from the other), make zero API
+              calls, accept `template_id is None`, and cannot raise (both tuples
+              non-empty by import-time validation).
+            - Metadata-driven kinds require a template_id; `None` raises.
+            - Metadata-driven fetch goes through the shared per-key item cache
+              (`_get_cached_items`): concurrent searches fetch once.
+            - Partition with `type(flag) is bool` (True=open, False=closed); any
+              non-bool / missing `Open` raises (never treated as closed).
+            - Raise on fetch failure/warning, empty active list, all-inactive
+              list, or an empty resolved partition for the requested side.
+            - Unknown artifact types → warning tuple.
+
+        Raises:
+            StateResolutionError: see Spec (supported artifact, cannot resolve).
+        """
+        if state not in ("open", "closed"):
+            # Caller must normalize/validate before branching here.
+            raise StateResolutionError(f"State '{state}' is not normalized to 'open' or 'closed'.")
+
+        artifact_kind = self._get_artifact_kind(artifact_type)
+        if artifact_kind is None:
+            return None, f"Unknown artifact type '{artifact_type}'."
+
+        state_config = get_state_config(artifact_kind)
+        if state_config is None:
+            # Unsupported artifact (e.g. document, release): R6 warning path.
+            return (
+                None,
+                f"'{artifact_type}' does not support state filtering. "
+                "Search ran without a state filter.",
+            )
+
+        # --- Fixed/system-wide artifacts: explicit config tuples, zero I/O. ---
+        if state_config.open_flag_field is None:
+            ids = state_config.fixed_open_ids if state == "open" else state_config.fixed_closed_ids
+            # Defensive: import-time validation already guarantees non-empty tuples.
+            if not ids:
+                raise StateResolutionError(
+                    f"No fixed {state} status IDs configured for '{artifact_type}'."
+                )
+            return list(ids), None
+
+        # --- Metadata-driven artifacts: strict boolean Open partition. ---
+        if template_id is None:
+            raise StateResolutionError(
+                f"Cannot resolve state '{state}' for '{artifact_type}': "
+                "no Product Template ID is available."
+            )
+
+        items, warning = await self._get_cached_items(template_id, "statuses", artifact_kind)
+        if warning is not None or items is None:
+            raise StateResolutionError(
+                f"Cannot resolve state '{state}' for '{artifact_type}': "
+                f"{warning or 'status metadata unavailable'}."
+            )
+        if not items:
+            raise StateResolutionError(
+                f"Cannot resolve state '{state}' for '{artifact_type}': "
+                "no active statuses were found."
+            )
+
+        flag_field = state_config.open_flag_field
+        id_field = state_config.id_field
+        open_ids: list[int] = []
+        closed_ids: list[int] = []
+        for item in items:
+            if flag_field not in item:
+                raise StateResolutionError(
+                    f"Active status is missing the '{flag_field}' flag while "
+                    f"resolving state for '{artifact_type}'."
+                )
+            flag = item[flag_field]
+            if type(flag) is not bool:
+                raise StateResolutionError(
+                    f"Active status has a non-boolean '{flag_field}' flag "
+                    f"({flag!r}) while resolving state for '{artifact_type}'."
+                )
+            status_id = item.get(id_field)
+            if not isinstance(status_id, int):
+                raise StateResolutionError(
+                    f"Active status is missing a valid '{id_field}' while "
+                    f"resolving state for '{artifact_type}'."
+                )
+            if flag:
+                open_ids.append(status_id)
+            else:
+                closed_ids.append(status_id)
+
+        resolved = open_ids if state == "open" else closed_ids
+        if not resolved:
+            raise StateResolutionError(f"No {state} statuses resolved for '{artifact_type}'.")
+        return resolved, None
+
     async def resolve_priority(
         self,
         template_id: int,
@@ -126,21 +262,13 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Resolve a priority (or importance) display name to its integer ID.
 
-        ``PRIORITY_FIELD_CONFIGS`` already maps Requirement → importance,
-        so this method handles both priority and importance transparently.
+        Shared resolver contract (see ``resolve_status``).
 
         Spec:
-            - Returns (int, None) on successful resolution
-            - Returns (None, warning_string) on any failure — never raises
-            - Unknown artifact_type → (None, warning)
+            - Requirement priority resolves transparently via its importance
+              config — callers need not know the mapping.
             - Artifact kind not in PRIORITY_FIELD_CONFIGS (e.g. risk) →
-              (None, warning suggesting Tier 2)
-            - Integer-string bypass: "3" → (3, None) without API call
-            - Requirement priority transparently resolves via importance
-              config — callers don't need to know the mapping
-            - Case-insensitive exact match on active items only
-
-        Returns ``(id, warning)``.
+              `(None, warning)` suggesting Tier 2.
         """
         artifact_kind = self._get_artifact_kind(artifact_type)
         if artifact_kind is None:
@@ -161,17 +289,11 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Resolve an artifact sub-type display name to its integer ID.
 
-        Spec:
-            - Returns (int, None) on successful resolution
-            - Returns (None, warning_string) on any failure — never raises
-            - Unknown artifact_type → (None, warning)
-            - Artifact kind not in TYPE_FIELD_CONFIGS → (None, warning)
-            - Integer-string bypass: "1" → (1, None) without API call
-            - Inactive types are excluded from matching — only active items
-              are candidates
-            - Case-insensitive exact match
+        Shared resolver contract (see ``resolve_status``); inactive types are
+        excluded from matching.
 
-        Returns ``(id, warning)``.
+        Spec:
+            - Artifact kind not in TYPE_FIELD_CONFIGS → `(None, warning)`.
         """
         artifact_kind = self._get_artifact_kind(artifact_type)
         if artifact_kind is None:
@@ -192,18 +314,12 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Resolve a severity display name to its integer ID.
 
-        Spec:
-            - Returns (int, None) on successful resolution
-            - Returns (None, warning_string) on any failure — never raises
-            - Unknown artifact_type → (None, warning)
-            - Artifact kind not in SEVERITY_FIELD_CONFIGS → (None, warning
-              suggesting Tier 2 integer IDs)
-            - Integer-string bypass: "1" → (1, None) without API call
-            - Inactive severities are excluded from matching — only active
-              items are candidates
-            - Case-insensitive exact match, with substring fallback
+        Shared resolver contract (see ``resolve_status``), with substring
+        fallback; inactive severities excluded.
 
-        Returns ``(id, warning)``.
+        Spec:
+            - Artifact kind not in SEVERITY_FIELD_CONFIGS → `(None, warning)`
+              suggesting Tier 2 integer IDs.
         """
         artifact_kind = self._get_artifact_kind(artifact_type)
         if artifact_kind is None:
@@ -225,19 +341,13 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Generic resolution: resolve a display name via any metadata section.
 
-        This is the primary entry point for field_resolver's string-to-ID
-        resolution. It delegates to _resolve_name using the section directly,
-        avoiding the need for one public method per metadata category.
+        Primary entry point for field_resolver's string-to-ID resolution;
+        delegates to ``_resolve_name`` on *section* directly, so no per-category
+        public method is needed. Shared resolver contract (see ``resolve_status``),
+        with substring fallback.
 
         Spec:
-            - Returns (int, None) on successful resolution
-            - Returns (None, warning_string) on any failure — never raises
-            - Unknown artifact_type → (None, warning)
-            - Section/kind not in _SECTION_CONFIG_MAP → (None, warning)
-            - Integer-string bypass handled by _resolve_name
-            - Case-insensitive exact match with substring fallback
-
-        Returns ``(id, warning)``.
+            - Section/kind not in _SECTION_CONFIG_MAP → `(None, warning)`.
         """
         artifact_kind = self._get_artifact_kind(artifact_type)
         if artifact_kind is None:
@@ -255,21 +365,13 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Resolve the authenticated user's ID via ``GET /users``.
 
-        The endpoint returns a single ``RemoteUser`` object (not an
-        array).  The ``UserId`` is extracted and cached so subsequent
-        calls skip the API round-trip.
+        The endpoint returns a single ``RemoteUser`` object (not an array).
 
         Spec:
-            - Returns (int, None) on success
-            - Returns (None, warning_string) on any failure — never raises
-            - Caches the user ID — second call makes zero API calls
-            - Non-dict response → (None, warning)
-            - Missing UserId key → (None, warning)
-            - API exception → (None, warning mentioning "Failed")
-            - Warning always mentions "Owner filter skipped" so callers
-              know the filter was not applied
-
-        Returns ``(user_id, warning)``.
+            - `(int, None)` on success; cached, so a second call makes no API call.
+            - `(None, warning)` on any failure (non-dict, missing UserId, API
+              exception) — never raises; the warning always says "Owner filter
+              skipped" so callers know it was not applied.
         """
         if self._current_user_id is not None:
             return self._current_user_id, None
@@ -304,31 +406,21 @@ class NameResolver:
     ) -> tuple[int | None, str | None]:
         """Resolve a release ID or version number to an integer ID.
 
-        If *release_value* parses as an integer it is returned directly
-        (bypass).  Otherwise a ``POST`` to the release search endpoint
-        finds the matching ``ReleaseId`` by ``VersionNumber``.
-
-        The caller is responsible for routing: builds keep release_id
-        as a URL path param; test_case/test_set keep it as a URL query
-        param.  This method only resolves the value.
+        The caller owns routing (builds use a URL path param;
+        test_case/test_set use a query param); this method only resolves the
+        value.
 
         Spec:
-            - Returns (int, None) on success
-            - Returns (None, warning_string) on any failure — never raises
-            - Integer-string bypass: "42" → (42, None) without API call
-            - Version string search uses case-insensitive exact match on
-              VersionNumber — substring matches from the API are filtered
-              to exact matches
-            - No exact match → (None, warning listing versions found)
-            - Empty API results → (None, warning)
-            - API exception → (None, warning mentioning "Failed")
-            - Search URL includes WCF routing query params (row_start,
-              row_count, sort params) — required for Spira endpoint matching
-            - POST body is a RemoteFilter array with VersionNumber StringValue
-
-        Returns ``(release_id, warning)``.
+            - `(int, None)` on success; `(None, warning)` on any failure
+              (empty results, no match, API exception) — never raises.
+            - Integer-string bypass: "42" → `(42, None)` without API call.
+            - Otherwise POSTs to release search and matches VersionNumber
+              case-insensitively exact (the API's substring hits are filtered
+              to exact); no match → warning listing versions found.
+            - Search URL carries WCF routing query params (row_start/row_count/
+              sort), required for Spira endpoint matching; POST body is a
+              RemoteFilter array with VersionNumber StringValue.
         """
-        # Integer-string bypass
         try:
             return int(release_value), None
         except (ValueError, TypeError):
@@ -341,14 +433,13 @@ class NameResolver:
                 "Release config not found. Cannot resolve version number.",
             )
 
-        # Build the search URL with ALL query params for WCF routing
+        # All query params are required for WCF endpoint routing.
         url = release_cfg.build_search_url(
             starting_row=1,
             number_of_rows=1,
             product_id=product_id,
         )
 
-        # POST with VersionNumber filter
         filters = [
             {
                 "PropertyName": "VersionNumber",
@@ -376,7 +467,6 @@ class NameResolver:
                 f"No release matching version '{release_value}' found in product {product_id}.",
             )
 
-        # Case-insensitive match on VersionNumber
         target = release_value.lower()
         for entry in raw:
             version = entry.get("VersionNumber", "")
@@ -385,8 +475,8 @@ class NameResolver:
                 if isinstance(rid, int):
                     return rid, None
 
-        # StringValue is a substring match — the API may return
-        # results that don't exactly match.  List what was found.
+        # The API's StringValue match is substring, so filter to exact above;
+        # here list what was found.
         found = [e.get("VersionNumber", "?") for e in raw]
         return (
             None,
@@ -404,36 +494,22 @@ class NameResolver:
     ) -> tuple[str | None, int | None, str | None]:
         """Resolve a component name or ID for filtering.
 
-        Returns ``(field_name, component_id, warning)`` where
-        *field_name* is ``"ComponentId"`` or ``"ComponentIds"``
-        depending on what the artifact's ``all_fields`` contains.
-
-        If neither field is present the artifact type does not
-        support component filtering and a warning is returned.
-
-        The caller uses *field_name* to decide the filter format:
-        ``ComponentIds`` → ``MultiValue``, ``ComponentId`` → ``IntValue``.
+        Returns ``(field_name, component_id, warning)``. The caller uses
+        *field_name* to pick the filter format: ``ComponentIds`` → ``MultiValue``,
+        ``ComponentId`` → ``IntValue``.
 
         Spec:
-            - Returns (str, int, None) on success — never raises
-            - Returns (None, None, warning_string) on any failure
-            - Field name selection: "ComponentIds" preferred over
-              "ComponentId" when both present in all_fields
-            - Neither field in all_fields → (None, None, warning
-              mentioning "does not support component filtering")
-            - Integer-string bypass: "10" → (field_name, 10, None)
-              without API call
-            - Name matching is case-insensitive exact match on active
-              components only (IsActive=True)
-            - Inactive components are excluded from matching AND from
-              the valid-names list in warnings
-            - No match → (None, None, warning listing valid component
-              names sorted alphabetically)
-            - Component list is cached per product_id — subsequent calls
-              for same product skip the API
-            - API failure → (None, None, warning mentioning "Failed")
+            - `(str, int, None)` on success; `(None, None, warning)` on any
+              failure — never raises.
+            - Field-name selection prefers "ComponentIds" over "ComponentId";
+              neither present → warning "does not support component filtering".
+            - Integer-string bypass: "10" → `(field_name, 10, None)` without API.
+            - Active-only (IsActive=True) case-insensitive exact match;
+              inactive components excluded from matching and from the warning's
+              valid-names list.
+            - No match → warning listing valid names sorted alphabetically;
+              API failure → warning. Component list cached per product_id.
         """
-        # Determine the correct field name from all_fields
         if "ComponentIds" in all_fields:
             field_name = "ComponentIds"
         elif "ComponentId" in all_fields:
@@ -445,13 +521,11 @@ class NameResolver:
                 f"'{artifact_type}' does not support component filtering.",
             )
 
-        # Integer-string bypass
         try:
             return field_name, int(component_value), None
         except (ValueError, TypeError):
             pass
 
-        # Fetch and cache component list
         comp_map = await self._get_components(product_id)
         if comp_map is None:
             return (
@@ -487,6 +561,7 @@ class NameResolver:
         *,
         artifact_type: str,
         status: str | None = None,
+        state: str | None = None,
         priority: str | None = None,
         owner_id: int | None = None,
         current_user: bool = False,
@@ -501,43 +576,40 @@ class NameResolver:
         template metadata (or int passthrough) → accumulate warnings.
 
         Spec:
-            - ALWAYS returns (list, list) — never raises
-            - First list: resolved (field_name, value) tuples ready for
-              build_remote_filters
-            - Second list: accumulated warnings (always a list, never None)
-            - Each named parameter is resolved independently — one failure
-              does not block others
-            - Parameters with None value are skipped (no warning, no filter)
-            - Parameters whose config field is None produce a warning and
-              are skipped
-            - When template_id is None, name-based resolution is skipped
-              and integer passthrough is attempted instead
-            - current_user takes precedence over owner_id when both are
-              provided (with a warning)
-            - release_id resolution here handles ONLY the server-side filter
-              case (non-build, non-query-param types) — URL query param
-              resolution is the caller's responsibility
-            - requirement_id is a direct passthrough (no name resolution) —
-              validated against config.all_fields
+            - ALWAYS returns `(filters, warnings)`, never raises, EXCEPT a
+              supported-artifact `state` failure propagates `StateResolutionError`
+              uncaught for the tool boundary to map to STATE_UNRESOLVED
+              (ADR-0016); every other failure (incl. unsupported `state`, name
+              miss) degrades to a warning.
+            - First list: resolved `(field_name, value)` tuples for
+              build_remote_filters. Second: warnings (always a list).
+            - `state` → exactly ONE status-field `MultiValue` tuple
+              `(config.status_field, list[int])`, not several ANDed entries;
+              unsupported → warning + no filter; supported-unresolved → raise.
+              `state`/`status` are mutually exclusive at the tool boundary.
+            - A successfully applied `status` OR `state` filter on a REQUIREMENT
+              search appends the summary-requirement note; NOT appended when the
+              filter was skipped or unsupported.
+            - Each param resolved independently (one failure doesn't block
+              others); `None` value → skipped silently; `None` config field →
+              warning + skip.
+            - `template_id is None` → skip name resolution, attempt integer
+              passthrough.
+            - current_user takes precedence over owner_id (with a warning).
+            - release_id here handles ONLY the server-side-filter case
+              (non-build, non-query-param); caller owns URL query-param
+              resolution.
+            - requirement_id is a direct passthrough validated against
+              config.all_fields.
 
         Args:
-            config: ArtifactConfig for the artifact type being searched.
-            product_id: Product ID (needed for component/release resolution).
             template_id: Resolved template ID (None = skip name resolution).
-            artifact_type: Artifact type string (e.g. "incident").
-            status: Display name or int string for status filter.
-            priority: Display name or int string for priority filter.
-            owner_id: Integer user ID for owner filter.
-            current_user: If True, resolve authenticated user's ID.
-            component: Component name or int string.
-            artifact_type_filter: Sub-type display name or int string.
-            release_id: Release ID (int) or version string for release filter.
-                Only used as a server-side filter here — caller handles
-                URL query param resolution separately.
-            requirement_id: Integer requirement ID (direct passthrough).
+            release_id: Release ID or version string — server-side filter only
+                here (caller handles URL query params).
 
-        Returns:
-            (tier1_filters, warnings)
+        Raises:
+            StateResolutionError: propagated unchanged from `resolve_state`
+                for a supported artifact (see Spec).
         """
         import contextlib
 
@@ -554,9 +626,28 @@ class NameResolver:
                     warnings.append(warning)
                 if resolved_id is not None:
                     tier1_filters.append((config.status_field, resolved_id))
+                    if artifact_type == "requirement":
+                        warnings.append(_REQUIREMENT_SUMMARY_FILTER_NOTE)
             else:
                 with contextlib.suppress(ValueError, TypeError):
                     tier1_filters.append((config.status_field, int(status)))
+                    if artifact_type == "requirement":
+                        warnings.append(_REQUIREMENT_SUMMARY_FILTER_NOTE)
+
+        # --- State (lifecycle open/closed) ---
+        # Unsupported artifacts warn; a supported-but-unresolvable one raises
+        # StateResolutionError, propagating unchanged (ADR-0016) for the boundary.
+        if state is not None:
+            if config.status_field is None:
+                warnings.append(f"'{artifact_type}' does not support state filtering.")
+            else:
+                resolved_ids, warning = await self.resolve_state(template_id, artifact_type, state)
+                if warning:
+                    warnings.append(warning)
+                if resolved_ids is not None:
+                    tier1_filters.append((config.status_field, resolved_ids))
+                    if artifact_type == "requirement":
+                        warnings.append(_REQUIREMENT_SUMMARY_FILTER_NOTE)
 
         # --- Priority ---
         if priority is not None:
@@ -634,8 +725,8 @@ class NameResolver:
                 )
 
         # --- Release ID as server-side filter ---
-        # Only applies for non-build types where release_id is NOT a URL query param.
-        # The caller handles URL query param resolution (step 0b) separately.
+        # Only non-build types where release_id is NOT a URL query param; the
+        # caller handles the query-param case (step 0b) separately.
         if (
             release_id is not None
             and artifact_type != "build"
@@ -679,6 +770,67 @@ class NameResolver:
         """
         return self._template_context.get_metadata_artifact_kind(artifact_type)
 
+    def _item_cache_lock(self, key: tuple[int, str, str]) -> asyncio.Lock:
+        """Return the coordination lock for one item-cache key, creating it once.
+
+        Spec:
+            - Same `asyncio.Lock` per key, so concurrent callers for a missing
+              key serialize on it and coalesce into a single fetch.
+            - Lazily created on first request, retained for the resolver's
+              lifetime (one tool invocation).
+            - Pure/no-await, so lock creation itself can't interleave; never raises.
+        """
+        lock = self._item_locks.get(key)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._item_locks[key] = lock
+        return lock
+
+    async def _get_cached_items(
+        self,
+        template_id: int,
+        section: str,
+        artifact_kind: str,
+    ) -> tuple[list[dict] | None, str | None]:
+        """Fetch active metadata items for a key, caching and coalescing fetches.
+
+        Shared backing fetch for status + state resolution, keyed
+        `(template_id, section, artifact_kind)`. The single place that coalesces
+        concurrent misses on one key into one API call.
+
+        Spec:
+            - `(items, None)` on success; the empty list is a valid, retained result.
+            - `(None, warning)` on any fetch failure/warning — never raises
+              (warning passed through from the metadata API).
+            - Cache hit → zero API calls.
+            - On a miss, the first caller takes the per-key lock and fetches;
+              others await it and read the cached result → exactly one fetch per
+              key per invocation.
+            - Distinct keys fetch independently (N keys → N fetches).
+            - Failures are NOT cached (key left absent so a retry re-fetches).
+            - The lock bounds the only awaited work (event-loop safe).
+        """
+        key = (template_id, section, artifact_kind)
+        cached = self._item_cache.get(key)
+        if cached is not None:
+            return cached, None
+
+        async with self._item_cache_lock(key):
+            # Double-checked: a caller we queued behind may have populated it.
+            cached = self._item_cache.get(key)
+            if cached is not None:
+                return cached, None
+
+            items, warning = await fetch_active_metadata_items(
+                self._client, template_id, section, artifact_kind
+            )
+            if warning is not None:
+                # Do not retain failures — leave the key absent so a retry re-fetches.
+                return None, warning
+
+            self._item_cache[key] = items
+            return items, None
+
     async def _resolve_name(
         self,
         template_id: int,
@@ -688,57 +840,35 @@ class NameResolver:
     ) -> tuple[int | None, list[str], str | None]:
         """Generic name resolution via the metadata feature's public API.
 
-        Delegates fetching and active-item filtering to
-        ``fetch_active_metadata_items``, then does case-insensitive exact
-        match (with substring fallback) on ``Name``.
+        Fetches active items via the shared item cache, then matches ``Name``
+        case-insensitively (exact first, then substring fallback).
 
         Spec:
-            - Returns (int, valid_names, None) on successful match
-            - Returns (None, valid_names, warning) on no match — valid_names
-              lists all active item names for the caller/warning message
-            - Returns (None, [], warning) on infrastructure failure (unknown
-              section, unknown kind, API error, empty response)
-            - Integer-string bypass: "42" → (42, [], None) without API call
-            - Successful resolution is cached by (template_id,
-              metadata_section, artifact_kind, display_name.lower()) — second
-              call with same key makes zero API calls
-            - Only active items (filtered by the metadata API) are
-              candidates for matching — inactive items are invisible
-            - Case-insensitive exact match on "Name" field is tried first
-            - Substring fallback: if exact match fails, tries case-insensitive
-              substring match (e.g. "high" matches "2 - High")
-            - Substring match succeeds only when exactly one item matches —
-              multiple substring matches produce an ambiguity warning
-            - Never raises — all exceptions caught and converted to warning
-
-        Args:
-            template_id: Product template numeric ID.
-            metadata_section: One of ``"statuses"``, ``"priorities"``,
-                ``"types"``.
-            artifact_kind: Template metadata artifact kind string
-                (e.g. ``"Incident"``, ``"Test Case"``).
-            display_name: The human-readable name to resolve.
-
-        Returns:
-            ``(id, valid_names, warning)`` — resolved ID (or None),
-            list of valid display names, and an optional warning.
+            - `(int, valid_names, None)` on match; `(None, valid_names, warning)`
+              on no match (valid_names lists active names for the message);
+              `(None, [], warning)` on infra failure (unknown section/kind, API
+              error, empty response). Never raises.
+            - Integer-string bypass: "42" → `(42, [], None)` without API call.
+            - Cached by `(template_id, section, kind, name.lower())` — a repeat
+              makes zero API calls.
+            - Active-only candidates; exact match tried first.
+            - Substring fallback (e.g. "high" matches "2 - High") succeeds only
+              on a single match; multiple matches → ambiguity warning.
         """
-        # Integer-string bypass
         try:
             return int(display_name), [], None
         except (ValueError, TypeError):
             pass
 
-        # Check name cache
         cache_key = (template_id, metadata_section, artifact_kind, display_name.lower())
         if cache_key in self._name_cache:
             return self._name_cache[cache_key], [], None
 
-        # Fetch active metadata items via the metadata feature's public API
-        filtered, warning = await fetch_active_metadata_items(
-            self._client, template_id, metadata_section, artifact_kind
+        # Shared, concurrency-safe item cache keyed (template_id, section, kind).
+        filtered, warning = await self._get_cached_items(
+            template_id, metadata_section, artifact_kind
         )
-        if warning is not None:
+        if warning is not None or filtered is None:
             return None, [], warning
 
         # Get the ID field name for this section/kind
@@ -758,14 +888,11 @@ class NameResolver:
                 matched_id = item.get(id_field)
 
         if matched_id is not None:
-            # Cache the successful resolution
             self._name_cache[cache_key] = matched_id
             return matched_id, valid_names, None
 
-        # Fallback: case-insensitive substring match.
-        # If the user provides "high" and the valid name is "2 - High",
-        # we match because "high" is contained in "2 - high".
-        # Only succeeds when exactly one item matches to avoid ambiguity.
+        # Substring fallback (e.g. "high" matches "2 - High"); only a single
+        # match is accepted, to avoid ambiguity.
         substring_matches: list[tuple[str, int]] = []
         for item in filtered:
             item_name = item.get("Name", "")
@@ -791,7 +918,6 @@ class NameResolver:
                 ),
             )
 
-        # No match found (neither exact nor substring)
         names_list = ", ".join(sorted(valid_names))
         return (
             None,
@@ -809,17 +935,11 @@ class NameResolver:
         """Fetch and cache active components for a product.
 
         Spec:
-            - Returns dict on success (may be empty if no active components)
-            - Returns None only on API exception — never raises
-            - Dict keys are lowercased component names; values are
-              (component_id, original_name) tuples
-            - Only active components (IsActive=True) are included
-            - Empty API response → caches empty dict (avoids retry on next
-              call) and returns it
-            - Cached per product_id — subsequent calls skip the API
-
-        Returns a ``{name_lower: (component_id, original_name)}``
-        dict of active components, or ``None`` on API failure.
+            - `{name_lower: (component_id, original_name)}` on success (empty if
+              no active components); None only on API exception — never raises.
+            - Active-only (IsActive=True).
+            - Empty API response caches an empty dict (avoids retry); cached per
+              product_id.
         """
         if product_id in self._component_cache:
             return self._component_cache[product_id]

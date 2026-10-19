@@ -1,6 +1,6 @@
 [project]
 name = "mcp-server-spira"
-version = "2.0.0"
+version = "2.1.0"
 description = "A Model Context Protocol (MCP) server enabling AI assistants to interact with Spira by Inflectra."
 readme = "README.md"
 license = "MIT"
@@ -39,6 +39,13 @@ exclude = [
     "build",
     "dist",
 ]
+
+[tool.ruff.format]
+# Don't format Python code blocks embedded in Markdown. Design docs and ADRs
+# carry illustrative snippets, not shipped source; formatting them is churn and
+# couples the docs to ruff's evolving style guide. Newer ruff formats these by
+# default on a directory scan, so this keeps `ruff format --check .` stable.
+exclude = ["*.md"]
 
 [tool.ruff.lint]
 # Enable specific rule sets
@@ -165,6 +172,19 @@ source = ["src"]
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branch = "develop"
+commit_message = "chore(release): {version} [skip ci] [TK:0]"
+tag_format = "v{version}"
+major_on_zero = false  # Don't auto-bump to 1.0 from 0.x
+
+[tool.semantic_release.commit_parser_options]
+# Only feat and fix trigger releases; everything else is ignored
+allowed_tags = ["feat", "fix", "perf"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
 
 [build-system]
 requires = ["setuptools >= 77.0.3"]

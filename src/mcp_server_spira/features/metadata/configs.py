@@ -95,6 +95,8 @@ REQUIREMENT_STATUS_CONFIG = TemplateMetadataFieldConfig(
     id_field="RequirementStatusId",
     endpoint="project-templates/{template_id}/requirements/statuses",
     include_fields=("Position",),
+    fixed_open_ids=(1, 2, 3, 4, 5, 7, 11, 12, 14, 15, 16),
+    fixed_closed_ids=(6, 8, 9, 10, 13),
 )
 
 INCIDENT_STATUS_CONFIG = TemplateMetadataFieldConfig(
@@ -102,6 +104,7 @@ INCIDENT_STATUS_CONFIG = TemplateMetadataFieldConfig(
     id_field="IncidentStatusId",
     endpoint="project-templates/{template_id}/incidents/statuses",
     include_fields=("Open",),
+    open_flag_field="Open",
 )
 
 TASK_STATUS_CONFIG = TemplateMetadataFieldConfig(
@@ -109,6 +112,8 @@ TASK_STATUS_CONFIG = TemplateMetadataFieldConfig(
     id_field="TaskStatusId",
     endpoint="project-templates/{template_id}/tasks/statuses",
     include_fields=("Position",),
+    fixed_open_ids=(1, 2, 4, 5, 8),
+    fixed_closed_ids=(3, 6, 7, 9),
 )
 
 RISK_STATUS_CONFIG = TemplateMetadataFieldConfig(
@@ -120,6 +125,7 @@ RISK_STATUS_CONFIG = TemplateMetadataFieldConfig(
         "Open",
         "Default",
     ),
+    open_flag_field="Open",
 )
 
 RELEASE_STATUS_CONFIG = TemplateMetadataFieldConfig(
@@ -134,6 +140,8 @@ TEST_CASE_STATUS_CONFIG = TemplateMetadataFieldConfig(
     id_field="TestCaseStatusId",
     endpoint="project-templates/{template_id}/test-cases/statuses",
     include_fields=("Position",),
+    fixed_open_ids=(1, 2, 4, 5),
+    fixed_closed_ids=(3, 6, 7, 8),
 )
 
 DOCUMENT_STATUS_CONFIG = TemplateMetadataFieldConfig(
@@ -264,10 +272,24 @@ _ALL_AGGREGATOR_DICTS: dict[str, dict[str, TemplateMetadataFieldConfig]] = {
     "IMPACT_FIELD_CONFIGS": IMPACT_FIELD_CONFIGS,
 }
 
+
+def _config_has_state(cfg: TemplateMetadataFieldConfig) -> bool:
+    """True when a config declares any state-support fields.
+
+    State knowledge lives on status configs only; this flags any config that
+    sets a metadata flag or a fixed tuple so the aggregator can reject state
+    fields found under a non-status dictionary.
+    """
+    return cfg.open_flag_field is not None or bool(cfg.fixed_open_ids) or bool(cfg.fixed_closed_ids)
+
+
 _all_errors: list[str] = []
 for _dict_name, _configs in _ALL_AGGREGATOR_DICTS.items():
     for _name, _cfg in _configs.items():
         _errs = _cfg.validate()
+        # Rule 5: state fields are only permitted under STATUS_FIELD_CONFIGS.
+        if _dict_name != "STATUS_FIELD_CONFIGS" and _config_has_state(_cfg):
+            _errs.append("state fields are only allowed on status configs")
         if _errs:
             _all_errors.extend(f"{_dict_name}[{_name}]: {e}" for e in _errs)
 if _all_errors:

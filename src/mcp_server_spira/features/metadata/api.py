@@ -11,6 +11,7 @@ patterns) stay private to the metadata package.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from mcp_server_spira.features.metadata.configs import (
@@ -26,6 +27,71 @@ if TYPE_CHECKING:
     from mcp_server_spira.utils.spira_client import SpiraClient
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class StateConfig:
+    """Narrow, resolved state-support info for one artifact kind.
+
+    The seam type exposed for the `state` Tier 1 filter — carries only what a
+    resolver needs, without leaking internal `TemplateMetadataFieldConfig`.
+
+    Spec:
+        - Frozen value object — hashable, immutable, no behavior.
+        - Describes exactly one state-support source: metadata-driven
+          (`open_flag_field` set, tuples empty — incident, risk) or
+          fixed/system-wide (both tuples set, flag None — requirement, task,
+          test case).
+        - `id_field` is the status ID field (e.g. "IncidentStatusId") emitted
+          into the Tier 1 RemoteFilter.
+        - Only constructed by `get_state_config` for a config with state
+          support; otherwise None (never an all-empty `StateConfig`).
+    """
+
+    open_flag_field: str | None
+    fixed_open_ids: tuple[int, ...]
+    fixed_closed_ids: tuple[int, ...]
+    id_field: str
+
+
+def get_state_config(artifact_kind: str) -> StateConfig | None:
+    """Return the resolved `StateConfig` for a metadata artifact kind.
+
+    Pure accessor over the status metadata config — the single source of truth
+    for state support. Does not expose `TemplateMetadataFieldConfig`.
+
+    Spec:
+        - Keyed by metadata artifact kind ("Incident", "Test Case", etc.).
+        - Returns a `StateConfig` only when the status config declares state
+          support (a flag, or both fixed tuples).
+        - None for an unknown kind, no status config, or no state support
+          (incl. Document, whose status config carries no state fields).
+        - Pure — no I/O, no client, no side effects; never raises.
+    """
+    config = STATUS_FIELD_CONFIGS.get(artifact_kind)
+    if config is None:
+        return None
+    if config.open_flag_field is None and not config.fixed_open_ids and not config.fixed_closed_ids:
+        return None
+    return StateConfig(
+        open_flag_field=config.open_flag_field,
+        fixed_open_ids=config.fixed_open_ids,
+        fixed_closed_ids=config.fixed_closed_ids,
+        id_field=config.id_field,
+    )
+
+
+def supports_state_filtering(artifact_kind: str) -> bool:
+    """Return whether a metadata artifact kind supports the `state` filter.
+
+    Spec:
+        - Equivalent to `get_state_config(artifact_kind) is not None`.
+        - True for metadata-driven (incident, risk) and fixed (requirement,
+          task, test case) kinds; False for unsupported kinds and Document.
+        - Pure — no I/O, no client, no side effects; never raises.
+    """
+    return get_state_config(artifact_kind) is not None
+
 
 # Section name → config dict mapping (internal detail exposed via this API).
 _SECTION_CONFIG_MAP: dict[str, dict[str, TemplateMetadataFieldConfig]] = {

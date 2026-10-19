@@ -9,7 +9,7 @@ from typing import Annotated, Any
 
 from pydantic import WithJsonSchema
 
-from mcp_server_spira.config import resolve_product_id
+from mcp_server_spira.config import get_create_tags, resolve_product_id
 from mcp_server_spira.features.artifact_configs import ARTIFACT_CONFIG
 from mcp_server_spira.features.create.batch import (
     BatchResult,
@@ -29,6 +29,7 @@ from mcp_server_spira.features.custom_properties import (
 )
 from mcp_server_spira.features.search.template_context import TemplateContext
 from mcp_server_spira.features.sub_artifact_configs import SUB_ARTIFACT_CONFIG
+from mcp_server_spira.features.tags import inject_tags
 from mcp_server_spira.models import ArtifactConfig, SubArtifactConfig
 from mcp_server_spira.utils.common import _sanitize_error, get_spira_client
 from mcp_server_spira.utils.common.responses import (
@@ -135,6 +136,14 @@ async def _create_artifact_impl(
                 for key, value in config.inject_defaults.items():
                     if key not in item:
                         item[key] = value
+
+        # Inject provenance tags (SPIRA_CREATE_TAGS). inject_tags no-ops unless
+        # config is a top-level ArtifactConfig with writable "Tags". Synchronous
+        # by design (does no I/O), so no await.
+        create_tags = get_create_tags()
+        if create_tags is not None:
+            for item in fields:
+                inject_tags(item, config, create_tags)
 
         # Build-specific: inject ProjectId and ReleaseId into POST body.
         # The Spira API requires these fields in the body AND in the URL for builds.

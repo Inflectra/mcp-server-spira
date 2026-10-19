@@ -211,3 +211,5 @@ workspace.code-workspace
 # Kiro
 # keep specs and other shared files, but exclude files specific to each user
 .kiro/settings
+.kiro/specs/**/tasks.meta.json
+.agents

@@ -60,6 +60,8 @@ Set these environment variables (or use a `.env` file):
 | `INFLECTRA_SPIRA_USERNAME` | Yes | Your Spira login name |
 | `INFLECTRA_SPIRA_API_KEY` | Yes | API Key (RSS Token) from your Spira user profile |
 | `SPIRA_PROJECT_ID` | No | Default product ID — avoids passing `product_id` on every call |
+| `SPIRA_CREATE_TAGS` | No | Comma-separated tag string merged into `Tags` on every artifact the MCP creates; empty or unset disables injection |
+| `SPIRA_UPDATE_TAGS` | No | Comma-separated tag string merged into `Tags` on every artifact the MCP updates; empty or unset disables injection |
 
 ---
 

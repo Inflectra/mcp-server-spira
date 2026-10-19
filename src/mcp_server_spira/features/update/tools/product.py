@@ -9,7 +9,7 @@ from typing import Annotated, Any
 
 from pydantic import WithJsonSchema
 
-from mcp_server_spira.config import resolve_product_id
+from mcp_server_spira.config import get_update_tags, resolve_product_id
 from mcp_server_spira.features.artifact_configs import ARTIFACT_CONFIG
 from mcp_server_spira.features.create.field_resolver import resolve_fields_for_create
 from mcp_server_spira.features.custom_properties import (
@@ -18,6 +18,7 @@ from mcp_server_spira.features.custom_properties import (
 )
 from mcp_server_spira.features.search.template_context import TemplateContext
 from mcp_server_spira.features.sub_artifact_configs import SUB_ARTIFACT_CONFIG
+from mcp_server_spira.features.tags import inject_tags
 from mcp_server_spira.features.update.validation import (
     SUB_ARTIFACT_TYPE_TO_CONFIG_KEY,
     SUB_ARTIFACT_TYPES,
@@ -212,6 +213,15 @@ async def _update_artifact_impl(
         # Preserve ConcurrencyDate from GET (override any user-provided value)
         if "ConcurrencyDate" in raw_data:
             merged["ConcurrencyDate"] = raw_data["ConcurrencyDate"]
+
+        # --- Step 5+: Tag injection ---
+        # Must stay after validation and the GET but before the PUT, so a
+        # rejected update returns its error without ever writing tags.
+        # inject_tags no-ops unless tags are configured and config is a
+        # top-level ArtifactConfig with writable "Tags". Synchronous, no await.
+        update_tags = get_update_tags()
+        if update_tags is not None:
+            inject_tags(merged, config, update_tags)
 
         # --- Step 6: Custom properties serialization + merge ---
         if cp_friendly is not None:

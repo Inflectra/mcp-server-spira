@@ -7,6 +7,8 @@ No separate hardcoded dict to drift out of sync.
 import json
 
 from mcp_server_spira.features.artifact_configs import ARTIFACT_CONFIG
+from mcp_server_spira.features.metadata.api import supports_state_filtering
+from mcp_server_spira.features.search.template_context import metadata_artifact_kind
 
 # Types exposed by the get_artifact_schema tool.
 # Subset of ARTIFACT_CONFIG keys — excludes "build" and "document" which
@@ -41,9 +43,13 @@ def _get_artifact_schema_impl(artifact_type: str) -> str:
     Spec:
         - ALWAYS returns a valid JSON string — never raises
         - Pure function — no API calls, no side effects, no async needed
-        - On success: response has "artifact_type" (str) and "fields"
-          (list of dicts with name/type/description) — callers parse
-          with json.loads without try/except
+        - On success: response has "artifact_type" (str), "state_supported"
+          (bool), and "fields" (list of dicts with name/type/description) —
+          callers parse with json.loads without try/except
+        - "state_supported" reports whether the type accepts the Tier 1 `state`
+          filter (via the canonical kind lookup + metadata seam); a
+          schema-exposed type with no metadata kind reports False. No new
+          artifact types are added to the schema
         - For creatable types (those with create_endpoint set in
           ArtifactConfig), response additionally includes
           "writable_fields" (list[str]) and "required_fields" (list[str])
@@ -81,8 +87,13 @@ def _get_artifact_schema_impl(artifact_type: str) -> str:
             # Fallback for fields without metadata (shouldn't happen with validation)
             fields_list.append({"name": fname, "type": "str", "description": ""})
 
+    # No metadata kind ⇒ can't support the Tier 1 `state` filter ⇒ False.
+    kind = metadata_artifact_kind(artifact_type)
+    state_supported = kind is not None and supports_state_filtering(kind)
+
     schema: dict = {
         "artifact_type": artifact_type,
+        "state_supported": state_supported,
         "fields": fields_list,
     }
 
