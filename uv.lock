@@ -310,7 +310,7 @@ cli = [
 
 [[package]]
 name = "mcp-server-spira"
-version = "2.0.0"
+version = "2.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -325,7 +325,7 @@ dependencies = [
 requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "idna", specifier = ">=3.15" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.9.2" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.9.2,<2" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "python-multipart", specifier = ">=0.0.27" },
     { name = "starlette", specifier = ">=1.0.1" },
