@@ -8,7 +8,7 @@ requires-python = ">=3.12"
 keywords = ["MCP", "AI", "GenAI"]
 dependencies = [
     "httpx>=0.28.1",
-    "mcp[cli]>=1.9.2",
+    "mcp[cli]>=1.9.2,<2",  # mcp 2.0 removed mcp.server.fastmcp, which server.py imports
     "python-multipart>=0.0.27",
     # Transitive pins — security fixes
     "idna>=3.15",          # CVE-2026-45409 (DoS via crafted domain names)

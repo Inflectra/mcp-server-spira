@@ -14,4 +14,11 @@ jobs:
         with: {python-version: "3.12"}
       - run: pip install build
       - run: python -m build
+      # Install the built wheel the way the README does (fresh environment, latest
+      # matching dependencies) and import the server before anything is published.
+      - name: Smoke-test the wheel in a fresh venv
+        run: |
+          python -m venv "$RUNNER_TEMP/smoke"
+          "$RUNNER_TEMP/smoke/bin/pip" install dist/*.whl
+          "$RUNNER_TEMP/smoke/bin/python" -c "import mcp_server_spira.server"
       - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
